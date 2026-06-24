@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "flexicare-poc",
+  "private_key_id": "9c3cb0a561b0d20870c930e18eb275d3c8d51bb5",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCraef0/aicW/Jo\ncsOBXgYrvqRw7/4kzxCAua6KiOuoeW80XuIVdv1KpNFmNQyftDQFzqeBD2CPxlQ5\ncBHkKXSMgZ0IdyJLvTkRgTBO+9xuKD2SffdHlUndVPLh9pG9ToXvmmUnmduZRWhZ\nHSWn0Fokcf0JbR+pcRE+ekLUMwRjK9qyjO1/51Lu2HpLOAUUctJLA05UTAXgrXZw\ndlYhwo+mzjknHBC/p+0+9mKLupCu9Xsz+jGvusZKqc2RhYWW4xC6SI/WYZjPYISG\nunetyeYPx6u6hz9uJIdzqZkOWnfayb2jD7t/3q/xV3Vzyz20uftX9Ygfk/rfEZwZ\n0pm31EVdAgMBAAECggEAK+nSVFelmgUOOYbpIhvJ3ewVqZ86DwkDE8898Vy5bqxJ\nenOyXMhihHxr7tC5XrKmPzSdgflEBiFLk3lsA/VA1/welDwdC6U62QqtKxbn9kqV\n15Ewx+Rti2fHX28xD/vtYSA/OOF4OjBnVqkaa/77EOoo5oDPwzNltQlSVJWLUrJN\n8RxGnLdWmTiNBY3wTut4za00cfhlWPEnZidnVO6UC5gaNzKR3oc/XgGUPSRtm8zs\nR6VkU7fhHbRQ9UJ+a+UadgCh/af4XC4tSDsd4jciCe7u1mnYgwms4pS3K79zb9pY\niK5ljg8qj2u/Jc159NHgVCvwiGlO5+pD2cx+EJ4FuwKBgQC7X4oDJHrUz7dgQStM\nA3iMn6R+9/0LvxNQJAacF4IL98x3Xc8VzITQVCW5YwLkhPIqHvpi+aIWV5jE32lJ\n7/fa0gLeL1CIPG82J9lqbRIdeQTmV7j4Q177Sj/X99i+1W5BTCBt4gk31jvYf4x2\njfAPjb9uzjNI/uOEzRwgZdPEJwKBgQDqMfld9vkju5cs9b+C0zZ9PqeXuhlckJT7\nq01zRUzAPptTipsR6UM19xkNggcjqfSOSPH+V9zrTLFvvuN2ncUUFiK7M2n9F8WP\nr2spuvU2XPkGjI0Mv2E6GFtq6qE8nGViFTAl0icYctaIXnk5yzyoPAvGp7hFuIyC\nBE3glUvI2wKBgQCDan20uIhB7DG0G+EPHjwVfP51Yt8itvAHvEy6e65lUHYinjPZ\nGSlpqCsRPEVSG4BxVGrOskEhpGxsYDlLdzgCTFtglBTKiICDni1Z/IfBDhkGqS39\nSds7KhdfFOD671y2BXuVNfy7IdG1hbfxipl9fzBtuce0gbj3cpgwjNqa7wKBgQCD\nzPotYrgV3xYWbHuKUfoBhIhnQInTaV8fP+oHrIGkU9ewrXnWG7QCo/zKeFoyPQzw\nIqdmX+Zp2jCl1gVHlUT7p/WF60qD8KPz2GJ0Cs7D+JEBmYosGWzLeDfCtSdm6BG6\noHgHYP01qjOIbbrFxtZtS9XIyE1Rl6oj5e46LWuILwKBgGOLHZ6W5s9qUf44FWG3\nmSCQmhWWmKqWZRUQtX5aal8Bo4a9TCuR7n0iiFqcrcQ2SOxfDOkc+jYSiLy2/JVM\nsvCszrVM+Xh8mxjTEMfeTkINScWmFeziVs9DhUC79vki58Z14VJDkxb/M+ZhTfMb\n6gWoiY3yiHOQyUoVgfgKGcom\n-----END PRIVATE KEY-----\n",
+  "client_email": "flexicare-poc@appspot.gserviceaccount.com",
+  "client_id": "114674162116636645217",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/flexicare-poc%40appspot.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

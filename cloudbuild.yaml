@@ -4,14 +4,14 @@ steps:
     args:
       - 'build'
       - '-t'
-      - 'gcr.io/$PROJECT_ID/medflex-plus'
+      - 'gcr.io/$PROJECT_ID/a1-integ-be'
       - '.'
 
   # Step 2: Push the Docker image to Google Container Registry
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
-      - 'gcr.io/$PROJECT_ID/medflex-plus'
+      - 'gcr.io/$PROJECT_ID/a1-integ-be'
 
   # Step 2: Deploy to Google App Engine
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -20,4 +20,4 @@ steps:
       - 'app'
       - 'deploy'
       - 'app.yaml'
-      - '--image-url=gcr.io/$PROJECT_ID/medflex-plus:latest'
+      - '--image-url=gcr.io/$PROJECT_ID/a1-integ-be:latest'

@@ -16,13 +16,7 @@ RUN composer install \
     --prefer-dist \
     --no-scripts
 
-COPY . .
-
-RUN composer dump-autoload --optimize --no-scripts
-
-RUN php artisan package:discover --ansi
-
-RUN chmod -R 775 storage bootstrap/cache
+RUN chown -R www-data: /app
 
 ENV PORT=8080
 

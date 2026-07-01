@@ -1,4 +1,4 @@
-FROM php:8.3-cli
+FROM php:8.3-fpm-alpine
 
 RUN apt-get update && apt-get install -y \
     build-essential \
@@ -15,8 +15,17 @@ RUN apt-get update && apt-get install -y \
     default-mysql-server \
     default-mysql-client \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) gd zip pdo pdo_mysql pdo_pgsql \
+    && docker-php-ext-install -j$(nproc) gd zip pdo pdo_mysql \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+RUN docker-php-ext-install \
+  pdo \
+  pdo_pgsql \
+  mbstring \
+  zip \
+  exif \
+  pcntl \
+  gd
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 

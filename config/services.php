@@ -41,11 +41,10 @@ return [
         'tenant_id' => env('AZURE_TENANT_ID'),
         'secret_value' => env('AZURE_SECRET_VALUE'),
     ],
-    'gcp' => [
-        'project_id' => env('GOOGLE_CLOUD_PROJECT_ID'),
-        'cloud_tasks_queue' => env('GOOGLE_CLOUD_TASKS_QUEUE'),
-        'tasks_endpoint' => env('GOOGLE_CLOUD_TASKS_ENDPOINT'),
-        'cloud_tasks_sa' => env('GOOGLE_CLOUD_CT_SA')
+    'shopify' => [
+        'store_name' => env('SHOPIFY_STORE_NAME'),
+        'url' => env('SHOPIFY_URL'),
+        'access_token' => env('SHOPIFY_ACCESS_TOKEN')
     ]
 
 ];

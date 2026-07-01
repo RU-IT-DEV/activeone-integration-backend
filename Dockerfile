@@ -16,13 +16,16 @@ ENV PORT 9000
 RUN mkdir -p /app
 COPY . /app
 
-RUN sh -c "wget http://getcomposer.org/composer.phar && chmod a+x composer.phar && mv composer.phar /usr/local/bin/composer"
-RUN cd /app && \
-    /usr/local/bin/composer install --ignore-platform-reqs 
-RUN chown -R www-data: /app
+RUN curl -sS https://getcomposer.org/installer | php \
+    -- --install-dir=/usr/local/bin --filename=composer
+
+WORKDIR /app
+
+RUN composer install --no-dev --prefer-dist --no-scripts --no-interaction
+
+RUN chown -R www-data: .
 # CMD bash -c "chmod -R 777 /var/www && php artisan migrate --seed && php artisan storage:link"
 # CMD sh /app/docker/startup.sh
 
-WORKDIR /app
 EXPOSE 8000
 CMD [ "php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]

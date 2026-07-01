@@ -14,8 +14,13 @@ COPY composer.json composer.lock ./
 RUN composer install \
     --no-dev \
     --prefer-dist \
-    --optimize-autoloader \
-    --no-interaction
+    --no-scripts
+
+COPY . .
+
+RUN composer dump-autoload --optimize
+
+RUN php artisan package:discover --ansi
 
 RUN chmod -R 775 storage bootstrap/cache
 

@@ -18,7 +18,7 @@ RUN composer install \
 
 COPY . .
 
-RUN composer dump-autoload --optimize
+RUN composer dump-autoload --optimize --no-scripts
 
 RUN php artisan package:discover --ansi
 

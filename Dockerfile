@@ -4,6 +4,17 @@ RUN set -ex \
   && apk --no-cache add \
     postgresql-dev
 
+RUN apk add --no-cache \
+    postgresql-dev \
+    freetype-dev \
+    libjpeg-turbo-dev \
+    libpng-dev \
+ && docker-php-ext-configure gd --with-freetype --with-jpeg \
+ && docker-php-ext-install \
+        gd \
+        pdo \
+        pdo_pgsql
+
 RUN docker-php-ext-install pdo pdo_pgsql
 
 RUN apk add --no-cache nginx wget

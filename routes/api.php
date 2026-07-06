@@ -1,6 +1,8 @@
 <?php
 
 
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\UsersController;
 use Illuminate\Support\Facades\Route;
 
  
@@ -17,6 +19,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::group(['namespace' => 'Api', 'middleware' => ['cors']], function () {
     // ... other routes ...
+    Route::post('register', [AuthController::class, 'register']);
     Route::delete('/clear-cache', function () {
         // Your logic to clear the cache goes here
         // Example:
@@ -24,5 +27,4 @@ Route::group(['namespace' => 'Api', 'middleware' => ['cors']], function () {
         return response()->json(['message' => 'Cache cleared successfully']);
     })->middleware('purge.auth');
 });
-
 

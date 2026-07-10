@@ -18,14 +18,12 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Ricky Galang 2',
                 'email' => 'ricky.psgtso@reliancehealth.com.ph',
-                'password' => Hash::make('HAVrV9tTlMdHazsuEQXtBE8WOuac68SIOBdH6WU4'),
-                'role_id' => 1,
+                'password' => Hash::make('HAVrV9tTlMdHazsuEQXtBE8WOuac68SIOBdH6WU4')
             ],
             [
                 'name' => 'Ian Mendoza',
                 'email' => 'ian.mendoza@reliancehealth.com.ph',
-                'password' => Hash::make('HAVrV9tTlMdHazsuEQXtBE8WOuac68SIOBdH6WU4'),
-                'role_id' => 1,
+                'password' => Hash::make('HAVrV9tTlMdHazsuEQXtBE8WOuac68SIOBdH6WU4')
             ]
         ]);
     }

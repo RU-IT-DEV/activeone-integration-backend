@@ -1,0 +1,132 @@
+<?php
+
+namespace App\Helper;
+
+use App\Models\ShopifyIntegrationAuth;
+use Illuminate\Support\Facades\Crypt;
+use App\Services\CustomCrypt;
+use Illuminate\Support\Facades\Http;
+
+class IntellicareHelper
+{
+    protected $access_key;
+    protected $custom_crypt;
+
+    public function __construct()
+    {
+        $this->custom_crypt = new CustomCrypt();
+        $botika_auth = ShopifyIntegrationAuth::where('shop_client_id', 'Intellicare:Botika API')->first();
+        if (empty($botika_auth)) {
+            $this->authenticate();
+        } else if ($botika_auth->expires_at < now()) {
+            $botika_auth->delete();
+            $this->authenticate();
+        } else {
+            $this->access_key = $botika_auth->access_token;
+        }
+    }
+
+    private function authenticate()
+    {
+        $data = json_encode([
+            'Username' => config('services.intellicare.username'),
+            'Password' => config('services.intellicare.password')
+        ]);
+
+        $encrypted_request = $this->custom_crypt->encrypt($data);
+        
+        $request = [
+            'Value' => $encrypted_request
+        ];
+
+        try {
+            $client = Http::post(config('services.intellicare.url') . '/auth', $request);
+
+            if ($client->failed()) {
+                $response = $client->json();
+    
+                $resp_status = $this->custom_crypt->decrypt($response['status']);
+                throw new \Exception($resp_status['message']);
+            } else {
+                $response = $this->clientResponse($client->json());
+        
+                if ($response['status']['success'] === FALSE) {
+                    throw new \Exception($response['status']['message']);
+                }
+
+                logger()->info("Botika Access Token Created Successfully.", $response['data']);
+                $this->access_key = $response['data']['access_token'];
+                ShopifyIntegrationAuth::updateOrCreate([
+                    'access_token' => $this->access_key,
+                    'expires_at' => now()->addSeconds(intval($response['data']['expires_in']))
+                ], [
+                    'shop_client_id' => 'Intellicare:Botika API'
+                ]);
+
+                return $this;
+            }
+        } catch (\Exception $e) {
+            // Handle authentication error
+            \Log::error('Intellicare authentication failed: ' . $e->getMessage());
+            throw new \Exception('Intellicare authentication failed: ' . $e->getMessage());
+            
+        }
+    }
+
+    /**
+     * Summary of clientResponse
+     * @param mixed $response
+     * @throws \Exception
+     * @return array{data: mixed, status: mixed}
+     */
+    private function clientResponse ($response)
+    {
+        $str_resp_status = $this->custom_crypt->decrypt($response['status']);
+        $arr_resp_status = json_decode($str_resp_status, true);
+
+        if (isset($arr_resp_status['success'])) {
+            if ($arr_resp_status['success'] === FALSE) {
+                throw new \Exception($arr_resp_status['message']);
+            }
+        } else if (isset($arr_resp_status['Success'])) {
+            if ($arr_resp_status['Success'] === FALSE) {
+                throw new \Exception($arr_resp_status['Message']);
+            }
+        }
+
+        $str_resp_data = $this->custom_crypt->decrypt($response['data']);
+        $arr_resp_data = json_decode($str_resp_data, true);
+
+        return [
+            'status' => $arr_resp_status,
+            'data' => $arr_resp_data
+        ];
+    }
+
+    public function validateMember($data)
+    {
+        $request = [
+            'Value' => $this->custom_crypt->encrypt(json_encode($data))
+        ];
+
+        try {
+            $client = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $this->access_key
+            ])->post(config('services.intellicare.url') . '/memb/validate-member', $request);
+            $response = $this->clientResponse($client->json());
+
+            if ($client->failed()) {
+                $resp_status = $response['status'];
+                throw new \Exception($resp_status['message']);
+            } else {
+                logger()->info("Validated member: ", $response['data']);
+                
+                return $response['data'];
+            }
+            
+        } catch (\Exception $e) {
+            \Log::error('Intellicare member validation failed: ' . $e->getMessage());
+            throw new \Exception('Intellicare member validation failed: ' . $e->getMessage(), 1);
+        }
+    }
+}

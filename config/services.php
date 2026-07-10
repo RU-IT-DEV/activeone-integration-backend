@@ -43,8 +43,17 @@ return [
     ],
     'shopify' => [
         'store_name' => env('SHOPIFY_STORE_NAME'),
+        'client_id' => env('SHOPIFY_APP_ID'),
         'url' => env('SHOPIFY_URL'),
         'access_token' => env('SHOPIFY_ACCESS_TOKEN')
+    ],
+    'intellicare' => [
+        'url' => env('INTELLICARE_API_URL'),
+        'username' => env('INTELLICARE_API_USERNAME'),
+        'password' => env('INTELLICARE_API_PASSWORD'),
+        'aes_key' => env('INTELLICARE_AES_KEY')
     ]
 
 ];
+
+// <a href="https://a1-integ-fe-385139891106.asia-southeast1.run.app/checkout?cartId={{ cart.token }}">Check Out</a>

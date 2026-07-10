@@ -13,9 +13,9 @@ RUN apk add --no-cache \
  && docker-php-ext-install \
         gd \
         pdo \
-        pdo_pgsql
+        pdo_mysql
 
-RUN docker-php-ext-install pdo pdo_pgsql
+RUN docker-php-ext-install pdo pdo_mysql
 
 RUN apk add --no-cache nginx wget
 

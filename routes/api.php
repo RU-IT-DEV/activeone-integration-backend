@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::group(['namespace' => 'Api', 'middleware' => ['cors']], function () {
     // ... other routes ...
+    Route::post('verify', [AuthController::class, 'verify']);
     Route::post('register', [AuthController::class, 'register']);
     // Route::post('cart-session', []);
     Route::delete('/clear-cache', function () {

@@ -9,7 +9,8 @@ class ShopifyHelper
 {
     private $x_access_token;
 
-    private $customer_input_constructed;
+    private $customer_input_constructed, $customerAddress_input_constructed;
+    private $shopifyCustomer;
 
 
     public function __construct()
@@ -86,6 +87,14 @@ class ShopifyHelper
             ]
         ];
 
+        $this->customerAddress_input_constructed = [
+            'countryCode' => $data['address']['country'],
+            'provinceCode' => $data['address']['province'],
+            'city' => $data['address']['city'],
+            'address2' => $data['address']['address2'],
+            'address1' => $data['address']['address1'],
+        ];
+
         return $this;
     }
 
@@ -107,20 +116,54 @@ class ShopifyHelper
             throw new \Exception("Error in creating Shopify customer.", 1);
         } else {
             $response = $client->json();
+            logger()->info("Shopify User is created: ", $response);
+
             if (array_key_exists('errors', $response)) {
                 throw new \Exception("Error in creating Shopify customer.", 1);
             } else {
-                if (isset($response['data']['customerCreate']['userErrors'])) {
-                    $errs = $response['data']['customerCreate']['userErrors'];
-
-                    $messages = collect($errs)
-                        ->pluck('message')
-                        ->implode(', ');
-                    throw new \Exception($messages, 1);
+                $response_customerCreate = $response['data']['customerCreate'];
+                if (isset($response_customerCreate['userErrors'])) {
+                    if (count($response_customerCreate['userErrors']) > 0) {
+                        $errs = $response_customerCreate['userErrors'];
+    
+                        $messages = collect($errs)
+                            ->pluck('message')
+                            ->implode(', ');
+                        throw new \Exception($messages, 400);
+                    } else {
+                        $this->shopifyCustomer = $response_customerCreate['customer'];
+                    }
                 }
             }
+        }
 
-            return $response;
+        return $this;
+    }
+
+    public function createUserAddress()
+    {
+        $apiUrl = config('services.shopify.url');
+        $query = 'mutation customerAddressCreate ($address: MailingAddressInput!, $customerId: ID!, $setAsDefault: Boolean) { customerAddressCreate(address: $address, customerId: $customerId, setAsDefault: $setAsDefault) { address { countryCode provinceCode city address2 address1 } userErrors { field message } } }';
+
+        $client = Http::withHeaders([
+            'X-Shopify-Access-Token' => $this->x_access_token
+        ])->post("$apiUrl/api/2026-07/graphql.json", [
+            'query' => $query,
+            'variables' => [
+                'input' => [
+                    'address' => $this->customerAddress_input_constructed,
+                    'customerId' => $this->shopifyCustomer['id'],
+                    'setAsDefault' => true
+                ],
+            ]
+        ]);
+
+        if ($client->failed()) {
+            throw new \Exception("Error in creating Shopify customer address.", 1);
+        } else {
+            $response = $client->json();
+            logger()->info("An address has been created.", $response);
+            return $this;
         }
     }
 }

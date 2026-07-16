@@ -126,7 +126,7 @@ class IntellicareHelper
             
         } catch (\Exception $e) {
             \Log::error('Intellicare member validation failed: ' . $e->getMessage());
-            throw new \Exception('Intellicare member validation failed: ' . $e->getMessage(), 1);
+            throw new \Exception('Intellicare member validation failed: ' . $e->getMessage(), 400);
         }
     }
 }

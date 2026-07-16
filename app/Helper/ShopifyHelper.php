@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Http;
 
 class ShopifyHelper
 {
-    private $x_access_token;
+    private $x_access_token, $apiUrl;
 
     private $customer_input_constructed, $customerAddress_input_constructed;
     private $shopifyCustomer;
@@ -15,6 +15,7 @@ class ShopifyHelper
 
     public function __construct()
     {
+        $this->apiUrl = config('services.shopify.url');
         $shopify = ShopifyIntegrationAuth::where('shop_client_id', config('services.shopify.client_id'))->first();
 
         if (!$shopify) {
@@ -100,7 +101,7 @@ class ShopifyHelper
 
     public function createUser()
     {
-        $apiUrl = config('services.shopify.url');
+        $apiUrl = $this->apiUrl;
         $query = 'mutation customerCreate($input: CustomerInput!) { customerCreate(input: $input) { userErrors { field message } customer { id email taxExempt firstName lastName metafields(first: 5) { edges { node { namespace key  value } } } } } }';
 
         $client = Http::withHeaders([
@@ -142,7 +143,7 @@ class ShopifyHelper
 
     public function createUserAddress()
     {
-        $apiUrl = config('services.shopify.url');
+        $apiUrl = $this->apiUrl;
         $query = 'mutation customerAddressCreate ($address: MailingAddressInput!, $customerId: ID!, $setAsDefault: Boolean) { customerAddressCreate(address: $address, customerId: $customerId, setAsDefault: $setAsDefault) { address { countryCode provinceCode city address2 address1 } userErrors { field message } } }';
 
         $client = Http::withHeaders([
@@ -150,11 +151,9 @@ class ShopifyHelper
         ])->post("$apiUrl/api/2026-07/graphql.json", [
             'query' => $query,
             'variables' => [
-                'input' => [
-                    'address' => $this->customerAddress_input_constructed,
-                    'customerId' => $this->shopifyCustomer['id'],
-                    'setAsDefault' => true
-                ],
+                'address' => $this->customerAddress_input_constructed,
+                'customerId' => $this->shopifyCustomer['id'],
+                'setAsDefault' => true
             ]
         ]);
 
@@ -163,7 +162,37 @@ class ShopifyHelper
         } else {
             $response = $client->json();
             logger()->info("An address has been created.", $response);
-            return $this;
+            if (array_key_exists("errors", $response)) {
+                $this->customerDelete();
+                throw new \Exception("Error creating customer address.", 422);
+            } else {
+                $this->shopifyCustomer['address'] = $response['data']['customerAddressCreate'];
+            }
         }
+        
+        return $this;
+    }
+
+    private function customerDelete()
+    {
+        $apiUrl = $this->apiUrl;
+        $query = 'mutation customerDelete($id: ID!) { customerDelete(input: {id: $id}) { shop { id } userErrors { field message } deletedCustomerId } }';
+
+        $client = Http::withHeaders([
+            'X-Shopify-Access-Token' => $this->x_access_token
+        ])->post("$apiUrl/api/2026-07/graphql.json", [
+            'query' => $query,
+            'variables' => [
+                'id' => $this->shopifyCustomer['id'],
+            ]
+        ]);
+
+        if ($client->failed()) {
+            throw new \Exception("Error in creating customer address.", 1);
+        } else {
+            throw new \Exception("An error occured while creating customer. Please try again later.", 420);
+        }
+
+        return $this;
     }
 }

@@ -94,8 +94,17 @@ class IntellicareHelper
             }
         }
 
-        $str_resp_data = $this->custom_crypt->decrypt($response['data']);
-        $arr_resp_data = json_decode($str_resp_data, true);
+        $str_resp_data = "";
+        $arr_resp_data = [];
+        if (is_array($response['data'])) {
+            foreach ($response['data'] as $key => $response_data) {
+                $str_resp_data = $this->custom_crypt->decrypt($response_data);
+                $arr_resp_data[] = json_decode($str_resp_data, true);
+            }
+        } else {
+            $str_resp_data = $this->custom_crypt->decrypt($response['data']);
+            $arr_resp_data = json_decode($str_resp_data, true);
+        }
 
         return [
             'status' => $arr_resp_status,
@@ -124,6 +133,31 @@ class IntellicareHelper
                 return $response['data'];
             }
             
+        } catch (\Exception $e) {
+            \Log::error('Intellicare member validation failed: ' . $e->getMessage());
+            throw new \Exception('Intellicare member validation failed: ' . $e->getMessage(), 400);
+        }
+    }
+
+    public function getDoctors($reqData)
+    {
+        try {
+            $client = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $this->access_key
+            ])->get(config('services.intellicare.url') . '/doctor/doctors', [
+                ...$reqData,
+                'page' => 1,
+                'size' => 25
+            ]);
+
+            $response = $this->clientResponse($client->json());
+            if ($client->failed()) {
+                throw new \Exception("Error Processing Request", 1);
+            } else {
+                logger()->info("Validated member: ", $response['data']);
+                
+                return $response['data'];
+            }
         } catch (\Exception $e) {
             \Log::error('Intellicare member validation failed: ' . $e->getMessage());
             throw new \Exception('Intellicare member validation failed: ' . $e->getMessage(), 400);

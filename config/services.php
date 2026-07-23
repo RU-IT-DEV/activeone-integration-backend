@@ -45,7 +45,8 @@ return [
         'store_name' => env('SHOPIFY_STORE_NAME'),
         'client_id' => env('SHOPIFY_APP_ID'),
         'url' => env('SHOPIFY_URL'),
-        'access_token' => env('SHOPIFY_ACCESS_TOKEN')
+        'access_token' => env('SHOPIFY_ACCESS_TOKEN'),
+        'storefront_access_token' => env('SHOPIFY_STOREFRONT_ACCESS_TOKEN')
     ],
     'intellicare' => [
         'url' => env('INTELLICARE_API_URL'),

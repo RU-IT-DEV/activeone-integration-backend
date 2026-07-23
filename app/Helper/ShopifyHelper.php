@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Http;
 
 class ShopifyHelper
 {
-    private $x_access_token, $apiUrl;
+    private $x_access_token, $x_storefront_response, $apiUrl;
 
     private $customer_input_constructed, $customerAddress_input_constructed;
     private $shopifyCustomer;
@@ -36,7 +36,7 @@ class ShopifyHelper
             'client_secret' => config('services.shopify.access_token')
         ];
 
-        $client = Http::asForm()->post(config('services.shopify.url') . '/oauth/access_token', $data);
+        $client = Http::asForm()->post(config('services.shopify.url') . '/admin/oauth/access_token', $data);
 
         if ($client->failed()) {
             logger()->error("Shopify Access Token Error.");
@@ -106,7 +106,7 @@ class ShopifyHelper
 
         $client = Http::withHeaders([
             'X-Shopify-Access-Token' => $this->x_access_token
-        ])->post("$apiUrl/api/2026-07/graphql.json", [
+        ])->post("$apiUrl/admin/api/2026-07/graphql.json", [
             'query' => $query,
             'variables' => [
                 'input' => $this->customer_input_constructed
@@ -148,7 +148,7 @@ class ShopifyHelper
 
         $client = Http::withHeaders([
             'X-Shopify-Access-Token' => $this->x_access_token
-        ])->post("$apiUrl/api/2026-07/graphql.json", [
+        ])->post("$apiUrl/admin/api/2026-07/graphql.json", [
             'query' => $query,
             'variables' => [
                 'address' => $this->customerAddress_input_constructed,
@@ -180,7 +180,7 @@ class ShopifyHelper
 
         $client = Http::withHeaders([
             'X-Shopify-Access-Token' => $this->x_access_token
-        ])->post("$apiUrl/api/2026-07/graphql.json", [
+        ])->post("$apiUrl/admin/api/2026-07/graphql.json", [
             'query' => $query,
             'variables' => [
                 'id' => $this->shopifyCustomer['id'],
@@ -194,5 +194,124 @@ class ShopifyHelper
         }
 
         return $this;
+    }
+
+    public function getCart($cartToken)
+    {
+        $apiUrl = $this->apiUrl;
+        $cartId = "gid://shopify/Cart/{$cartToken}";
+        $query = 'query GetCart($cartId: ID!) {
+  cart(id: $cartId) {
+    id
+    createdAt
+    updatedAt
+    checkoutUrl
+    
+    # 👤 CUSTOMER & BUYER INFORMATION
+    buyerIdentity {
+      email
+      phone
+      customer {
+        id
+        firstName
+        lastName
+        email
+        phone
+        # Fetches customer-specific metafield parameters
+        # Replace namespace and key with your exact setup values
+        metafields(identifiers: [
+          { namespace: "custom", key: "account_number" },
+          { namespace: "custom", key: "coverage_end" },
+          { namespace: "custom", key: "status" },
+        ]) {
+          id
+          namespace
+          key
+          value
+          type
+        }
+      }
+    }
+
+    # 🛒 CART LINE ITEMS INFORMATION
+    lines(first: 50) {
+      edges {
+        node {
+          id
+          quantity
+          cost {
+            totalAmount {
+              amount
+              currencyCode
+            }
+          }
+          merchandise {
+            ... on ProductVariant {
+              id
+              title
+              sku
+              price {
+                amount
+                currencyCode
+              }
+              image {
+                url
+                altText
+              }
+              product {
+                id
+                title
+                handle
+              }
+              selectedOptions {
+                name
+                value
+              }
+            }
+          }
+        }
+      }
+    }
+
+    # 💰 PRICING SUMMARY 
+    cost {
+      subtotalAmount {
+        amount
+        currencyCode
+      }
+      checkoutChargeAmount {
+        amount
+        currencyCode
+      }
+    }
+  }
+}
+';
+
+        $accessToken = config('services.shopify.storefront_access_token');
+        $client = Http::withHeaders([
+            'Content-Type' => "application/json",
+            'X-Shopify-Storefront-Access-Token' => $accessToken
+        ])->post("$apiUrl/api/2026-07/graphql.json", [
+            'query' => $query,
+            'variables' => [
+                'cartId' => $cartId
+            ]
+        ]);
+
+        if ($client->failed()) {
+            $response = $client->json();
+            $err_message = array_key_exists("errors", $response) ? $response['errors']:"";
+            logger()->info($err_message);
+            throw new \Exception($err_message, 422);
+        } else {
+            $response = $client->json();
+            if (array_key_exists("errors", $response)) {
+                $err_message = $response['errors'][0]['message'];
+                throw new \Exception($err_message, 422);
+            } else {
+                return $response;
+            }
+        }
     }
 }

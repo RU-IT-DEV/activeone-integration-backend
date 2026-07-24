@@ -22,14 +22,14 @@ env_variables:
   APP_STORAGE: /tmp
   VIEW_COMPILED_PATH: /tmp
   DB_CONNECTION: mysql
-  DB_HOST: 10.52.97.29
+  DB_HOST: 10.52.97.200
   DB_PORT: 3306
-  DB_DATABASE: flexben-plus-qa
-  DB_USERNAME: ruitdev
-  DB_PASSWORD: password10
-  APP_NAME: "UFlex Support"
-  APP_FE_URL: https://flexben.web.app/
-  APP_API_URL: https://flexicare-poc.as.r.appspot.com/api/
+  DB_DATABASE: pbm_integration
+  DB_USERNAME: a1-integration
+  DB_PASSWORD: vi[nSH*f6Y_vZ#X,
+  APP_NAME: "ActiveOne Shopee"
+  APP_FE_URL: https://a1-integ-fe-385139891106.asia-southeast1.run.app
+  APP_API_URL: https://a1-integ-be-385139891106.asia-southeast1.run.app/api/
   APP_ENV: staging
   APP_DEBUG: false
   LOG_CHANNEL: daily
@@ -42,11 +42,11 @@ env_variables:
   MAIL_MAILER: smtp
   MAIL_HOST: smtp.office365.com
   MAIL_PORT: 587
-  MAIL_USERNAME: noreply@flexicare.com.ph
+  MAIL_USERNAME: 
   MAIL_PASSWORD: "msttjfjpnfnpblql"
   MAIL_ENCRYPTION: tls
-  MAIL_FROM_ADDRESS: noreply@flexicare.com.ph
-  MAIL_FROM_NAME: "FLEXICARE Support"
+  MAIL_FROM_ADDRESS: 
+  MAIL_FROM_NAME: "NoReply"
   PUSHER_APP_ID:
   PUSHER_APP_KEY:
   PUSHER_APP_SECRET:
@@ -55,23 +55,6 @@ env_variables:
   APP_PACKAGES_CACHE: /tmp/packages.php
   APP_CONFIG_CACHE: /tmp/config.php
   APP_ROUTES_CACHE: /tmp/routes.php
-  GOOGLE_CLOUD_PROJECT_ID: flexicare-poc
-  GOOGLE_CLOUD_STORAGE_KEY_FILE_PATH: /qa-gcs-key.json
-  GOOGLE_CLOUD_STORAGE_BUCKET: medflex-plus
-  GOOGLE_CLOUD_STORAGE_PATH_PREFIX:
-  GOOGLE_CLOUD_STORAGE_API_URI: 
-  GOOGLE_CLOUD_TASKS_ENDPOINT: https://flexicare-poc.as.r.appspot.com/api/tasks/process-queue-job
-  GOOGLE_CLOUD_TASKS_QUEUE: flexben-queue
-  AZURE_CLOUD_URL: https://login.microsoftonline.com/
-  AZURE_CLIENT_ID: 6a292a54-5e1f-4601-a4e3-5a2650ec5918
-  AZURE_TENANT_ID: f6c83453-edb8-44b7-8639-6d090e011a63
-  AZURE_SECRET_VALUE: R898Q~sz7CvaBFf42woa.-qtJlw2O1uoe7fH3aw8
-
-  PURGE_API_TOKEN: 183902dkdk11-229999dken-3839ddkklll-aasd12lld
-
-
-
-
-
-
-
+  SHOPIFY_STORE_NAME: activeone-intellicare-sandbox
+  SHOPIFY_URL: https://activeone-intellicare-sandbox.myshopify.com
+  INTELLICARE_API_URL: "https://azure.intellicare.ph/uat/webservice/pharmacy-integration/api"

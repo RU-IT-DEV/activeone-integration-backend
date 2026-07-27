@@ -49,6 +49,43 @@ Route::get('/debug-db', function () {
         'database' => config('database.connections.mysql.database'),
     ];
 });
+
+Route::get('/pdo-test', function () {
+
+    try {
+        $pdo = new PDO(
+            sprintf(
+                'mysql:host=%s;port=%s;dbname=%s',
+                env('DB_HOST'),
+                env('DB_PORT'),
+                env('DB_DATABASE')
+            ),
+            env('DB_USERNAME'),
+            env('DB_PASSWORD'),
+            [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            ]
+        );
+
+        return [
+            'success' => true,
+            'server' => $pdo->query('SELECT VERSION()')->fetchColumn(),
+        ];
+
+    } catch (Throwable $e) {
+        return [
+            'success' => false,
+            'message' => $e->getMessage(),
+            'code' => $e->getCode(),
+        ];
+    }
+});
+Route::get('/pdo-info', function () {
+    return [
+        'client_version' => PDO::getAvailableDrivers(),
+        'mysql_client' => PDO::ATTR_CLIENT_VERSION,
+    ];
+});
 Route::get('/run-member_claims-factory/{userId}/{planLinkId}/{count}', function ($userId, $planLinkId, $count) {
     abort_unless(app()->environment('local'), 403);
 

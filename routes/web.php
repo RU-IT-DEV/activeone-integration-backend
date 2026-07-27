@@ -39,6 +39,16 @@ Route::get('/run-schedule', function () {
     Artisan::call('schedule:run');
     return response()->json(['message' => 'Scheduler executed'], 200);
 });
+Route::get('/debug-db', function () {
+    return [
+        'env_password' => env('DB_PASSWORD') === null ? 'NULL' : 'SET',
+        'config_password' => config('database.connections.mysql.password') === null ? 'NULL' : 'SET',
+        'password_length' => strlen(config('database.connections.mysql.password') ?? ''),
+        'host' => config('database.connections.mysql.host'),
+        'user' => config('database.connections.mysql.username'),
+        'database' => config('database.connections.mysql.database'),
+    ];
+});
 Route::get('/run-member_claims-factory/{userId}/{planLinkId}/{count}', function ($userId, $planLinkId, $count) {
     abort_unless(app()->environment('local'), 403);
 

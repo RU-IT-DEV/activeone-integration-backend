@@ -22,17 +22,17 @@ env_variables:
   APP_STORAGE: /tmp
   VIEW_COMPILED_PATH: /tmp
   DB_CONNECTION: mysql
-  DB_HOST: 10.52.97.29
+  DB_HOST: 10.52.97.200
   DB_PORT: 3306
-  DB_DATABASE: flexben-plus-qa
-  DB_USERNAME: ruitdev
-  DB_PASSWORD: password10
+  DB_DATABASE: pbm_integration
+  DB_USERNAME: a1-integration
+  DB_PASSWORD: vi[nSH*f6Y_vZ#X,
   APP_NAME: "UFlex Support"
   APP_FE_URL: https://flexben.web.app/
   APP_API_URL: https://flexicare-poc.as.r.appspot.com/api/
   APP_ENV: staging
   APP_DEBUG: false
-  LOG_CHANNEL: daily
+  LOG_CHANNEL: stderr
   LOG_PATH: /tmp/laravel.log
   CACHE_DRIVER: file
   CACHE_PATH: /tmp/laravel-cache

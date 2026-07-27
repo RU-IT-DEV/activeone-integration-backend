@@ -143,12 +143,11 @@ class IntellicareHelper
     {
         try {
             $client = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->access_key
-            ])->get(config('services.intellicare.url') . '/doctor/doctors', [
-                ...$reqData,
+                'Authorization' => 'Bearer ' . $this->access_key,
                 'page' => 1,
-                'size' => 25
-            ]);
+                'size' => 1,
+                'prccode' => $reqData['prccode']
+            ])->get(config('services.intellicare.url') . '/doctor/doctors');
 
             $response = $this->clientResponse($client->json());
             if ($client->failed()) {

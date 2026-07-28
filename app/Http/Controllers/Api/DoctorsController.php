@@ -18,7 +18,7 @@ class DoctorsController extends BaseController
 
             return $this->sendResponse($data, "Success.");
         } catch (\Exception $e) {
-            return $this->sendError("Something went wrong.", $e->getMessage());
+            return $this->sendError($e->getMessage(), []);
         }
     }
 }

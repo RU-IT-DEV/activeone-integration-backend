@@ -158,8 +158,8 @@ class IntellicareHelper
                 return $response['data'];
             }
         } catch (\Exception $e) {
-            \Log::error('Intellicare member validation failed: ' . $e->getMessage());
-            throw new \Exception('Intellicare member validation failed: ' . $e->getMessage(), 400);
+            \Log::error('Intellicare search doctor PRC failed: ' . $e->getMessage());
+            throw new \Exception('Intellicare search doctor PRC failed: ' . $e->getMessage(), 400);
         }
     }
 }

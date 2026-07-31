@@ -49,6 +49,8 @@ class AuthController extends BaseController
             'address.city' => 'required|string',
             'address.address2' => 'nullable|string',
             'address.address1' => 'required|string',
+            'termsOfService' => 'required|accepted',
+            'privacyPolicy' => 'required|accepted',
         ], [
             'address.address1.required' => "Address line 1 is required.",
             'address.city.required' => "City is required.",

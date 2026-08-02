@@ -3,7 +3,9 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CartController;
+use App\Http\Controllers\Api\CartItemController;
 use App\Http\Controllers\Api\DoctorsController;
+use App\Http\Controllers\Api\OrdersController;
 use App\Http\Controllers\Api\UsersController;
 use Illuminate\Support\Facades\Route;
 
@@ -26,6 +28,8 @@ Route::group(['namespace' => 'Api', 'middleware' => ['cors']], function () {
 
     Route::get('cart', [CartController::class, 'show']);
     Route::get('doctors', [DoctorsController::class, 'index']);
+    
+    Route::post('order', [OrdersController::class, 'store']);
     
     // Route::post('cart-session', []);
     Route::delete('/clear-cache', function () {

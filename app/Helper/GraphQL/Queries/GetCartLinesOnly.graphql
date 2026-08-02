@@ -1,0 +1,14 @@
+query GetCart($cartId: ID!) {
+  cart(id: $cartId) {
+    id
+
+    # 🛒 CART LINE ITEMS INFORMATION
+    lines(first: 50) {
+      edges {
+        node {
+          id
+        }
+      }
+    }
+  }
+}

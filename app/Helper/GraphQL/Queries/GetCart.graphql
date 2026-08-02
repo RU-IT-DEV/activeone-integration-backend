@@ -1,0 +1,98 @@
+query GetCart($cartId: ID!) {
+  cart(id: $cartId) {
+    id
+    createdAt
+    updatedAt
+    checkoutUrl
+    
+    # 👤 CUSTOMER & BUYER INFORMATION
+    buyerIdentity {
+      email
+      phone
+      customer {
+        id
+        firstName
+        lastName
+        email
+        phone
+        # Fetches customer-specific metafield parameters
+        # Replace namespace and key with your exact setup values
+        metafields(identifiers: [
+          { namespace: "custom", key: "account_number" },
+          { namespace: "custom", key: "coverage_end" },
+          { namespace: "custom", key: "contract" },
+          { namespace: "custom", key: "status" },
+          { namespace: "custom", key: "birth_date" },
+        ]) {
+          id
+          namespace
+          key
+          value
+          type
+        }
+      }
+    }
+
+    # 🛒 CART LINE ITEMS INFORMATION
+    lines(first: 50) {
+      edges {
+        node {
+          id
+          quantity
+          cost {
+            totalAmount {
+              amount
+              currencyCode
+            }
+          }
+          merchandise {
+            ... on ProductVariant {
+              id
+              title
+              sku
+              taxable
+              price {
+                amount
+                currencyCode
+              }
+              image {
+                url
+                altText
+              }
+              product {
+                id
+                title
+                handle
+                category { name }
+                metafields(identifiers: [
+                  { namespace: "custom", key: "medicine_type" }
+                ]) {
+                  namespace
+                  key
+                  value
+                  type
+                }
+              }
+              selectedOptions {
+                name
+                value
+              }
+            }
+          }
+        }
+      }
+    }
+
+    # 💰 PRICING SUMMARY 
+    cost {
+      subtotalAmount {
+        amount
+        currencyCode
+      }
+      checkoutChargeAmount {
+        amount
+        currencyCode
+      }
+    }
+  }
+}

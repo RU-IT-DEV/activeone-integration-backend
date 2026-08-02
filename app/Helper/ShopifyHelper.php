@@ -2,12 +2,13 @@
 
 namespace App\Helper;
 
+use App\Models\Order;
 use App\Models\ShopifyIntegrationAuth;
 use Illuminate\Support\Facades\Http;
 
 class ShopifyHelper
 {
-    private $x_access_token, $x_storefront_response, $apiUrl;
+    public $x_access_token, $x_storefront_response, $apiUrl;
 
     private $customer_input_constructed, $customerAddress_input_constructed;
     private $shopifyCustomer;
@@ -63,6 +64,12 @@ class ShopifyHelper
             'metafields' => [
                 [
                     'namespace' => 'custom',
+                    'key' => 'birth_date',
+                    'value' => $data['birth_date'],
+                    'type' => 'date'
+                ],
+                [
+                    'namespace' => 'custom',
                     'key' => 'account_number',
                     'value' => $data['account_no'],
                     'type' => 'single_line_text_field'
@@ -83,6 +90,12 @@ class ShopifyHelper
                     'namespace' => 'custom',
                     'key' => 'coverage_end',
                     'value' => $data['end_date'],
+                    'type' => 'single_line_text_field'
+                ],
+                [
+                    'namespace' => 'custom',
+                    'key' => 'contract',
+                    'value' => $data['contract'],
                     'type' => 'single_line_text_field'
                 ]
             ]
@@ -200,93 +213,9 @@ class ShopifyHelper
     {
         $apiUrl = $this->apiUrl;
         $cartId = "gid://shopify/Cart/{$cartToken}";
-        $query = 'query GetCart($cartId: ID!) {
-  cart(id: $cartId) {
-    id
-    createdAt
-    updatedAt
-    checkoutUrl
-    
-    # 👤 CUSTOMER & BUYER INFORMATION
-    buyerIdentity {
-      email
-      phone
-      customer {
-        id
-        firstName
-        lastName
-        email
-        phone
-        # Fetches customer-specific metafield parameters
-        # Replace namespace and key with your exact setup values
-        metafields(identifiers: [
-          { namespace: "custom", key: "account_number" },
-          { namespace: "custom", key: "coverage_end" },
-          { namespace: "custom", key: "status" },
-        ]) {
-          id
-          namespace
-          key
-          value
-          type
-        }
-      }
-    }
-
-    # 🛒 CART LINE ITEMS INFORMATION
-    lines(first: 50) {
-      edges {
-        node {
-          id
-          quantity
-          cost {
-            totalAmount {
-              amount
-              currencyCode
-            }
-          }
-          merchandise {
-            ... on ProductVariant {
-              id
-              title
-              sku
-              price {
-                amount
-                currencyCode
-              }
-              image {
-                url
-                altText
-              }
-              product {
-                id
-                title
-                handle
-              }
-              selectedOptions {
-                name
-                value
-              }
-            }
-          }
-        }
-      }
-    }
-
-    # 💰 PRICING SUMMARY 
-    cost {
-      subtotalAmount {
-        amount
-        currencyCode
-      }
-      checkoutChargeAmount {
-        amount
-        currencyCode
-      }
-    }
-  }
-}
-';
+        $query = file_get_contents(
+            app_path("Helper/GraphQL/Queries/GetCart.graphql")
+        );
 
         $accessToken = config('services.shopify.storefront_access_token');
         $client = Http::withHeaders([
@@ -304,6 +233,129 @@ class ShopifyHelper
             $err_message = array_key_exists("errors", $response) ? $response['errors']:"";
             logger()->info($err_message);
             throw new \Exception($err_message, 422);
+        } else {
+            $response = $client->json();
+            if (array_key_exists("errors", $response)) {
+                $err_message = $response['errors'][0]['message'];
+                throw new \Exception($err_message, 422);
+            } else {
+                return $response;
+            }
+        }
+    }
+
+    public function getCartLinesOnly($cartId)
+    {
+        $apiUrl = $this->apiUrl;
+        $query = file_get_contents(
+            app_path("Helper/GraphQL/Queries/GetCartLinesOnly.graphql")
+        );
+
+        $accessToken = config('services.shopify.storefront_access_token');
+        $client = Http::withHeaders([
+            'Content-Type' => "application/json",
+            'X-Shopify-Storefront-Access-Token' => $accessToken
+        ])->post("$apiUrl/api/2026-07/graphql.json", [
+            'query' => $query,
+            'variables' => [
+                'cartId' => $cartId
+            ]
+        ]);
+
+        if ($client->failed()) {
+            $response = $client->json();
+            $err_message = array_key_exists("errors", $response) ? $response['errors']:"";
+            logger()->info($err_message);
+            throw new \Exception($err_message, 422);
+        } else {
+            $response = $client->json();
+            if (array_key_exists("errors", $response)) {
+                $err_message = $response['errors'][0]['message'];
+                throw new \Exception($err_message, 422);
+            } else {
+                return $response;
+            }
+        }
+    }
+
+    public function transformOrderData(Order $order): array
+    {
+        return [
+            'billingAddress' => $order->billingAddress->only([
+                'address1',
+                'address2',
+                'city',
+                'countryCode',
+                'provinceCode',
+                'zip',
+                'firstName',
+                'lastName',
+                'phone',
+            ]),
+
+            'shippingAddress' => $order->shippingAddress->only([
+                'address1',
+                'address2',
+                'city',
+                'countryCode',
+                'provinceCode',
+                'zip',
+                'firstName',
+                'lastName',
+                'phone',
+            ]),
+
+            'customer' => [
+                'toUpsert' => [
+                    'email' => $order->customer_email,
+                    'id' => $order->customer_id
+                ]
+            ],
+            'financialStatus' => $order->financialStatus,
+
+            'lineItems' => $order->lineItems->map(function ($item) {
+                return [
+                    'priceSet' => [
+                        'shopMoney' => [
+                            'amount' => $item->shopify_product_price,
+                            'currencyCode' => 'PHP',
+                        ],
+                    ],
+                    'productId' => $item->shopify_productId,
+                    'quantity' => (int) $item->quantity,
+                    'sku' => $item->sku,
+                    'taxable' => (bool) $item->taxable,
+                    'title' => $item->title,
+                    'variantTitle' => $item->variantTitle,
+                ];
+            })->values()->all(),
+
+            'test' => (bool) $order->test,
+        ];
+    }
+
+    public function getMetaobject($id)
+    {
+        $apiUrl = $this->apiUrl;
+        $query = file_get_contents(
+            app_path("Helper/GraphQL/Queries/GetMetaobj.graphql")
+        );
+
+        $client = Http::withHeaders([
+            'Content-Type' => "application/json",
+            'X-Shopify-Access-Token' => $this->x_access_token
+        ])->post("$apiUrl/api/2026-07/graphql.json", [
+            'query' => $query,
+            'variables' => [
+                'id' => $id
+            ]
+        ]);
+
+        if ($client->failed()) {
+            $response = $client->json();
+            $err_message = array_key_exists("errors", $response) ? $response['errors']:"";
+            logger()->info($err_message);
+            throw new \Exception($err_message[0]['message'], 422);
         } else {
             $response = $client->json();
             if (array_key_exists("errors", $response)) {

@@ -42,6 +42,7 @@ class AuthController extends BaseController
             'last_name' => 'required|string',
             'email_address' => 'required|string',
             'account_no' => 'required|string|max:20',
+            'birth_date' => 'required|date_format:Y-m-d\TH:i:s',
             'company' => 'required|string',
             'email_personal' => "nullable|email",
             'address.country' => 'required|string',
@@ -59,12 +60,12 @@ class AuthController extends BaseController
 
         try {
             $data = $request->all();
-            $arr_shopify_response = $shopify_helper
+            $shopify_helper
                 ->processCreateCustomerInput($data)
                 ->createUser()
                 ->createUserAddress();
 
-            return $this->sendResponse($arr_shopify_response, "Success.");
+            return $this->sendResponse([], "Successfully created a user account.");
         } catch (\Exception $e) {
             if ($e->getCode() == 400) {
                 return $this->sendError("Something went wrong. Call your administrator.", [

@@ -53,11 +53,14 @@ class IntellicareCreateTransactionJob implements ShouldQueue
             } else {
                 $this->orderModel->intellicare_status = "VERIFYING";
                 $this->orderModel->save();
-                logger()->info("Transaction is created: ", $response['data']);
+                $this->orderModel->intellicareLog->reference_number = $response['data']['reference_number'];
+                $this->orderModel->intellicareLog->loa_date = $response['data']['loa_date'];
+                $this->orderModel->intellicareLog->save();
+                logger()->info("IntellicareJob: Transaction is created.");
             }
         } catch (\Exception $e) {
-            \Log::error('Intellicare member validation failed: ' . $e->getMessage());
-            throw new \Exception('Intellicare member validation failed: ' . $e->getMessage(), 400);
+            \Log::error('Intellicare createTransaction failed: ' . $e->getMessage());
+            throw new \Exception('Intellicare createTransaction failed: ' . $e->getMessage(), 400);
         }
     }
 }

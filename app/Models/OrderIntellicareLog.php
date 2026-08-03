@@ -8,6 +8,10 @@ class OrderIntellicareLog extends Model
 {
     protected $fillable = [
         'order_id',
+        'reference_number',
+        'first_name',
+        'last_name',
+        'birth_date',
         'account_no',
         'contract',
         'branch',

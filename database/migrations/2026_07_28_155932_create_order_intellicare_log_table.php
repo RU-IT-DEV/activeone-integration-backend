@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('account_no');
             $table->string('contract');
             $table->string('branch');
-            $table->string('receipt_number');
+            $table->string('receipt_number')->nullable();
             $table->string('prccode');
             $table->json('diagnosis');
             $table->string('prescription_location')->nullable();

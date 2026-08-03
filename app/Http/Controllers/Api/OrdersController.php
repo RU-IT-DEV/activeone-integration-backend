@@ -124,7 +124,6 @@ class OrdersController extends BaseController
                 'birth_date' => $customer->birth_date,
                 'contract' => $customer->contract,
                 'branch' => 'NCR-PS',
-                'receipt_number' => "018324172983389",
                 'prccode' => $reqData['prccode'],
                 'diagnosis' => explode(",", $reqData['diagnosis']),
                 'prescription_location' => ''
@@ -136,10 +135,9 @@ class OrdersController extends BaseController
             
             // Runs ONLY if the outer transaction succeeds completely
             DB::afterCommit(function () use ($order) {
-                Bus::chain([
-                    JobDispatcher::dispatch(new IntellicareCreateTransactionJob($order)),
-                    JobDispatcher::dispatch(new ShopifyCreateOrderJob($order)),
-                ])->dispatch();
+                JobDispatcher::dispatch(
+                    new ShopifyCreateOrderJob($order)
+                );
             });
 
             return $order;
@@ -151,15 +149,6 @@ class OrdersController extends BaseController
         // $order->load([
         //     'lineItems', 'shippingAddress','billingAddress','intellicareLog'
         // ])->toArray();
-        // $arr_resp = $intellicareHelper->transformTransactionData($order->intellicareLog);
-        // $cc = new CustomCrypt;
-        // print_r(json_encode($arr_resp));
-
-        // echo $cc->encrypt(json_encode($arr_resp));
-
-        // echo $cc->decrypt('U2FsdGVkX1+a2xAxSV6CBIrmaZzBujQnRTK8ERsSdsXPBGXabs65Z+2C7nSIIpZrTdSpSBBt1Ic83ZQy9Nv0nVeG69eXGzOwyHTp60TzR1JEb7myXkGbWaIl7yfLfiSzLCT6sxdOjzfz8tbuJqV3HGm3LQfmTTbT6sLMsPAkX94JDQBL2lBL87QBgepjzNsCvuc+sxWDiRprO+p3HmIJev55BYqT6WxQHMAXftZ/C6DIxk+ksx26A3K4SJRZN6leXuD0HQ8KCqX4FigH6OdrKFEDyUvesaXCYEsL9uiyKz3OuWDC5I+8DBZKG/PwGFzTb2EP26KA6V9A7kppEwpOvPoQYzSUk2XSBqtvAtjGXu+esDURviSEIoBUZwvnfrXMGb/Uyq0NBOiS+iCwIrVCJh+6dAGZQeZm9SLGP8KIgnHY2zsT94Zy5rj0iEEDPe9+0M6RrSoZ1uOGh9MP9CDhVB9Hv3r0OmxBoTCAVX1pHj6buSQ1/W1Y28Va05uOm9h64Qi9+OVngB/5NF4/E08TYuLiN8V8Dt4+X4VmooNkuNWI5VKI8IU8DM9uWocJi2fVUFTSyCJqVJkcLV0cN3gy04P6D4j5JETW8RUxNfrpIDXws9IHSNnwKxtfHKXyuCgZFaCAjTh+d6JHlVJsZPb/IDOQ5D0N1YYLxsXVcP44dKsxC9b5zyQaG6lktA2cTBEXCuAQeeyKYb9RY4WDuR24qSRdQGSBBDGf/48ciDjaZJg1nsE6bSy/e8g3YvIhCsd0yd+hdj3tvd2N4Y1rPUPfxAaaCXM9ZchQIwmiqrEHJCCBeCykV3ic0mXFfjC5zrer7ySsfOKqcbOn1z4HuOg+ka3QmI7VPbwUH/697BNSgFZ2KTi8GAjSFbXznkDIQwrr7LyTkAXWGv9G9Y+GK15FMa2GNydy+J22QpcPjSwcXl9BtAiuF/FNOt4RPYI/PipFlWq3rsgDlgU29bifXIp7RGuClLbjxz8vLiuXGLcFfQX1GlURbh2nNI9Zbi7H+w5kdu6BmkChVZLoSAyCzhVjkMW8qiB2xMZOkxBkyYPTr9c/zEaFCboO+6KJ59rVNt4owjL8D3932j91vVClA8YsJTwjtAE7c4jiK43LFwLi++yme1FDOnJHbjOChdJrGuw60mmX/8vvJEb0SpssARE3Ba4bdLq1W0s5smAJuAjxjCUmN/0bj3z2HKXN1X6oJHxrrpqmdzBdChMrMjG89ENCTCh5OYH9//dLnrViD/ayegOhB7SpSxDhBq1gmG6CVcvM/xuRcBwEIG+88exHoU6DUyt2n1ncs9jh4Hvb0OkOWePRa3cI3BIrwQa+KQ/eLw3OqTS+fTkV8NA5BXm50CIFLfXPNRUZKO6zbE+Av3DBeps=');
-
-        // echo $cc->decrypt('U2FsdGVkX19Hd21O0VGB/rz5vseyEWO6oReyfvIUPpZQhLP+pymK6P1yrhKkjhbNHGvCedNi+VZMmyoru/LcSHGITNsbjtbWB8cf4OceBCCcLvWAXlbr5Ms4PW2cpTeZWGfPMICM7a/yK26cplC72w==');
 
         // JobDispatcher::dispatch(
         //     new IntellicareCreateTransactionJob($order)

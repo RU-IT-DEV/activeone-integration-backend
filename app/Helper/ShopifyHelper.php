@@ -344,7 +344,7 @@ class ShopifyHelper
         $client = Http::withHeaders([
             'Content-Type' => "application/json",
             'X-Shopify-Access-Token' => $this->x_access_token
-        ])->post("$apiUrl/api/2026-07/graphql.json", [
+        ])->post("$apiUrl/admin/api/2026-07/graphql.json", [
             'query' => $query,
             'variables' => [
                 'id' => $id
@@ -362,7 +362,7 @@ class ShopifyHelper
                 $err_message = $response['errors'][0]['message'];
                 throw new \Exception($err_message, 422);
             } else {
-                return $response;
+                return $response['data']['metaobject'];
             }
         }
     }

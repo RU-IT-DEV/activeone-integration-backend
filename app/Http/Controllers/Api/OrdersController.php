@@ -19,6 +19,29 @@ class OrdersController extends BaseController
     {
         $reqData = $request->all();
 
+        $this->validate($request, [
+            'id' => 'required|string',
+            'totalAmount' => 'required|numeric',
+            'prccode' => 'required|string',
+            'diagnosis' => 'required|string',
+            'customer' => 'required|array',
+            'customer.id' => 'required|string',
+            'customer.email' => 'required|email',
+            'customer.firstName' => 'required|string',
+            'customer.lastName' => 'required|string',
+            'customer.account_no' => 'required|string',
+            'customer.birth_date' => 'required|date_format:Y-m-d',
+            'customer.contract' => 'required|string',
+            'address' => 'required|array',
+            'address.address' => 'required|string',
+            'address.baranggay' => 'required|string',
+            'address.city' => 'required|string',
+            'address.country' => 'required|string',
+            'address.region' => 'required|string',
+            'address.postalCode' => 'required|string',
+            // Add more validation rules as needed
+        ]);
+
         $order = DB::transaction(function () use ($reqData) {
             $customer = (object) $reqData['customer'];
 

@@ -2,6 +2,7 @@
 
 namespace App\Helper;
 
+use App\Models\OrderIntellicareLog;
 use App\Models\ShopifyIntegrationAuth;
 use Illuminate\Support\Facades\Crypt;
 use App\Services\CustomCrypt;
@@ -9,7 +10,7 @@ use Illuminate\Support\Facades\Http;
 
 class IntellicareHelper
 {
-    protected $access_key;
+    public $access_key;
     protected $custom_crypt;
 
     public function __construct()
@@ -79,7 +80,7 @@ class IntellicareHelper
      * @throws \Exception
      * @return array{data: mixed, status: mixed}
      */
-    private function clientResponse ($response)
+    public function clientResponse ($response)
     {
         $str_resp_status = $this->custom_crypt->decrypt($response['status']);
         $arr_resp_status = json_decode($str_resp_status, true);
@@ -161,5 +162,45 @@ class IntellicareHelper
             \Log::error('Intellicare search doctor PRC failed: ' . $e->getMessage());
             throw new \Exception('Intellicare search doctor PRC failed: ' . $e->getMessage(), 400);
         }
+    }
+
+    private function diagnosis ($arr_diagnosis)
+    {
+        $data = [];
+        foreach ($arr_diagnosis as $code) {
+            $data[] = [
+                'code' => $code,
+                'name' => 'Cough and Colds',
+                'primary' => true,
+            ];
+        }
+        return $data;
+    }
+
+    public function transformTransactionData(OrderIntellicareLog $intellicareLog): array
+    {
+        return [
+            'account_no' => $intellicareLog->account_no,
+            'contract' => (int) $intellicareLog->contract,
+            'first_name' => $intellicareLog->first_name,
+            'last_name' => $intellicareLog->last_name,
+            'branch' => $intellicareLog->branch,
+            'birth_date' => $intellicareLog->birth_date,
+            'receipt_number' => $intellicareLog->receipt_number,
+            'prccode' => $intellicareLog->prccode,
+            'diagnosis' => $this->diagnosis($intellicareLog->diagnosis),
+            'medicines' => $intellicareLog->medicines->map(function ($item) {
+                return [
+                    'code' => $item->code,
+                    'quantity' => $item->quantity,
+                    'unit' => $item->unit,
+                    'gross' => $item->amount,
+                    'gross_wo_vat' => $item->no_vat_amount,
+                    'vat_amount' => $item->vat_amount,
+                    'type' => $item->type,
+                    'with_prescription' => (bool) $item->is_prescribed  
+                ];
+            })->values()->all(),
+        ];
     }
 }

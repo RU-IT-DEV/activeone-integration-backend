@@ -73,8 +73,10 @@ class OrdersController extends BaseController
                     FILTER_VALIDATE_BOOLEAN
                 );
 
-                if (!is_null($obj_item->merchandise['image'])) {
-                    $image = $obj_item->merchandise['image']['url'];
+                if (isset($obj_item->merchandise['image'])) {
+                    if (!is_null($obj_item->merchandise['image'])) {
+                        $image = $obj_item->merchandise['image']['url'];
+                    }
                 }
 
                 $orderDetails[] = [

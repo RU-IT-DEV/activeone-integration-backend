@@ -65,7 +65,8 @@ query GetCart($cartId: ID!) {
                 handle
                 category { name }
                 metafields(identifiers: [
-                  { namespace: "custom", key: "medicine_type" }
+                  { namespace: "custom", key: "medicine_type" },
+                  { namespace: "custom", key: "medicine_code" },
                 ]) {
                   namespace
                   key

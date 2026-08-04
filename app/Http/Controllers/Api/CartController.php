@@ -26,13 +26,25 @@ class CartController extends BaseController
                         if (!is_null($metafield)) {
                             if ($metafield['type'] == "metaobject_reference") {
                                 $referenceValue = $shopifyHelper->getMetaobject($metafield['value']);
+                                $str_typeValue = $referenceValue['displayName'];
+                                if (str_contains($str_typeValue, 'OTC')) {
+                                    $product['category']['name'] = "OTC";
+                                } else {
+                                    $product['category']['name'] = empty($str_typeValue) ?? 'OTC';
+                                }
                                 $metafield['valueId'] = $metafield['value'];
-                                $metafield['value'] = $referenceValue['displayName'] ?? '';
+                                $metafield['value'] = $str_typeValue ?? '';
+                                // modify this metafield with type metaobject_reference
                                 $productMetafields[$key] = $metafield;
+                            } else {
+                                if ($metafield['key'] == "medicine_code") {
+                                    $product['code'] = $metafield['value'];
+                                }
                             }
                         }
                     }
-                    $item['node']['merchandise']['product']['metafields'] = $productMetafields;
+                    $product['metafields'] = $productMetafields;
+                    $item['node']['merchandise']['product'] = $product;
                 }
 
                 return $item;

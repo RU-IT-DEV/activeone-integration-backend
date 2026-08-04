@@ -44,6 +44,7 @@ class IntellicareCreateTransactionJob implements ShouldQueue
                 'Authorization' => 'Bearer ' . $this->intellicareHelper->access_key
             ])->post(config('services.intellicare.url') . '/transaction/create', $request);
             $response = $this->intellicareHelper->clientResponse($client->json());
+            logger()->info("IntellicareJob: Transaction is created. Response: ", $response['data']);
 
             if ($client->failed()) {
                 $resp_status = $response['status'];
@@ -53,10 +54,9 @@ class IntellicareCreateTransactionJob implements ShouldQueue
             } else {
                 $this->orderModel->intellicare_status = "VERIFYING";
                 $this->orderModel->save();
-                $this->orderModel->intellicareLog->reference_number = $response['data']['reference_number'];
+                $this->orderModel->intellicareLog->reference_number = $response['data']['approval_code'];
                 $this->orderModel->intellicareLog->loa_date = $response['data']['loa_date'];
                 $this->orderModel->intellicareLog->save();
-                logger()->info("IntellicareJob: Transaction is created.");
             }
         } catch (\Exception $e) {
             \Log::error('Intellicare createTransaction failed: ' . $e->getMessage());

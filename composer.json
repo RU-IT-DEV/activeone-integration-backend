@@ -11,6 +11,7 @@
         "google/cloud": "^0.268.0",
         "google/cloud-ai-platform": "*",
         "google/cloud-bigquery": "*",
+        "google/cloud-secret-manager": "*",
         "google/cloud-storage": "^1.43",
         "google/cloud-tasks": "*",
         "guzzlehttp/guzzle": "^7.2",

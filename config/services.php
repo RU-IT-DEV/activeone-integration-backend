@@ -53,6 +53,17 @@ return [
         'username' => env('INTELLICARE_API_USERNAME'),
         'password' => env('INTELLICARE_API_PASSWORD'),
         'aes_key' => env('INTELLICARE_AES_KEY')
+    ],
+    'cloud_task' => [
+        'shopify' => [
+            'queue' => env('GOOGLE_CLOUD_TASKS_QUEUE_SHOPIFY')
+        ],
+        'intellicare' => [
+            'queue' => env('GOOGLE_CLOUD_TASKS_QUEUE_INTELLICARE')
+        ],
+        'project_id' => env('GOOGLE_CLOUD_PROJECT_ID'),
+        'tasks_endpoint' => env('GOOGLE_CLOUD_TASKS_ENDPOINT'),
+        'cloud_tasks_sa' => env('GOOGLE_CLOUD_CT_SA')
     ]
 
 ];

@@ -27,9 +27,10 @@ env_variables:
   DB_DATABASE: pbm_integration
   DB_USERNAME: a1-integration
   DB_PASSWORD: vi[nSH*f6Y_vZ#X,
-  APP_NAME: "UFlex Support"
-  APP_FE_URL: https://flexben.web.app/
-  APP_API_URL: https://flexicare-poc.as.r.appspot.com/api/
+  APP_NAME: "ActiveOne Shopee"
+  APP_URL: "https://a1-integ-be-385139891106.asia-southeast1.run.app/"
+  APP_FE_URL: "https://a1-integ-fe-385139891106.asia-southeast1.run.app/"
+  APP_API_URL: "https://a1-integ-be-385139891106.asia-southeast1.run.app/api"
   APP_ENV: staging
   APP_DEBUG: false
   LOG_CHANNEL: stderr
@@ -60,3 +61,10 @@ env_variables:
   SHOPIFY_APP_ID: 96f27f79b853398eda08aeba1626e1a0
   INTELLICARE_API_USERNAME: ac1.admin
   INTELLICARE_API_URL: "https://azure.intellicare.ph/uat/webservice/pharmacy-integration/api"
+  GOOGLE_CLOUD_PROJECT_ID: "hdsi-tng-combo-dev-1"
+  GOOGLE_CLOUD_STORAGE_SECRET_NAME: "a1-integration-secrets"
+  GOOGLE_CLOUD_TASKS_ENDPOINT: "http://localhost:8004/api/tasks/process-queue-job"
+  GOOGLE_CLOUD_TASKS_QUEUE_SHOPIFY: "shopify-create-order"
+  GOOGLE_CLOUD_TASKS_QUEUE_INTELLICARE: "create-intellicare-transaction"
+  GOOGLE_CLOUD_CT_SA: "a1-shic-integration@hdsi-tng-combo-dev-1.iam.gserviceaccount.com"
+

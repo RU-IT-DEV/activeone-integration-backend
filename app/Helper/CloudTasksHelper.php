@@ -17,10 +17,10 @@ class CloudTasksHelper
     {
         $client = new CloudTasksClient();
 
-        $projectId = config('services.gcp.project_id');
+        $projectId = config('services.cloud_task.project_id');
         $location  = 'asia-southeast1';
-        $queue     = config('services.gcp.cloud_tasks_queue');
-        $endpoint  = config('services.gcp.tasks_endpoint');
+        $queue     = config('services.cloud_task.shopify.queue');
+        $endpoint  = config('services.cloud_task.tasks_endpoint');
 
         $parent = $client->queueName($projectId, $location, $queue);
 
@@ -42,7 +42,7 @@ class CloudTasksHelper
                 'Content-Type' => 'application/json',
             ],
             'oidc_token' => new OidcToken([
-                'service_account_email' => config('services.gcp.cloud_tasks_sa'),
+                'service_account_email' => config('services.cloud_task.cloud_tasks_sa'),
             ]),
             'body' => base64_encode(json_encode([
                 'job_class' => get_class($job),

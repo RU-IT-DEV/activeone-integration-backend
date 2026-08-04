@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\CartItemController;
 use App\Http\Controllers\Api\DoctorsController;
 use App\Http\Controllers\Api\OrdersController;
+use App\Http\Controllers\Api\ProcessJobsController;
 use App\Http\Controllers\Api\UsersController;
 use Illuminate\Support\Facades\Route;
 
@@ -32,6 +33,7 @@ Route::group(['namespace' => 'Api', 'middleware' => ['cors']], function () {
     Route::post('order', [OrdersController::class, 'store']);
     Route::get('orders', [OrdersController::class, 'index']);
     Route::get('product-metaobject', [OrdersController::class, 'showProductMetaobject']);
+    Route::post('tasks/process-queue-job', [ProcessJobsController::class, 'queue_work']);
     
     // Route::post('cart-session', []);
     Route::delete('/clear-cache', function () {

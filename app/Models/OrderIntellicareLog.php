@@ -27,6 +27,10 @@ class OrderIntellicareLog extends Model
 
     public function medicines()
     {
-        return $this->hasManyThrough(OrderDetails::class, Order::class, 'id', 'order_id');
+        return $this->hasMany(
+            OrderDetails::class,
+            'order_id',
+            'order_id'
+        );
     }
 }

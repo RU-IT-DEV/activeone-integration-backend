@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Api\BaseController;
+use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -40,6 +41,11 @@ class ProcessJobsController extends BaseController
 
             if (!class_exists($jobClass)) {
                 abort(400, 'Invalid job class');
+            }
+
+            if (isset($payload['shopify_order_name'])) {
+                $payload = Order::with(['lineItems', 'shippingAddress', 'billingAddress', 'intellicareLog'])
+                    ->findOrFail($payload['id']);
             }
 
             $job = new $jobClass($payload);

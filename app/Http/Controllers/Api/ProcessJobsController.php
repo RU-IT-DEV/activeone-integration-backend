@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Api\BaseController;
-use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -43,7 +42,12 @@ class ProcessJobsController extends BaseController
                 abort(400, 'Invalid job class');
             }
 
-            $job = new $jobClass($payload);
+            $job = match (true) {
+                isset($payload['orderId']) => new $jobClass(
+                    $payload['orderId']
+                ),
+                default => new $jobClass(),
+            };
 
             dispatch_sync($job);
 

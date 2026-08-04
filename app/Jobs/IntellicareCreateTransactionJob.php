@@ -31,7 +31,12 @@ class IntellicareCreateTransactionJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $order = Order::findOrFail($this->orderId);
+        $order = Order::with([
+            'lineItems',
+            'shippingAddress',
+            'billingAddress',
+            'intellicareLog',
+        ])->findOrFail($this->orderId);
 
         $this->intellicareHelper = new IntellicareHelper;
         $this->custom_crypt = new CustomCrypt;

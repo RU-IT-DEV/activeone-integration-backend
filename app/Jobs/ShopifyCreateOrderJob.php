@@ -29,7 +29,12 @@ class ShopifyCreateOrderJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $order = Order::findOrFail($this->orderId);
+        $order = Order::with([
+            'lineItems',
+            'shippingAddress',
+            'billingAddress',
+            'intellicareLog',
+        ])->findOrFail($this->orderId);
 
         $this->shopifyHelper = new ShopifyHelper;
         $this->orderModel = $order;

@@ -30,6 +30,7 @@ Route::group(['namespace' => 'Api', 'middleware' => ['cors']], function () {
     Route::get('doctors', [DoctorsController::class, 'index']);
     
     Route::post('order', [OrdersController::class, 'store']);
+    Route::get('orders', [OrdersController::class, 'index']);
     Route::get('product-metaobject', [OrdersController::class, 'showProductMetaobject']);
     
     // Route::post('cart-session', []);

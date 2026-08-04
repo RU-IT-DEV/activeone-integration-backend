@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Helper\IntellicareHelper;
 use App\Helper\ShopifyHelper;
 use App\Http\Controllers\Api\BaseController;
 use Illuminate\Http\Request;
 
 class CartController extends BaseController
 {
-    public function show(Request $request, ShopifyHelper $shopifyHelper)
+    public function show(Request $request, ShopifyHelper $shopifyHelper, IntellicareHelper $intellicareHelper)
     {
         $data = $request->all();
 
@@ -51,7 +52,11 @@ class CartController extends BaseController
             }, $lineItems);
 
             $cart['data']['cart']['lines']['edges'] = $lineItems;
-            return $this->sendResponse($cart['data'], "Success");
+            $response = [
+                ...$cart['data'],
+                'botika_token' => $intellicareHelper->access_key
+            ];
+            return $this->sendResponse($response, "Success");
         } catch (\Exception $e) {
             if ($e->getCode() === 422) {
                 return $this->sendError("Something went wrong. {$e->getMessage()}", [], 422);

@@ -55,18 +55,24 @@ class FileUploadService
         ]);
     }
 
-    public function filesystem($file, $document_type, $id, $main_folder)
+    public function filesystem($file, $id, $main_folder)
     {
         if (!$file) return null;
 
-        $extension = $file->getClientOriginalExtension();
-        $newFilename = Str::random(16) . '.' . $extension;
-        $folder_1 = preg_replace('/[^a-zA-Z0-9_\-]/', '', $id);
-        $folder_2 = preg_replace('/[^a-zA-Z0-9_\-]/', '', $document_type);
-        $gcsPath = "{$main_folder}/{$folder_1}/{$folder_2}/{$newFilename}";
-
-        $object = $this->uploadStream(fopen($file->getPathname(), 'r'), $gcsPath, $file->getClientMimeType());
-        return $gcsPath;
+        try {
+            $extension = $file->getClientOriginalExtension();
+            $newFilename = $id . "-" . Str::random(16) . '.' . $extension;
+            $folder_1 = preg_replace('/[^a-zA-Z0-9_\-]/', '', $id);
+            $gcsPath = "{$main_folder}/{$folder_1}/{$newFilename}";
+    
+            $object = $this->uploadStream(fopen($file->getPathname(), 'r'), $gcsPath, $file->getClientMimeType());
+            return [
+                'file_path' => $gcsPath,
+                'file_name' => $newFilename
+            ];
+        } catch (\Throwable $th) {
+            throw new \Exception($th->getMessage(), 1);
+        }
     }
 
     private function sanitizePdf($file)
@@ -177,5 +183,10 @@ class FileUploadService
     {
         $file = fopen($localPath, 'r');
         $this->uploadStream($file, $gcsPath, 'application/octet-stream');
+    }
+
+    public function getStream ($path)
+    {
+        return $this->storageClient()->readStream($path);
     }
 }

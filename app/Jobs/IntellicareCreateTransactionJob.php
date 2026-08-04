@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Helper\IntellicareHelper;
 use App\Models\Order;
+use App\Services\FileUploadService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -32,10 +33,8 @@ class IntellicareCreateTransactionJob implements ShouldQueue
     public function handle(): void
     {
         $order = Order::with([
-            'lineItems',
-            'shippingAddress',
-            'billingAddress',
-            'intellicareLog',
+            'intellicareLog.medicines',
+            'intellicareLog.prescriptions'
         ])->findOrFail($this->orderId);
 
         $this->intellicareHelper = new IntellicareHelper;
@@ -50,9 +49,9 @@ class IntellicareCreateTransactionJob implements ShouldQueue
         logger()->info("Intellicare Create Transaction start: ", $this->transaction);
 
         try {
-            $client = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->intellicareHelper->access_key
-            ])->post(config('services.intellicare.url') . '/transaction/create', $request);
+            $client = Http::withToken(
+                $this->intellicareHelper->access_key
+            )->post(config('services.intellicare.url') . '/transaction/create', $request);
             $response = $this->intellicareHelper->clientResponse($client->json());
             logger()->info("IntellicareJob: Transaction is created. Response: ", $response['data']);
 
@@ -67,10 +66,57 @@ class IntellicareCreateTransactionJob implements ShouldQueue
                 $this->orderModel->intellicareLog->reference_number = $response['data']['approval_code'];
                 $this->orderModel->intellicareLog->loa_date = $response['data']['loa_date'];
                 $this->orderModel->intellicareLog->save();
+
+                $this->uploadPrescriptions();
             }
         } catch (\Exception $e) {
             \Log::error('Intellicare createTransaction failed: ' . $e->getMessage());
             throw new \Exception('Intellicare createTransaction failed: ' . $e->getMessage(), 400);
+        }
+    }
+
+    private function uploadPrescriptions ()
+    {
+        $fileUplService = new FileUploadService();
+
+        $intellicareLog = $this->orderModel->intellicareLog;
+
+        try {
+            $request = Http::withToken($this->intellicareHelper->access_key);
+
+            $streams = [];
+
+            foreach ($intellicareLog->prescriptions as $prescription) {
+                $stream = $fileUplService->getStream($prescription->file_path);
+
+                if ($stream === false) {
+                    throw new \Exception("Unable to read {$prescription->file_path}");
+                }
+
+                $streams[] = $stream;
+
+                $request = $request->attach(
+                    'prescription_file[]',
+                    $stream,
+                    $prescription->file_name
+                );
+            }
+
+            $client = $request->post(config('services.intellicare.url') . '/prescription/upload', [
+                'acctno' => $this->custom_crypt->encrypt($intellicareLog->account_no),
+                'reference_no' => $this->custom_crypt->encrypt($intellicareLog->reference_number),
+            ]);
+            logger()->info("Response from upload prescription: ", $client->json());
+            // $response = $this->intellicareHelper->clientResponse($client->json());
+
+            // Always close the streams
+            foreach ($streams as $stream) {
+                fclose($stream);
+            }
+
+            // logger()->info("Intellicare Prescription Upload response: ", $response['data']);
+        } catch (\Exception $e) {
+            logger()->error($e->getMessage());
         }
     }
 }

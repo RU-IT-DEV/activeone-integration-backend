@@ -33,4 +33,9 @@ class Order extends Model
     {
         return $this->hasOne(OrderIntellicareLog::class, 'order_id');
     }
+
+    public function prescriptions()
+    {
+        return $this->hasMany(OrderPrescription::class, 'order_id');
+    }
 }

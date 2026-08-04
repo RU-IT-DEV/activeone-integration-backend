@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\CartItemController;
 use App\Http\Controllers\Api\DoctorsController;
+use App\Http\Controllers\Api\OrderPrescriptionController;
 use App\Http\Controllers\Api\OrdersController;
 use App\Http\Controllers\Api\ProcessJobsController;
 use App\Http\Controllers\Api\UsersController;
@@ -31,8 +32,9 @@ Route::group(['namespace' => 'Api', 'middleware' => ['cors']], function () {
     Route::get('doctors', [DoctorsController::class, 'index']);
     
     Route::post('order', [OrdersController::class, 'store']);
+    Route::post('order/{order}/prescriptions', [OrderPrescriptionController::class, 'store']);
     Route::get('orders', [OrdersController::class, 'index']);
-    Route::get('product-metaobject', [OrdersController::class, 'showProductMetaobject']);
+    Route::post('product-metaobject', [OrdersController::class, 'showProductMetaobject']);
     Route::post('tasks/process-queue-job', [ProcessJobsController::class, 'queue_work']);
     
     // Route::post('cart-session', []);

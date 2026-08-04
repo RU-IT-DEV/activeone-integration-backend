@@ -3,12 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Dispatchers\JobDispatcher;
-use App\Helper\IntellicareHelper;
 use App\Http\Controllers\Api\BaseController;
-use App\Jobs\IntellicareCreateTransactionJob;
 use App\Jobs\ShopifyCreateOrderJob;
 use App\Services\CustomCrypt;
-use Illuminate\Support\Facades\Bus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Order;
@@ -24,7 +21,7 @@ class OrdersController extends BaseController
 
         return $this->sendResponse($orders, "Orders retrieved successfully.");
     }
-    public function store(Request $request, IntellicareHelper $intellicareHelper)
+    public function store(Request $request)
     {
         $reqData = $request->all();
 
@@ -146,15 +143,28 @@ class OrdersController extends BaseController
             
             // Runs ONLY if the outer transaction succeeds completely
             DB::afterCommit(function () use ($order) {
-                JobDispatcher::dispatch(
-                    new ShopifyCreateOrderJob($order->id)
-                );
+                (new ShopifyCreateOrderJob($order->id))->handle();
             });
-
+            
             return $order;
         });
 
-        return $this->sendResponse($order, "Order has been added.");
+        $response = [
+            'id' => $order->id,
+            'customer_id' => $order->customer_id,
+            'customer_email' => $order->customer_email,
+            'customer_name' => $order->customer_name,
+            'shopify_cart_id' => $order->shopify_cart_id,
+            'financialStatus' => $order->financialStatus,
+            'totalAmount' => $order->totalAmount,
+            'test' => $order->test,
+            'intellicare_status' => $order->intellicare_status,
+            'shopify_status' => $order->shopify_status,
+            'activeone_status' => $order->activeone_status,
+            'isp' => $order->intellicareLog
+        ];
+
+        return $this->sendResponse($response, "Order has been added.");
 
         // $order = Order::where('intellicare_status', 'TRXN_SENT')->first();
         // $order->load([
@@ -168,6 +178,21 @@ class OrdersController extends BaseController
 
     public function showProductMetaobject (Request $request)
     {
-        $fieldId = $request->input('fieldId');
+        $data = $request->all();
+        $this->validate($request, [
+            'value' => 'required|string',
+            'process' => 'required|string'
+        ]);
+
+        $cc = new CustomCrypt;
+        if ($data['process'] === 'encrypt') {
+            $metaobject = $cc->encrypt($data['value']);
+        } else if ($data['process'] === 'decrypt') {
+            $metaobject = $cc->decrypt($data['value']);
+        } else {
+            return $this->sendError("Invalid process type. Use 'encrypt' or 'decrypt'.", [], 400);
+        }
+
+        return $this->sendResponse($metaobject, "Product metaobject retrieved successfully.");
     }
 }

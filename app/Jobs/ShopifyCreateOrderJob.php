@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Dispatchers\JobDispatcher;
 use App\Helper\ShopifyHelper;
+use App\Models\Order;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -18,11 +19,9 @@ class ShopifyCreateOrderJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct($order)
+    public function __construct(public int $orderId)
     {
-        $this->shopifyHelper = new ShopifyHelper;
-        $this->orderModel = $order;
-        $this->order = $this->shopifyHelper->transformOrderData($order);
+
     }
 
     /**
@@ -30,6 +29,12 @@ class ShopifyCreateOrderJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $order = Order::findOrFail($this->orderId);
+
+        $this->shopifyHelper = new ShopifyHelper;
+        $this->orderModel = $order;
+        $this->order = $this->shopifyHelper->transformOrderData($order);
+
         logger()->info("ShopifyCreateOrderJob is running...");
         $apiUrl = $this->shopifyHelper->apiUrl;
         $query = file_get_contents(
@@ -71,10 +76,10 @@ class ShopifyCreateOrderJob implements ShouldQueue
                     $this->orderModel->intellicareLog->receipt_number = str_replace("#", "", $order['name']);
                     $this->orderModel->intellicareLog->save();
 
-                    $this->clearCart();
+                    // $this->clearCart();
 
                     JobDispatcher::dispatch(
-                        new IntellicareCreateTransactionJob($this->orderModel)
+                        new IntellicareCreateTransactionJob($this->orderModel->id)
                     );
                 }
             } 

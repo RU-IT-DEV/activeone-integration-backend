@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Helper\IntellicareHelper;
+use App\Models\Order;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -20,12 +21,9 @@ class IntellicareCreateTransactionJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct($order)
+    public function __construct(public int $orderId)
     {
-        $this->intellicareHelper = new IntellicareHelper;
-        $this->custom_crypt = new CustomCrypt;
-        $this->orderModel = $order;
-        $this->transaction = $this->intellicareHelper->transformTransactionData($order->intellicareLog);
+
     }
 
     /**
@@ -33,6 +31,13 @@ class IntellicareCreateTransactionJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $order = Order::findOrFail($this->orderId);
+
+        $this->intellicareHelper = new IntellicareHelper;
+        $this->custom_crypt = new CustomCrypt;
+        $this->orderModel = $order;
+        $this->transaction = $this->intellicareHelper->transformTransactionData($order->intellicareLog);
+
         $request = [
             'Value' => $this->custom_crypt->encrypt(json_encode($this->transaction))
         ];

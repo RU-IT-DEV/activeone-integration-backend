@@ -147,7 +147,7 @@ class OrdersController extends BaseController
             // Runs ONLY if the outer transaction succeeds completely
             DB::afterCommit(function () use ($order) {
                 JobDispatcher::dispatch(
-                    new ShopifyCreateOrderJob($order)
+                    new ShopifyCreateOrderJob($order->id)
                 );
             });
 

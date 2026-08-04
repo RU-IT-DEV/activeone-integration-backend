@@ -43,11 +43,6 @@ class ProcessJobsController extends BaseController
                 abort(400, 'Invalid job class');
             }
 
-            if (isset($payload['shopify_order_name'])) {
-                $payload = Order::with(['lineItems', 'shippingAddress', 'billingAddress', 'intellicareLog'])
-                    ->findOrFail($payload['id']);
-            }
-
             $job = new $jobClass($payload);
 
             dispatch_sync($job);

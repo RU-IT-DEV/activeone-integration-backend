@@ -22,4 +22,4 @@ prod-app.yaml
 qa-app.yaml
 prod-gcs-key.json
 qa-gcs-key.json
-local.Dockerfile
+local.Dockerfileqa-gcs-key.json

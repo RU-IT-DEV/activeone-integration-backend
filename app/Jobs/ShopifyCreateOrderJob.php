@@ -81,7 +81,7 @@ class ShopifyCreateOrderJob implements ShouldQueue
                     $this->orderModel->intellicareLog->receipt_number = str_replace("#", "", $order['name']);
                     $this->orderModel->intellicareLog->save();
 
-                    // $this->clearCart();
+                    $this->clearCart();
 
                     JobDispatcher::dispatch(
                         new IntellicareCreateTransactionJob($this->orderModel->id)

@@ -10,6 +10,11 @@ use App\Services\FileUploadService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+logger()->info([
+    'Client' => class_exists(\Google\Cloud\SecretManager\V1\Client::class),
+    'SecretManagerServiceClient' => class_exists(\Google\Cloud\SecretManager\V1\SecretManagerServiceClient::class),
+]);
+
 class OrderPrescriptionController extends BaseController
 {
     public function store(Request $request, Order $order, FileUploadService $fileUplService)

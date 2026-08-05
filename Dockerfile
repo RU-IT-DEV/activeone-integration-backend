@@ -34,6 +34,8 @@ RUN curl -sS https://getcomposer.org/installer | php \
 
 WORKDIR /app
 
+COPY composer.json composer.lock ./
+
 RUN composer install --no-dev --prefer-dist --no-scripts --no-interaction
 
 RUN chown -R www-data: .

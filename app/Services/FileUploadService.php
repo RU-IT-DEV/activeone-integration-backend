@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use Google\Cloud\Storage\StorageClient;
-use Google\Cloud\SecretManager\V1\Client as SecretManagerClient;
+use Google\Cloud\SecretManager\V1\SecretManagerServiceClient as SecretManagerClient;
 use Illuminate\Support\Str;
 use Symfony\Component\Process\Process;
 use Carbon\Carbon;

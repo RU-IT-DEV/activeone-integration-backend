@@ -24,7 +24,7 @@ class OrdersController extends BaseController
         $reqData = $request->all();
 
         $this->validate($request, [
-            'id' => 'required|string',
+            'id' => 'required|string|unique:orders,shopify_cart_id',
             'totalAmount' => 'required|numeric',
             'prccode' => 'required|string',
             'diagnosis' => 'required|string',
@@ -57,9 +57,9 @@ class OrdersController extends BaseController
                 'financialStatus' => 'PENDING', 
                 'totalAmount' => $reqData['totalAmount'],
                 'test' => true, 
-                'intellicare_status' => 'VERIFYING', 
+                'intellicare_status' => 'TRXN_CREATE', 
                 'shopify_status' => 'PENDING',
-                'activeone_status' => 'VERIFYING'
+                'activeone_status' => 'TRXN_CREATED'
             ]);
             $address = (object) $reqData['address'];
             $lineItems = $reqData['edges'];

@@ -18,7 +18,7 @@ class OrderPrescriptionController extends BaseController
 
         $this->validate($request, [
             'attachments' => 'required|array',
-            'attachments.*' => 'file'
+            'attachments.*' => 'file|mimes:jpeg,png,pdf,jpg'
         ]);
 
         try {

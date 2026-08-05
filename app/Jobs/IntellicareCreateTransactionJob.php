@@ -10,6 +10,7 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\Http;
 use App\Services\CustomCrypt;
+use Illuminate\Support\Facades\DB;
 
 class IntellicareCreateTransactionJob implements ShouldQueue
 {
@@ -80,13 +81,21 @@ class IntellicareCreateTransactionJob implements ShouldQueue
         $fileUplService = new FileUploadService();
 
         $intellicareLog = $this->orderModel->intellicareLog;
+        $intellicareLog->load([
+            'prescriptions'
+        ]);
 
         try {
-            $request = Http::withToken($this->intellicareHelper->access_key);
+            $request = Http::withToken($this->intellicareHelper->access_key)
+                ->attach('acctno', $this->custom_crypt->encrypt($intellicareLog->account_no))
+                ->attach('reference_no', $this->custom_crypt->encrypt($intellicareLog->reference_number));
 
             $streams = [];
 
             foreach ($intellicareLog->prescriptions as $prescription) {
+                $prescription->reference_number = $intellicareLog->reference_number;
+                $prescription->save();
+
                 $stream = $fileUplService->getStream($prescription->file_path);
 
                 if ($stream === false) {
@@ -95,26 +104,25 @@ class IntellicareCreateTransactionJob implements ShouldQueue
 
                 $streams[] = $stream;
 
+                $newFileName = $intellicareLog->reference_number . $prescription->file_name;
+
                 $request = $request->attach(
-                    'prescription_file[]',
+                    'prescription_file',
                     $stream,
-                    $prescription->file_name
+                    $newFileName
                 );
             }
 
-            $client = $request->post(config('services.intellicare.url') . '/prescription/upload', [
-                'acctno' => $this->custom_crypt->encrypt($intellicareLog->account_no),
-                'reference_no' => $this->custom_crypt->encrypt($intellicareLog->reference_number),
-            ]);
-            logger()->info("Response from upload prescription: ", $client->json());
-            // $response = $this->intellicareHelper->clientResponse($client->json());
+            $client = $request->post(config('services.intellicare.url') . '/prescription/upload');
+            $response = $this->intellicareHelper->clientResponse($client->json());
+            // logger()->info("Response from upload prescription: ", $client->json());
 
             // Always close the streams
             foreach ($streams as $stream) {
                 fclose($stream);
             }
 
-            // logger()->info("Intellicare Prescription Upload response: ", $response['data']);
+            logger()->info("Intellicare Prescription Upload response: ", $response['data']);
         } catch (\Exception $e) {
             logger()->error($e->getMessage());
         }

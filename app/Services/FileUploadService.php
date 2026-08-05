@@ -185,8 +185,14 @@ class FileUploadService
         $this->uploadStream($file, $gcsPath, 'application/octet-stream');
     }
 
-    public function getStream ($path)
+    public function getStream(string $path)
     {
-        return $this->storageClient()->readStream($path);
+        $object = $this->bucket()->object($path);
+
+        if (!$object->exists()) {
+            throw new \Exception("File {$path} does not exist in GCS.");
+        }
+
+        return $object->downloadAsStream()->detach();
     }
 }

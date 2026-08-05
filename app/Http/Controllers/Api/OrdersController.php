@@ -2,9 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Dispatchers\JobDispatcher;
 use App\Http\Controllers\Api\BaseController;
-use App\Jobs\ShopifyCreateOrderJob;
 use App\Services\CustomCrypt;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -140,11 +138,6 @@ class OrdersController extends BaseController
             $order->load([
                 'lineItems', 'shippingAddress','billingAddress','intellicareLog'
             ])->toArray();
-            
-            // Runs ONLY if the outer transaction succeeds completely
-            DB::afterCommit(function () use ($order) {
-                (new ShopifyCreateOrderJob($order->id))->handle();
-            });
             
             return $order;
         });

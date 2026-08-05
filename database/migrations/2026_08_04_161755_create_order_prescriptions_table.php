@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('order_prescriptions', function (Blueprint $table) {
             $table->id();
             $table->integer('order_id');
-            $table->string('reference_number');
+            $table->string('reference_number')->nullable();
             $table->string('account_number');
             $table->string('location');
             $table->text('file_path');

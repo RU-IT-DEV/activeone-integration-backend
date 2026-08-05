@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Dispatchers\JobDispatcher;
+use App\Jobs\ShopifyCreateOrderJob;
 use App\Http\Controllers\Api\BaseController;
 use App\Models\Order;
 use App\Services\FileUploadService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class OrderPrescriptionController extends BaseController
 {
@@ -21,10 +24,11 @@ class OrderPrescriptionController extends BaseController
         try {
             $prescriptions = [];
 
+            DB::beginTransaction();
             foreach ($files as $file) {
                 $filePath = $fileUplService->filesystem(
                     $file,
-                    $order->intellicareLog->reference_number,
+                    "order{$order->intellicareLog->order_id}",
                     'checkout-prescriptions'
                 );
 
@@ -32,10 +36,15 @@ class OrderPrescriptionController extends BaseController
                     'location' => config('app.env'),
                     'file_path' => $filePath['file_path'],
                     'file_name' => $filePath['file_name'],
-                    'account_number' => $order->intellicareLog->account_no,
-                    'reference_number' => $order->intellicareLog->reference_number,
+                    'account_number' => $order->intellicareLog->account_no
                 ]);
             }
+            DB::commit();
+
+            // Runs ONLY if the outer transaction succeeds completely
+            DB::afterCommit(function () use ($order) {
+                JobDispatcher::dispatch(new ShopifyCreateOrderJob($order->id));
+            });
 
             return $this->sendResponse($prescriptions, 'Successfully uploaded your prescriptions');
         } catch (\Exception $e) {

@@ -14,6 +14,9 @@ class AuthController extends BaseController
     public function verify(Request $request, IntellicareHelper $intellicare_helper) {
         $this->validate($request, [
             'hmoNumber' => 'required|string|max:20'
+        ], [
+            'hmoNumber.required' => 'Member HMO Account Number is required',
+            'hmoNumber.max' => 'Member HMO Account Number must be 16 digits'
         ]);
 
         try {

@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\FileSystemController;
 use App\Http\Controllers\Api\OrderPrescriptionController;
 use App\Http\Controllers\Api\OrdersController;
 use App\Http\Controllers\Api\ProcessJobsController;
+use App\Http\Controllers\Api\Shopify\CustomerController;
 use App\Http\Controllers\Api\UsersController;
 use Illuminate\Support\Facades\Route;
 
@@ -29,6 +30,7 @@ Route::group(['namespace' => 'Api', 'middleware' => ['cors']], function () {
     Route::post('verify', [AuthController::class, 'verify']);
     Route::post('register', [AuthController::class, 'register']);
 
+    Route::get('customer-default-address', [CustomerController::class, 'show']);
     Route::get('cart', [CartController::class, 'show']);
     Route::get('doctors', [DoctorsController::class, 'index']);
     

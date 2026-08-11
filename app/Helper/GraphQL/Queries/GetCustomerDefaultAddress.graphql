@@ -1,0 +1,27 @@
+query getCustomerAddresses($customerId: ID!) {
+  customer(id: $customerId) {
+    id
+    defaultAddress {
+      address1
+      address2
+      city
+      province
+      provinceCode
+      country
+      countryCode
+      zip
+      phone
+    }
+    addresses {
+      address1
+      address2
+      city
+      province
+      provinceCode
+      country
+      countryCode
+      zip
+      phone
+    }
+  }
+}

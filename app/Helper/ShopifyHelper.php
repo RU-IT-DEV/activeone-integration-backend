@@ -366,4 +366,37 @@ class ShopifyHelper
             }
         }
     }
+
+    public function getCustomer($id)
+    {
+        $apiUrl = $this->apiUrl;
+        $query = file_get_contents(
+            app_path("Helper/GraphQL/Queries/GetCustomerDefaultAddress.graphql")
+        );
+
+        $client = Http::withHeaders([
+            'Content-Type' => "application/json",
+            'X-Shopify-Access-Token' => $this->x_access_token
+        ])->post("$apiUrl/admin/api/2026-07/graphql.json", [
+            'query' => $query,
+            'variables' => [
+                'customerId' => $id
+            ]
+        ]);
+
+        if ($client->failed()) {
+            $response = $client->json();
+            $err_message = array_key_exists("errors", $response) ? $response['errors']:"";
+            logger()->info($err_message);
+            throw new \Exception($err_message[0]['message'], 422);
+        } else {
+            $response = $client->json();
+            if (array_key_exists("errors", $response)) {
+                $err_message = $response['errors'][0]['message'];
+                throw new \Exception($err_message, 422);
+            } else {
+                return $response['data']['customer'];
+            }
+        }
+    }
 }

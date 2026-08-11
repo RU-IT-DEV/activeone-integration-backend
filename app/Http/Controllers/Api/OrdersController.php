@@ -24,7 +24,7 @@ class OrdersController extends BaseController
         $reqData = $request->all();
 
         $this->validate($request, [
-            'id' => 'required|string|unique:orders,shopify_cart_id',
+            'id' => 'required|string',
             'totalAmount' => 'required|numeric',
             'prccode' => 'required|string',
             'customer' => 'required|array',

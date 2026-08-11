@@ -167,12 +167,14 @@ class IntellicareHelper
     private function diagnosis ($arr_diagnosis)
     {
         $data = [];
-        foreach ($arr_diagnosis as $code) {
-            $data[] = [
-                'code' => $code,
-                'name' => 'Cough and Colds',
-                'primary' => true,
-            ];
+        if (!is_null($arr_diagnosis)) {
+            foreach ($arr_diagnosis as $code) {
+                $data[] = [
+                    'code' => $code,
+                    'name' => 'Cough and Colds',
+                    'primary' => true,
+                ];
+            }
         }
         return $data;
     }

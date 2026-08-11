@@ -74,11 +74,6 @@ class OrdersController extends BaseController
                     FILTER_VALIDATE_BOOLEAN
                 );
 
-                $isPrescribed = filter_var(
-                    $obj_item->merchandise['product']['is_prescribed'] ?? false,
-                    FILTER_VALIDATE_BOOLEAN
-                );
-
                 if (isset($obj_item->merchandise['image'])) {
                     if (!is_null($obj_item->merchandise['image'])) {
                         $image = $obj_item->merchandise['image']['url'];
@@ -101,7 +96,7 @@ class OrdersController extends BaseController
                     'vat_amount' => $obj_item->cost['tax']['amount'], 
                     'no_vat_amount' => $obj_item->cost['deductableToEmployee']['amount'], 
                     'taxable' => $taxable,
-                    'is_prescribed' => $isPrescribed
+                    'is_prescribed' => true
                 ];
 
             }

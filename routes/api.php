@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\CartItemController;
 use App\Http\Controllers\Api\DoctorsController;
+use App\Http\Controllers\Api\FileSystemController;
 use App\Http\Controllers\Api\OrderPrescriptionController;
 use App\Http\Controllers\Api\OrdersController;
 use App\Http\Controllers\Api\ProcessJobsController;
@@ -37,6 +38,8 @@ Route::group(['namespace' => 'Api', 'middleware' => ['cors']], function () {
     Route::post('product-metaobject', [OrdersController::class, 'showProductMetaobject']);
     Route::post('tasks/process-queue-job', [ProcessJobsController::class, 'queue_work']);
     
+    Route::get('a1-shopify-integration/object', [FileSystemController::class, 'getSignedUrl']);
+
     // Route::post('cart-session', []);
     Route::delete('/clear-cache', function () {
         // Your logic to clear the cache goes here

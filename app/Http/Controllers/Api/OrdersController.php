@@ -37,7 +37,7 @@ class OrdersController extends BaseController
             'customer.contract' => 'required|string',
             'address' => 'required|array',
             'address.address' => 'required|string',
-            'address.baranggay' => 'required|string',
+            'address.barangay' => 'required|string',
             'address.city' => 'required|string',
             'address.country' => 'required|string',
             'address.region' => 'required|string',
@@ -103,7 +103,7 @@ class OrdersController extends BaseController
 
             $addressData = [
                 'address1' => $address->address,
-                'address2' => $address->address2,
+                'address2' => "{$address->address2} {$address->barangay}",
                 'city' => $address->city,
                 'countryCode' => $address->country,
                 'provinceCode' => $address->region,

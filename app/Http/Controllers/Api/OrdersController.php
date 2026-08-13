@@ -110,7 +110,7 @@ class OrdersController extends BaseController
                 'zip' => $address->postalCode,
                 'firstName' => $customer->firstName,
                 'lastName' => $customer->lastName,
-                'phone' => $address->phone,
+                'phone' => $address->phone ?? null,
             ];
 
             $order->shippingAddress()->create($addressData);

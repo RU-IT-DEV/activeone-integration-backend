@@ -9,7 +9,7 @@ class Order extends Model
     protected $fillable = [
         'customer_id', 'customer_email', 'customer_name', 
         'shopify_cart_id', 'shopify_order_name', 'shopify_order_id',
-        'financialStatus', 'totalAmount',
+        'order_url', 'financialStatus', 'totalAmount',
         'test', 'intellicare_status', 'shopify_status',
         'activeone_status'
     ];

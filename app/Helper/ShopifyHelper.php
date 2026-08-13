@@ -2,6 +2,8 @@
 
 namespace App\Helper;
 
+use App\Dispatchers\JobDispatcher;
+use App\Jobs\IntellicareCreateTransactionJob;
 use App\Models\Order;
 use App\Models\ShopifyIntegrationAuth;
 use Illuminate\Support\Facades\Http;
@@ -11,6 +13,9 @@ class ShopifyHelper
     public $x_access_token, $x_storefront_response, $apiUrl;
 
     private $customer_input_constructed, $customerAddress_input_constructed;
+
+    private $c_order;
+
     private $shopifyCustomer;
 
 
@@ -278,9 +283,9 @@ class ShopifyHelper
         }
     }
 
-    public function transformOrderData(Order $order): array
+    public function transformOrderData(Order $order)
     {
-        return [
+        $this->c_order = [
             'billingAddress' => $order->billingAddress->only([
                 'address1',
                 'address2',
@@ -332,6 +337,8 @@ class ShopifyHelper
 
             'test' => (bool) $order->test,
         ];
+
+        return $this;
     }
 
     public function getMetaobject($id)
@@ -398,5 +405,100 @@ class ShopifyHelper
                 return $response['data']['customer'];
             }
         }
+    }
+
+    public function orderCreate(Order $orderModel)
+    {
+        $apiUrl = $this->apiUrl;
+        $query = file_get_contents(
+            app_path('Helper/GraphQL/Mutations/OrderCreate.graphql')
+        );
+
+        $client = Http::withHeaders([
+            'X-Shopify-Access-Token' => $this->x_access_token
+        ])->post("$apiUrl/admin/api/2026-07/graphql.json", [
+            'query' => $query,
+            'variables' => [
+                'options' => [
+                    "inventoryBehaviour" => "BYPASS",
+                    "sendFulfillmentReceipt" => true,
+                    "sendReceipt" => true
+                ],
+                'order' => $this->c_order
+            ]
+        ]);
+
+        $response = $client->json();
+
+        if ($client->failed()) {
+            throw new \Exception("Error Processing Shopify Create Order", 1);
+        } else {
+            logger()->info("Response: ", $response);
+            
+            if (array_key_exists('errors', $response)) {
+                throw new \Exception($response['errors'][0]['message'], 1);
+            } else {
+                $resp_data = $response['data'];
+                $orderCreate = $resp_data['orderCreate'];
+                if (count($orderCreate['userErrors']) > 0) {
+                    throw new \Exception($resp_data['userErrors'], 1);
+                } else {
+                    $order = $resp_data['orderCreate']['order'];
+                    $orderModel->shopify_order_name = $order['name'];
+                    $orderModel->order_url = $order['statusPageUrl'];
+                    $orderModel->save();
+                    $orderModel->intellicareLog->receipt_number = str_replace("#", "", $order['name']);
+                    $orderModel->intellicareLog->save();
+
+                    JobDispatcher::dispatch(
+                        new IntellicareCreateTransactionJob($orderModel->id)
+                    );
+                }
+            } 
+        }
+
+        return $this;
+    }
+
+    public function clearCart(Order $orderModel)
+    {
+        $cartLines_response = $this->getCartLinesOnly($orderModel->shopify_cart_id);
+        $lines = array_map(function ($v) {
+            return $v['node']['id'];
+        }, $cartLines_response['data']['cart']['lines']['edges']);
+        $apiUrl = $this->apiUrl;
+        $cartId = $orderModel->shopify_cart_id;
+        $query = file_get_contents(
+            app_path("Helper/GraphQL/Mutations/cartLinesRemove.graphql")
+        );
+
+        $accessToken = config('services.shopify.storefront_access_token');
+        $client = Http::withHeaders([
+            'Content-Type' => "application/json",
+            'X-Shopify-Storefront-Access-Token' => $accessToken
+        ])->post("$apiUrl/api/2026-07/graphql.json", [
+            'query' => $query,
+            'variables' => [
+                'cartId' => $cartId,
+                'lineIds' => $lines
+            ]
+        ]);
+
+        if ($client->failed()) {
+            $response = $client->json();
+            $err_message = array_key_exists("errors", $response) ? $response['errors']:"";
+            logger()->info($err_message);
+            throw new \Exception($err_message, 422);
+        } else {
+            $response = $client->json();
+            if (array_key_exists("errors", $response)) {
+                $err_message = $response['errors'][0]['message'];
+                throw new \Exception($err_message, 422);
+            } else {
+                logger()->info("ClearCart Response:", $response);
+            }
+        }
+
+        return $this;
     }
 }

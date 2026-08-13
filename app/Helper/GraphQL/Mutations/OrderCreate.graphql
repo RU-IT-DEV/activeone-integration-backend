@@ -5,6 +5,7 @@ mutation OrderCreate($order: OrderCreateOrderInput!) {
       name
       displayFinancialStatus
       displayFulfillmentStatus
+      statusPageUrl
 
       billingAddress {
         address1

@@ -16,7 +16,7 @@ class JobDispatcher
                 return;
             }
 
-            dispatch_sync($job);
+            dispatch($job);
             return;
         }
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Dispatchers\JobDispatcher;
+use App\Helper\ShopifyHelper;
 use App\Jobs\ShopifyCreateOrderJob;
 use App\Http\Controllers\Api\BaseController;
 use App\Models\Order;
@@ -43,12 +44,22 @@ class OrderPrescriptionController extends BaseController
 
             // Runs ONLY if the outer transaction succeeds completely
             DB::afterCommit(function () use ($order) {
-                JobDispatcher::dispatch(new ShopifyCreateOrderJob($order->id));
+                $shopifyHelper = new ShopifyHelper();
+                $shopifyHelper
+                    ->transformOrderData($order)
+                    ->orderCreate($order)
+                    ->clearCart($order);
             });
+                
+            $order->refresh();
+            $response = [
+                ...$prescriptions,
+                'order_url' => $order->order_url,
+            ];
 
-            return $this->sendResponse($prescriptions, 'Successfully uploaded your prescriptions');
+            return $this->sendResponse($response, 'Successfully uploaded your prescriptions');
         } catch (\Exception $e) {
-            return $this->sendError('Something went wrong.', $e->getMessage());
+            return $this->sendError($e->getMessage(), 'Something went wrong.');
         }
     }
 }

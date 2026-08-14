@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Api;
 use App\Helper\ShopifyHelper;
 use App\Helper\IntellicareHelper;
 use App\Http\Controllers\Api\BaseController;
+use App\Mail\CustomerRegistrationMail;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Http\Request;
 
 class AuthController extends BaseController
@@ -63,10 +65,17 @@ class AuthController extends BaseController
 
         try {
             $data = $request->all();
-            $shopify_helper
-                ->processCreateCustomerInput($data)
-                ->createUser()
-                ->createUserAddress();
+            // $shopify_helper
+            //     ->processCreateCustomerInput($data)
+            //     ->createUser()
+            //     ->createUserAddress();
+
+            $customer_name = $data['first_name'] . " " . $data['last_name'];
+            $shop_url = config('app.frontend_url');
+            
+            Mail::to($data['email_address'])->send(
+                new CustomerRegistrationMail($customer_name, $shop_url)
+            );
 
             return $this->sendResponse([], "Successfully created a user account.");
         } catch (\Exception $e) {

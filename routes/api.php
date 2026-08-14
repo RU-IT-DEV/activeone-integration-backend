@@ -27,7 +27,10 @@ use Illuminate\Support\Facades\Route;
 
 Route::group(['namespace' => 'Api', 'middleware' => ['cors']], function () {
     // ... other routes ...
-    Route::post('verify', [AuthController::class, 'verify']);
+    Route::prefix('verify')->group(function () {
+        Route::post('account-number', [AuthController::class, 'verifyAccountNumber']);
+        Route::post('email', [AuthController::class, 'verifyEmail']);
+    });
     Route::post('register', [AuthController::class, 'register']);
 
     Route::get('customer-default-address', [CustomerController::class, 'show']);

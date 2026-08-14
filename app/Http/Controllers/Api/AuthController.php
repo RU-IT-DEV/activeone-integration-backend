@@ -6,14 +6,18 @@ use App\Helper\ShopifyHelper;
 use App\Helper\IntellicareHelper;
 use App\Http\Controllers\Api\BaseController;
 use App\Mail\CustomerRegistrationMail;
+use App\Models\CustomerEmailVerification;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class AuthController extends BaseController
 {
-    public function verify(Request $request, IntellicareHelper $intellicare_helper) {
+    public function verifyAccountNumber(Request $request, IntellicareHelper $intellicare_helper) {
         $this->validate($request, [
             'hmoNumber' => 'required|string|max:20'
         ], [
@@ -41,6 +45,29 @@ class AuthController extends BaseController
         }
     }
 
+    public function verifyEmail(Request $request)
+    {
+        $this->validate($request, [
+            'e' => 'required'
+        ]);
+
+        $encrypted_email = substr($request->input('e'), 0, -26);
+        $str_token = substr($request->input('e'), -25);
+
+        $decrypt = Crypt::decrypt($encrypted_email);
+        $value = CustomerEmailVerification::where('email', $decrypt)->where('token', $str_token)->first();
+
+        if ($value) {
+            if (Carbon::now() > $value->expires_at) {
+                return $this->sendError("Token expired", [], 422);
+            } else {
+                return $this->sendResponse([], "Success");
+            }
+        } else {
+            return $this->sendError("Not Found.", [], 404);
+        }
+    }
+
     public function register(Request $request, ShopifyHelper $shopify_helper) {
         $this->validate($request, [
             'first_name' => 'required|string',
@@ -65,13 +92,22 @@ class AuthController extends BaseController
 
         try {
             $data = $request->all();
-            // $shopify_helper
-            //     ->processCreateCustomerInput($data)
-            //     ->createUser()
-            //     ->createUserAddress();
+            $shopify_helper
+                ->processCreateCustomerInput($data)
+                ->createUser()
+                ->createUserAddress();
+
+            $hash_str = Str::random(25);
+            $enc_str = Crypt::encrypt($data['email_address']) . "+$hash_str";
+
+            CustomerEmailVerification::create([
+                'email' => $data['email_address'],
+                'token' => $hash_str,
+                'expires_at' => Carbon::now()->addDays(3)
+            ]);
 
             $customer_name = $data['first_name'] . " " . $data['last_name'];
-            $shop_url = config('app.frontend_url');
+            $shop_url = config('app.frontend_url') . "?e=$enc_str";
             
             Mail::to($data['email_address'])->send(
                 new CustomerRegistrationMail($customer_name, $shop_url)

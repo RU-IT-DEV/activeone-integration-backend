@@ -67,4 +67,5 @@ env_variables:
   GOOGLE_CLOUD_TASKS_QUEUE_SHOPIFY: "shopify-create-order"
   GOOGLE_CLOUD_TASKS_QUEUE_INTELLICARE: "create-intellicare-transaction"
   GOOGLE_CLOUD_CT_SA: "a1-shic-integration@hdsi-tng-combo-dev-1.iam.gserviceaccount.com"
+  A1_SHOP_URL: "https://a1-integ-fe-385139891106.asia-southeast1.run.app/email-verify"
 

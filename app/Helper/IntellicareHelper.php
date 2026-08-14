@@ -168,11 +168,10 @@ class IntellicareHelper
     {
         $data = [];
         if (!is_null($arr_diagnosis)) {
-            foreach ($arr_diagnosis as $code) {
+            foreach ($arr_diagnosis as $key => $code) {
                 $data[] = [
                     'code' => $code,
-                    'name' => 'Cough and Colds',
-                    'primary' => true,
+                    'primary' => $key == 0,
                 ];
             }
         }

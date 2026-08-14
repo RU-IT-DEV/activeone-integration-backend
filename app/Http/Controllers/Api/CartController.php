@@ -31,7 +31,7 @@ class CartController extends BaseController
                                 if (str_contains($str_typeValue, 'OTC')) {
                                     $product['category']['name'] = "OTC";
                                 } else {
-                                    $product['category']['name'] = empty($str_typeValue) ?? 'OTC';
+                                    $product['category']['name'] = empty($str_typeValue) ? 'OTC':$str_typeValue;
                                 }
                                 $metafield['valueId'] = $metafield['value'];
                                 $metafield['value'] = $str_typeValue ?? '';
@@ -51,10 +51,12 @@ class CartController extends BaseController
                 return $item;
             }, $lineItems);
 
+            $diagnosis = data_get($lineItems, '*.node.merchandise.product.code', []);
+
             $cart['data']['cart']['lines']['edges'] = $lineItems;
+            $cart['data']['arr_med_diagnosis'] = $diagnosis;
             $response = [
-                ...$cart['data'],
-                'botika_token' => $intellicareHelper->access_key
+                ...$cart['data']
             ];
             return $this->sendResponse($response, "Success");
         } catch (\Exception $e) {

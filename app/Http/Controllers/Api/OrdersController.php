@@ -27,6 +27,7 @@ class OrdersController extends BaseController
             'id' => 'required|string',
             'totalAmount' => 'required|numeric',
             'prccode' => 'required|string',
+            'diagnosis' => 'required|string',
             'customer' => 'required|array',
             'customer.id' => 'required|string',
             'customer.email' => 'required|email',
@@ -125,6 +126,7 @@ class OrdersController extends BaseController
                 'contract' => $customer->contract,
                 'branch' => 'NCR-PS',
                 'prccode' => $reqData['prccode'],
+                'diagnosis' => explode(",", $reqData['diagnosis']),
                 'prescription_location' => ''
             ]);
 

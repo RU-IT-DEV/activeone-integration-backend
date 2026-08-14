@@ -42,7 +42,7 @@ class FileUploadService
         ]);
     }
 
-    private function bucket()
+    public function bucket()
     {
         return $this->storageClient()->bucket(config('filesystems.disks.gcs.bucket'));
     }
@@ -149,21 +149,6 @@ class FileUploadService
         }
 
         return $objectName;
-    }
-
-    public function getSignedUrl(Request $request)
-    {
-        $validated = $request->validate(['fileName' => 'required|string']);
-        $object = $this->bucket()->object($validated['fileName']);
-        if (!$object->exists()) return response()->json(['error' => 'File not found'], 404);
-
-        $stream = $object->downloadAsStream();
-        $content = $stream->getContents();
-        $mime = $object->info()['contentType'] ?? 'application/octet-stream';
-
-        return response($content, 200)
-            ->header('Content-Type', $mime)
-            ->header('Content-Disposition', 'inline');
     }
 
     public function delete(string $file_path): bool

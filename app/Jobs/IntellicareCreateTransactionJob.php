@@ -58,8 +58,6 @@ class IntellicareCreateTransactionJob implements ShouldQueue
 
             if ($client->failed()) {
                 $resp_status = $response['status'];
-                $this->orderModel->intellicare_status = "TRXN_ERROR";
-                $this->orderModel->save();
                 throw new \Exception($resp_status['message']);
             } else {
                 $this->orderModel->intellicare_status = "VERIFYING";
@@ -71,6 +69,8 @@ class IntellicareCreateTransactionJob implements ShouldQueue
                 $this->uploadPrescriptions();
             }
         } catch (\Exception $e) {
+            $this->orderModel->intellicare_status = "TRXN_ERROR";
+            $this->orderModel->save();
             \Log::error('Intellicare createTransaction failed: ' . $e->getMessage());
             throw new \Exception('Intellicare createTransaction failed: ' . $e->getMessage(), 400);
         }
@@ -124,6 +124,8 @@ class IntellicareCreateTransactionJob implements ShouldQueue
 
             logger()->info("Intellicare Prescription Upload response: ", $response['data']);
         } catch (\Exception $e) {
+            $this->orderModel->intellicare_status = "TRXN_PRX_ERROR";
+            $this->orderModel->save();
             logger()->error($e->getMessage());
         }
     }

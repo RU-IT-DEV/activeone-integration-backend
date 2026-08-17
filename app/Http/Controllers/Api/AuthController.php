@@ -95,23 +95,8 @@ class AuthController extends BaseController
             $shopify_helper
                 ->processCreateCustomerInput($data)
                 ->createUser()
-                ->createUserAddress();
-
-            $hash_str = Str::random(25);
-            $enc_str = Crypt::encrypt($data['email_address']) . "+$hash_str";
-
-            CustomerEmailVerification::create([
-                'email' => $data['email_address'],
-                'token' => $hash_str,
-                'expires_at' => Carbon::now()->addDays(3)
-            ]);
-
-            $customer_name = $data['first_name'] . " " . $data['last_name'];
-            $shop_url = config('app.frontend_url') . "?e=$enc_str";
-            
-            Mail::to($data['email_address'])->send(
-                new CustomerRegistrationMail($customer_name, $shop_url)
-            );
+                ->createUserAddress()
+                ->sendAccountInvite();
 
             return $this->sendResponse([], "Successfully created a user account.");
         } catch (\Exception $e) {

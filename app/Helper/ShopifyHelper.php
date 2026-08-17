@@ -191,6 +191,37 @@ class ShopifyHelper
         return $this;
     }
 
+    public function sendAccountInvite()
+    {
+        $apiUrl = $this->apiUrl;
+        $query = file_get_contents(
+            app_path("Helper/GraphQL/Queries/customerSendAccountInviteEmail.graphql")
+        );
+
+        $client = Http::withHeaders([
+            'X-Shopify-Access-Token' => $this->x_access_token
+        ])->post("$apiUrl/admin/api/2026-07/graphql.json", [
+            'query' => $query,
+            'variables' => [
+                'customerId' => $this->shopifyCustomer['id']
+            ]
+        ]);
+
+        if ($client->failed()) {
+            throw new \Exception("Error in creating Shopify customer address.", 1);
+        } else {
+            $response = $client->json();
+            logger()->info("An address has been created.", $response);
+            if (array_key_exists("errors", $response)) {
+                throw new \Exception("Error creating customer address.", 422);
+            } else {
+                $this->shopifyCustomer['id'] = $response['data']['id'];
+            }
+        }
+        
+        return $this;
+    }
+
     private function customerDelete()
     {
         $apiUrl = $this->apiUrl;

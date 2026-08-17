@@ -1,0 +1,11 @@
+mutation CustomerSendAccountInviteEmail($customerId: ID!) {
+  customerSendAccountInviteEmail(customerId: $customerId) {
+    customer {
+      id
+    }
+    userErrors {
+      field
+      message
+    }
+  }
+}

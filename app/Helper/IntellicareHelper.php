@@ -171,6 +171,7 @@ class IntellicareHelper
             foreach ($arr_diagnosis as $key => $code) {
                 $data[] = [
                     'code' => $code,
+                    'name' => "",
                     'primary' => $key == 0,
                 ];
             }

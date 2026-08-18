@@ -58,7 +58,12 @@ class IntellicareCreateTransactionJob implements ShouldQueue
 
             if ($client->failed()) {
                 $resp_status = $response['status'];
-                throw new \Exception($resp_status['message']);
+                if ($resp_status === "Duplicate receipt number.") {
+                    logger()->info("Trying to reupload order {$this->orderModel->id} prescription.");
+                    $this->uploadPrescriptions();
+                } else {
+                    throw new \Exception($resp_status['message']);
+                }
             } else {
                 $this->orderModel->intellicare_status = "VERIFYING";
                 $this->orderModel->save();

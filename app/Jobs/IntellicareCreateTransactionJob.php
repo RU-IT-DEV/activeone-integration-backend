@@ -58,12 +58,7 @@ class IntellicareCreateTransactionJob implements ShouldQueue
 
             if ($client->failed()) {
                 $resp_status = $response['status'];
-                if ($resp_status['message'] === "Duplicate receipt number.") {
-                    logger()->info("Trying to reupload order {$this->orderModel->id} prescription.");
-                    $this->uploadPrescriptions();
-                } else {
-                    throw new \Exception($resp_status['message']);
-                }
+                throw new \Exception($resp_status['message']);
             } else {
                 $this->orderModel->intellicare_status = "VERIFYING";
                 $this->orderModel->save();
@@ -74,10 +69,15 @@ class IntellicareCreateTransactionJob implements ShouldQueue
                 $this->uploadPrescriptions();
             }
         } catch (\Exception $e) {
-            $this->orderModel->intellicare_status = "TRXN_ERROR";
-            $this->orderModel->save();
-            \Log::error('Intellicare createTransaction failed: ' . $e->getMessage());
-            throw new \Exception('Intellicare createTransaction failed: ' . $e->getMessage(), 400);
+            if ($e->getMessage() === "Duplicate receipt number.") {
+                logger()->info("Trying to reupload order {$this->orderModel->id} prescription.");
+                $this->uploadPrescriptions();
+            } else {
+                $this->orderModel->intellicare_status = "TRXN_ERROR";
+                $this->orderModel->save();
+                \Log::error('Intellicare createTransaction failed: ' . $e->getMessage());
+                throw new \Exception('Intellicare createTransaction failed: ' . $e->getMessage(), 400);
+            }
         }
     }
 

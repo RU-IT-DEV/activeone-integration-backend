@@ -126,7 +126,7 @@ class IntellicareCreateTransactionJob implements ShouldQueue
         } catch (\Exception $e) {
             $this->orderModel->intellicare_status = "TRXN_PRX_ERROR";
             $this->orderModel->save();
-            logger()->error($e->getMessage());
+            logger()->error('Intellicare uploadPrescription failed: ' . $e->getMessage());
         }
     }
 }

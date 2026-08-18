@@ -19,10 +19,11 @@ class AuthController extends BaseController
 {
     public function verifyAccountNumber(Request $request, IntellicareHelper $intellicare_helper) {
         $this->validate($request, [
-            'hmoNumber' => 'required|string|max:20'
+            'hmoNumber' => 'required|string|max:20|min:20'
         ], [
             'hmoNumber.required' => 'Member HMO Account Number is required',
-            'hmoNumber.max' => 'Member HMO Account Number must be 16 digits'
+            'hmoNumber.max' => 'Member HMO Account Number must be 16 digits',
+            'hmoNumber.min' => 'Member HMO Account Number must be 16 digits',
         ]);
 
         try {
@@ -82,6 +83,7 @@ class AuthController extends BaseController
             'address.city' => 'required|string',
             'address.address2' => 'nullable|string',
             'address.address1' => 'required|string',
+            'address.phone_no' => 'required|string',
             'termsOfService' => 'required|accepted',
             'privacyPolicy' => 'required|accepted',
         ], [

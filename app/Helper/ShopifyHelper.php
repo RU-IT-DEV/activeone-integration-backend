@@ -14,7 +14,7 @@ class ShopifyHelper
 
     private $customer_input_constructed, $customerAddress_input_constructed;
 
-    private $c_order;
+    private $c_order, $r_order;
 
     private $shopifyCustomer;
 
@@ -478,6 +478,8 @@ class ShopifyHelper
                     $orderModel->shopify_order_name = $order['name'];
                     $orderModel->order_url = $order['statusPageUrl'];
                     $orderModel->save();
+                    // save as response order
+                    $this->r_order = $order;
                     $orderModel->intellicareLog->receipt_number = str_replace("#", "", $order['name']);
                     $orderModel->intellicareLog->save();
 
@@ -527,6 +529,41 @@ class ShopifyHelper
                 throw new \Exception($err_message, 422);
             } else {
                 logger()->info("ClearCart Response:", $response);
+            }
+        }
+
+        return $this;
+    }
+
+    public function sendInvoice()
+    {
+        $apiUrl = $this->apiUrl;
+        $query = file_get_contents(
+            app_path("Helper/GraphQL/Mutations/orderInvoiceSend.graphql")
+        );
+
+        $client = Http::withHeaders([
+            'Content-Type' => "application/json",
+            'X-Shopify-Access-Token' => $this->x_access_token
+        ])->post("$apiUrl/api/2026-07/graphql.json", [
+            'query' => $query,
+            'variables' => [
+                'orderId' => $this->r_order['id']
+            ]
+        ]);
+
+        if ($client->failed()) {
+            $response = $client->json();
+            $err_message = array_key_exists("errors", $response) ? $response['errors']:"";
+            logger()->info($err_message);
+            throw new \Exception($err_message, 422);
+        } else {
+            $response = $client->json();
+            if (array_key_exists("errors", $response)) {
+                $err_message = $response['errors'][0]['message'];
+                throw new \Exception($err_message, 422);
+            } else {
+                logger()->info("Send Order Invoice Response:", $response);
             }
         }
 

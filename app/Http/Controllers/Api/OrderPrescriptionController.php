@@ -48,6 +48,7 @@ class OrderPrescriptionController extends BaseController
                 $shopifyHelper
                     ->transformOrderData($order)
                     ->orderCreate($order)
+                    ->sendInvoice()
                     ->clearCart($order);
             });
                 

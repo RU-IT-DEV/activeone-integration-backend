@@ -1,0 +1,10 @@
+mutation OrderInvoiceSend($orderId: ID!, $email: EmailInput) {
+  orderInvoiceSend(id: $orderId, email: $email) {
+    order {
+      id
+    }
+    userErrors {
+      message
+    }
+  }
+}

@@ -67,8 +67,6 @@ class OrdersController extends BaseController
             foreach ($lineItems as $key => $item) {
                 $obj_item = (object) $item;
                 $image = null; 
-                $productCode = empty($obj_item->merchandise['product']['code']) ? 
-                    $obj_item->merchandise['sku'] : $obj_item->merchandise['product']['code'];
                 $taxable = filter_var(
                     $obj_item->merchandise['taxable'],
                     FILTER_VALIDATE_BOOLEAN
@@ -87,7 +85,7 @@ class OrdersController extends BaseController
                     'image_url' => $image,
                     'quantity' => $obj_item->quantity, 
                     'sku' => $obj_item->merchandise['sku'],
-                    'code' => $productCode, 
+                    'code' => $obj_item->merchandise['sku'], 
                     'title' => $obj_item->merchandise['product']['title'], 
                     'type' => $obj_item->merchandise['product']['category']['name'], 
                     'variantTitle' => $obj_item->merchandise['title'],

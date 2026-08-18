@@ -445,6 +445,8 @@ class ShopifyHelper
             app_path('Helper/GraphQL/Mutations/OrderCreate.graphql')
         );
 
+        logger()->info("Order create started...");
+
         $client = Http::withHeaders([
             'X-Shopify-Access-Token' => $this->x_access_token
         ])->post("$apiUrl/admin/api/2026-07/graphql.json", [

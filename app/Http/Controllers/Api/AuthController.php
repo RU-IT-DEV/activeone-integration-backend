@@ -89,7 +89,8 @@ class AuthController extends BaseController
         ], [
             'address.address1.required' => "Address line 1 is required.",
             'address.city.required' => "City is required.",
-            'address.province.required' => "Province is required."
+            'address.province.required' => "Province is required.",
+            'address.phone_no.required' => "The phone number field is required."
         ]);
 
         try {

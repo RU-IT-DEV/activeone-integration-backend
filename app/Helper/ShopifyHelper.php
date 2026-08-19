@@ -195,7 +195,7 @@ class ShopifyHelper
     {
         $apiUrl = $this->apiUrl;
         $query = file_get_contents(
-            app_path("Helper/GraphQL/Queries/customerSendAccountInviteEmail.graphql")
+            app_path("Helper/GraphQL/Mutations/customerSendAccountInviteEmail.graphql")
         );
 
         $client = Http::withHeaders([
@@ -208,14 +208,15 @@ class ShopifyHelper
         ]);
 
         if ($client->failed()) {
-            throw new \Exception("Error in creating Shopify customer address.", 1);
+            throw new \Exception("Error in sending Shopify account invite.", 1);
         } else {
             $response = $client->json();
-            logger()->info("An address has been created.", $response);
-            if (array_key_exists("errors", $response)) {
-                throw new \Exception("Error creating customer address.", 422);
+            logger()->info("Account activation mail has been sent.", $response);
+            $response_data = $response['data']['customerSendAccountInviteEmail'];
+            if (array_key_exists("errors", $response_data)) {
+                throw new \Exception("Error in sending Shopify account invite.", 422);
             } else {
-                $this->shopifyCustomer['id'] = $response['data']['id'];
+                $this->shopifyCustomer['id'] = $response_data['customer']['id'];
             }
         }
         

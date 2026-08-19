@@ -83,14 +83,23 @@ class AuthController extends BaseController
             'address.city' => 'required|string',
             'address.address2' => 'nullable|string',
             'address.address1' => 'required|string',
-            'address.phone_no' => 'required|string',
+            'address.phone_no' => [
+                'required',
+                'string',
+                'max:13',
+                'min:11',
+                'regex:/^(09\d{9}|\+639\d{9})$/'
+            ],
             'termsOfService' => 'required|accepted',
             'privacyPolicy' => 'required|accepted',
         ], [
             'address.address1.required' => "Address line 1 is required.",
             'address.city.required' => "City is required.",
             'address.province.required' => "Province is required.",
-            'address.phone_no.required' => "The phone number field is required."
+            'address.phone_no.required' => "The phone number field is required.",
+            'address.phone_no.min' => "The phone number field should be 11 digits.",
+            'address.phone_no.max' => "The phone number field should be 11 digits.",
+            'address.phone_no.regex' => "The phone number field is invalid.",
         ]);
 
         try {

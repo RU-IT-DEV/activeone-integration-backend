@@ -342,6 +342,8 @@ class ShopifyHelper
                 'phone',
             ]),
 
+            'email' => $order->customer_email,
+
             'customer' => [
                 'toUpsert' => [
                     'email' => $order->customer_email,

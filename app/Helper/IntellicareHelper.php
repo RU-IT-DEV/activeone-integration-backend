@@ -196,9 +196,9 @@ class IntellicareHelper
                     'code' => $item->code,
                     'quantity' => $item->quantity,
                     'unit' => $item->unit,
-                    'gross' => $item->amount,
-                    'gross_wo_vat' => $item->no_vat_amount,
-                    'vat_amount' => $item->vat_amount,
+                    'gross' => 1,
+                    'gross_wo_vat' => 0.8,
+                    'vat_amount' => 0.2,
                     'type' => $item->type,
                     'with_prescription' => (bool) $item->is_prescribed  
                 ];

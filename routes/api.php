@@ -45,6 +45,10 @@ Route::group(['namespace' => 'Api', 'middleware' => ['cors']], function () {
     
     Route::get('a1-shopify-integration/object', [FileSystemController::class, 'getSignedUrl']);
 
+    Route::prefix('admin')->group(function () {
+        Route::post('login-with-msal', [AuthController::class, 'verifyAzureToken']);
+    });
+
     // Route::post('cart-session', []);
     Route::delete('/clear-cache', function () {
         // Your logic to clear the cache goes here

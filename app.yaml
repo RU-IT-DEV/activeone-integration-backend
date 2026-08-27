@@ -22,15 +22,15 @@ env_variables:
   APP_STORAGE: /tmp
   VIEW_COMPILED_PATH: /tmp
   DB_CONNECTION: mysql
-  DB_HOST: 10.52.97.200
+  DB_HOST: 10.52.97.206
   DB_PORT: 3306
   DB_DATABASE: pbm_integration
   DB_USERNAME: a1-integration
   DB_PASSWORD: vi[nSH*f6Y_vZ#X,
   APP_NAME: "ActiveOne Shopee"
-  APP_URL: "https://a1-integ-be-385139891106.asia-southeast1.run.app/"
+  APP_URL: "https://activeone-integration-backend-750380878643.asia-southeast1.run.app/"
   APP_FE_URL: "https://a1-integ-fe-385139891106.asia-southeast1.run.app/"
-  APP_API_URL: "https://a1-integ-be-385139891106.asia-southeast1.run.app/api"
+  APP_API_URL: "https://activeone-integration-backend-750380878643.asia-southeast1.run.app/api"
   APP_ENV: staging
   APP_DEBUG: false
   LOG_CHANNEL: stderr
@@ -63,7 +63,7 @@ env_variables:
   INTELLICARE_API_URL: "https://azure.intellicare.ph/uat/webservice/pharmacy-integration/api"
   GOOGLE_CLOUD_PROJECT_ID: "hdsi-tng-combo-prod-1"
   GOOGLE_CLOUD_STORAGE_SECRET_NAME: "a1-integrations-secret"
-  GOOGLE_CLOUD_TASKS_ENDPOINT: "http://localhost:8004/api/tasks/process-queue-job"
+  GOOGLE_CLOUD_TASKS_ENDPOINT: "https://activeone-integration-backend-750380878643.asia-southeast1.run.app/api/tasks/process-queue-job"
   GOOGLE_CLOUD_TASKS_QUEUE_SHOPIFY: "shopify-create-order"
   GOOGLE_CLOUD_TASKS_QUEUE_INTELLICARE: "create-intellicare-transaction"
   GOOGLE_CLOUD_CT_SA: "activeonerx@hdsi-tng-combo-prod-1.iam.gserviceaccount.com"

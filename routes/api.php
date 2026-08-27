@@ -51,7 +51,7 @@ Route::group(['namespace' => 'Api', 'middleware' => ['cors']], function () {
 
     Route::prefix('admin')->group(function () {
         Route::post('login-with-msal', [AuthController::class, 'verifyAzureToken']);
-        Route::get('refresh-token', [AuthController::class, 'refreshToken'])->middleware('auth:sanctum');
+        Route::get('refresh-token', [AuthController::class, 'refreshToken']);
     });
 
     // Route::post('cart-session', []);

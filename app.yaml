@@ -31,7 +31,7 @@ env_variables:
   APP_URL: "https://activeone-integration-backend-750380878643.asia-southeast1.run.app/"
   APP_FE_URL: "https://a1-integ-fe-385139891106.asia-southeast1.run.app/"
   APP_API_URL: "https://activeone-integration-backend-750380878643.asia-southeast1.run.app/api"
-  APP_ENV: staging
+  APP_ENV: production
   APP_DEBUG: false
   LOG_CHANNEL: stderr
   LOG_PATH: /tmp/laravel.log

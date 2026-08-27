@@ -62,7 +62,7 @@ env_variables:
   INTELLICARE_API_USERNAME: ac1.admin
   INTELLICARE_API_URL: "https://azure.intellicare.ph/uat/webservice/pharmacy-integration/api"
   GOOGLE_CLOUD_PROJECT_ID: "hdsi-tng-combo-prod-1"
-  GOOGLE_CLOUD_STORAGE_SECRET_NAME: "a1-integration-secrets"
+  GOOGLE_CLOUD_STORAGE_SECRET_NAME: "a1-integrations-secret"
   GOOGLE_CLOUD_TASKS_ENDPOINT: "http://localhost:8004/api/tasks/process-queue-job"
   GOOGLE_CLOUD_TASKS_QUEUE_SHOPIFY: "shopify-create-order"
   GOOGLE_CLOUD_TASKS_QUEUE_INTELLICARE: "create-intellicare-transaction"

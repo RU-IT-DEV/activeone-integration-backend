@@ -262,4 +262,13 @@ class AuthController extends BaseController
 
         // Add any additional claim validations here if needed
     }
+
+    public function refreshToken(Request $request)
+    {
+        $user = $request->user();
+
+        return $this->sendResponse([
+            'user' => $user
+        ], "Fetching of user data is successful.");
+    }
 }

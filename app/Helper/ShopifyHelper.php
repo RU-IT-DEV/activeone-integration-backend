@@ -106,12 +106,18 @@ class ShopifyHelper
             ]
         ];
 
+        $phone = $data['address']['phone_no'];
+        if (preg_match('/^09\d{9}$/', $phone)) {
+            $data['address']['phone_no'] = '+63' . substr($phone, 1);
+        }
+
         $this->customerAddress_input_constructed = [
             'countryCode' => $data['address']['country'],
             'provinceCode' => $data['address']['province'],
             'city' => $data['address']['city'],
             'address2' => $data['address']['address2'],
             'address1' => $data['address']['address1'],
+            'phone' => $data['address']['phone_no'],
         ];
 
         return $this;

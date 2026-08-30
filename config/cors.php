@@ -19,7 +19,7 @@ return [
 
     'allowed_methods' => ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
 
-    'allowed_origins' => [env('APP_FE_URL', ''), 'http://127.0.0.1:5173', 'http://localhost:5173', 'https://flexben.web.app', 'https://flexben.ph','https://flexben-prod.web.app'],
+    'allowed_origins' => [env('APP_FE_URL', ''), 'http://127.0.0.1:5173', 'http://localhost:5173', 'https://a1-integ-fe-385139891106.asia-southeast1.run.app', 'https://rci-activeonerx-750380878643.asia-southeast1.run.app'],
 
     'allowed_origins_patterns' => [],
 

@@ -15,22 +15,23 @@ handlers:
     redirect_http_response_code: 301
     script: auto
 vpc_access_connector:
-  name: "projects/unilab-cit-hostnet-prod-1/locations/asia-southeast1/connectors/hdsi-tng-combo-dev-1"
+  name: "projects/unilab-cit-hostnet-prod-1/locations/asia-southeast1/connectors/hdsi-tng-combo-prod-1"
 
 env_variables:
   APP_KEY: base64:aIVltd4RPSpBy5JgoUZ/Ur0wQQN4ohWBOWxu2CyS/U8=
   APP_STORAGE: /tmp
   VIEW_COMPILED_PATH: /tmp
   DB_CONNECTION: mysql
-  DB_HOST: 10.52.97.200
+  DB_HOST: 10.52.97.206
   DB_PORT: 3306
   DB_DATABASE: pbm_integration
   DB_USERNAME: a1-integration
+  DB_SOCKET: /cloudsql/hdsi-tng-combo-dev-1:asia-southeast1:a1-integration
   APP_NAME: "ActiveOne Shopee"
-  APP_URL: "https://a1-integ-be-385139891106.asia-southeast1.run.app/"
+  APP_URL: "https://activeone-integration-backend-750380878643.asia-southeast1.run.app/"
   APP_FE_URL: "https://a1-integ-fe-385139891106.asia-southeast1.run.app/"
-  APP_API_URL: "https://a1-integ-be-385139891106.asia-southeast1.run.app/api"
-  APP_ENV: staging
+  APP_API_URL: "https://activeone-integration-backend-750380878643.asia-southeast1.run.app/api"
+  APP_ENV: production
   APP_DEBUG: false
   LOG_CHANNEL: stderr
   LOG_PATH: /tmp/laravel.log
@@ -42,11 +43,11 @@ env_variables:
   MAIL_MAILER: smtp
   MAIL_HOST: smtp.office365.com
   MAIL_PORT: 587
-  MAIL_USERNAME: noreply@flexicare.com.ph
+  MAIL_USERNAME: noreply@shopify.com
   MAIL_PASSWORD: "msttjfjpnfnpblql"
   MAIL_ENCRYPTION: tls
-  MAIL_FROM_ADDRESS: noreply@flexicare.com.ph
-  MAIL_FROM_NAME: "FLEXICARE Support"
+  MAIL_FROM_ADDRESS: noreply@shopify.com
+  MAIL_FROM_NAME: "Shopify Support"
   PUSHER_APP_ID:
   PUSHER_APP_KEY:
   PUSHER_APP_SECRET:
@@ -55,17 +56,17 @@ env_variables:
   APP_PACKAGES_CACHE: /tmp/packages.php
   APP_CONFIG_CACHE: /tmp/config.php
   APP_ROUTES_CACHE: /tmp/routes.php
-  SHOPIFY_STORE_NAME: activeone-intellicare-sandbox
-  SHOPIFY_URL: https://activeone-intellicare-sandbox.myshopify.com
+  SHOPIFY_STORE_NAME: activeonerx
+  SHOPIFY_URL: https://activeonerx.com
   SHOPIFY_APP_ID: 96f27f79b853398eda08aeba1626e1a0
   INTELLICARE_API_USERNAME: ac1.admin
   INTELLICARE_API_URL: "https://azure.intellicare.ph/uat/webservice/pharmacy-integration/api"
-  GOOGLE_CLOUD_PROJECT_ID: "hdsi-tng-combo-dev-1"
-  GOOGLE_CLOUD_STORAGE_SECRET_NAME: "a1-integration-secrets"
-  GOOGLE_CLOUD_TASKS_ENDPOINT: "http://localhost:8004/api/tasks/process-queue-job"
+  GOOGLE_CLOUD_PROJECT_ID: "hdsi-tng-combo-prod-1"
+  GOOGLE_CLOUD_STORAGE_SECRET_NAME: "a1-integrations-secret"
+  GOOGLE_CLOUD_TASKS_ENDPOINT: "https://activeone-integration-backend-750380878643.asia-southeast1.run.app/api/tasks/process-queue-job"
   GOOGLE_CLOUD_TASKS_QUEUE_SHOPIFY: "shopify-create-order"
   GOOGLE_CLOUD_TASKS_QUEUE_INTELLICARE: "create-intellicare-transaction"
-  GOOGLE_CLOUD_CT_SA: "a1-shic-integration@hdsi-tng-combo-dev-1.iam.gserviceaccount.com"
+  GOOGLE_CLOUD_CT_SA: "activeonerx@hdsi-tng-combo-prod-1.iam.gserviceaccount.com"
   A1_SHOP_URL: "https://a1-integ-fe-385139891106.asia-southeast1.run.app/email-verify"
   AZURE_CLOUD_URL: https://login.microsoftonline.com/
   AZURE_CLIENT_ID: 6a292a54-5e1f-4601-a4e3-5a2650ec5918

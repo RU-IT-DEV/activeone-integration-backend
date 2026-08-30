@@ -26,7 +26,6 @@ env_variables:
   DB_PORT: 3306
   DB_DATABASE: pbm_integration
   DB_USERNAME: a1-integration
-  DB_PASSWORD: vi[nSH*f6Y_vZ#X,
   APP_NAME: "ActiveOne Shopee"
   APP_URL: "https://a1-integ-be-385139891106.asia-southeast1.run.app/"
   APP_FE_URL: "https://a1-integ-fe-385139891106.asia-southeast1.run.app/"

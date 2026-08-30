@@ -56,7 +56,7 @@ class OrdersController extends BaseController
                 'shopify_cart_id' => $reqData['id'],
                 'financialStatus' => 'PENDING', 
                 'totalAmount' => $reqData['totalAmount'],
-                'test' => true, 
+                'test' => config('app.env') !== 'production', 
                 'intellicare_status' => 'TRXN_CREATE', 
                 'shopify_status' => 'PENDING',
                 'activeone_status' => 'TRXN_CREATED'

@@ -162,6 +162,25 @@ class OrdersController extends BaseController
         // );
     }
 
+    public function update(Request $request, Order $order) {
+        $this->validate($request, [
+            'activeone_status' => 'required|in:APPROVED,REJECTED'
+        ], [
+            'activeone_status.required' => "ActiveOne status is required.",
+            'activeone_status.in' => "ActiveOne status must be Approved or Rejected.",
+        ]);
+
+        try {
+            $order->activeone_status = $request->input('activeone_status');
+            $order->save();
+    
+            return $this->sendResponse([], "Order {$order->shopify_order_name} is {$order->activeone_status}.");
+        } catch (\Exception $e) {
+            return $this->sendError($e->getMessage(), [], 400);
+        }
+    }
+    
+
     public function showProductMetaobject (Request $request)
     {
         $data = $request->all();

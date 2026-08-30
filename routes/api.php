@@ -39,7 +39,11 @@ Route::group(['namespace' => 'Api', 'middleware' => ['cors']], function () {
     
     Route::post('order', [OrdersController::class, 'store']);
     Route::post('order/{order}/prescriptions', [OrderPrescriptionController::class, 'store']);
-    Route::get('orders', [OrdersController::class, 'index']);
+
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('orders', [OrdersController::class, 'index']);
+        Route::patch('orders/{order}', [OrdersController::class, 'update']);
+    });
     Route::post('product-metaobject', [OrdersController::class, 'showProductMetaobject']);
     Route::post('tasks/process-queue-job', [ProcessJobsController::class, 'queue_work']);
     
@@ -47,7 +51,7 @@ Route::group(['namespace' => 'Api', 'middleware' => ['cors']], function () {
 
     Route::prefix('admin')->group(function () {
         Route::post('login-with-msal', [AuthController::class, 'verifyAzureToken']);
-        Route::get('refresh-token', [AuthController::class, 'refreshToken']);
+        Route::get('refresh-token', [AuthController::class, 'refreshToken'])->middleware('auth:sanctum');
     });
 
     // Route::post('cart-session', []);

@@ -120,6 +120,8 @@ class IntellicareCreateTransactionJob implements ShouldQueue
 
             $client = $request->post(config('services.intellicare.url') . '/prescription/upload');
             $response = $this->intellicareHelper->clientResponse($client->json());
+            $this->orderModel->intellicare_status = "SUCCESS";
+            $this->orderModel->save();
             // logger()->info("Response from upload prescription: ", $client->json());
 
             // Always close the streams
@@ -132,6 +134,7 @@ class IntellicareCreateTransactionJob implements ShouldQueue
             $this->orderModel->intellicare_status = "TRXN_PRX_ERROR";
             $this->orderModel->save();
             logger()->error('Intellicare uploadPrescription failed: ' . $e->getMessage());
+            throw new \Exception('Intellicare uploadPrescription failed: ' . $e->getMessage(), 400);
         }
     }
 }

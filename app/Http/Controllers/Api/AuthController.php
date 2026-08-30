@@ -204,6 +204,8 @@ class AuthController extends BaseController
                             'email' => $decodedArray['preferred_username'],
                             'password' => Hash::make("@ct1ve0ne_#2026"),
                             'email_verified_at' => Carbon::now(),
+                            'role' => 'pharmacist',
+                            'position' => 'ActiveOne Pharmacist'
                         ]);
                     }
                     logger()->info("should create token");
@@ -266,6 +268,12 @@ class AuthController extends BaseController
     public function refreshToken(Request $request)
     {
         $user = $request->user();
+        
+        if (!$user) {
+            $auth = $request->header('Authorization');
+            $token = str_replace("Bearer ", "", $auth);
+            $user = User::where('remember_token', $token)->first();
+        }
 
         return $this->sendResponse([
             'user' => $user

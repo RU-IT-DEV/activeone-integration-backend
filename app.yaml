@@ -71,5 +71,5 @@ env_variables:
   AZURE_CLOUD_URL: https://login.microsoftonline.com/
   AZURE_CLIENT_ID: 6a292a54-5e1f-4601-a4e3-5a2650ec5918
   AZURE_TENANT_ID: f6c83453-edb8-44b7-8639-6d090e011a63
-  AZURE_SECRET_VALUE: R898Q~sz7CvaBFf42woa.-qtJlw2O1uoe7fH3aw8
+  AZURE_SECRET_VALUE: HfU8Q~5~zbiKWyKIOc1oSroh-SfdaFIN.7_baaWC
 

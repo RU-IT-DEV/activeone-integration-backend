@@ -56,7 +56,7 @@ class OrdersController extends BaseController
                 'shopify_cart_id' => $reqData['id'],
                 'financialStatus' => 'PENDING', 
                 'totalAmount' => $reqData['totalAmount'],
-                'test' => true, 
+                'test' => config('app.env') !== 'production', 
                 'intellicare_status' => 'TRXN_CREATE', 
                 'shopify_status' => 'PENDING',
                 'activeone_status' => 'TRXN_CREATED'
@@ -161,6 +161,25 @@ class OrdersController extends BaseController
         //     new IntellicareCreateTransactionJob($order)
         // );
     }
+
+    public function update(Request $request, Order $order) {
+        $this->validate($request, [
+            'activeone_status' => 'required|in:APPROVED,REJECTED'
+        ], [
+            'activeone_status.required' => "ActiveOne status is required.",
+            'activeone_status.in' => "ActiveOne status must be Approved or Rejected.",
+        ]);
+
+        try {
+            $order->activeone_status = $request->input('activeone_status');
+            $order->save();
+    
+            return $this->sendResponse([], "Order {$order->shopify_order_name} is {$order->activeone_status}.");
+        } catch (\Exception $e) {
+            return $this->sendError($e->getMessage(), [], 400);
+        }
+    }
+    
 
     public function showProductMetaobject (Request $request)
     {

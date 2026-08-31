@@ -67,5 +67,9 @@ env_variables:
   GOOGLE_CLOUD_TASKS_QUEUE_SHOPIFY: "shopify-create-order"
   GOOGLE_CLOUD_TASKS_QUEUE_INTELLICARE: "create-intellicare-transaction"
   GOOGLE_CLOUD_CT_SA: "activeonerx@hdsi-tng-combo-prod-1.iam.gserviceaccount.com"
-  A1_SHOP_URL: "https://rci-activeonerx-750380878643.asia-southeast1.run.app/email-verify"
+  A1_SHOP_URL: "https://a1-integ-fe-385139891106.asia-southeast1.run.app/email-verify"
+  AZURE_CLOUD_URL: https://login.microsoftonline.com/
+  AZURE_CLIENT_ID: 6a292a54-5e1f-4601-a4e3-5a2650ec5918
+  AZURE_TENANT_ID: f6c83453-edb8-44b7-8639-6d090e011a63
+  AZURE_SECRET_VALUE: HfU8Q~5~zbiKWyKIOc1oSroh-SfdaFIN.7_baaWC
 

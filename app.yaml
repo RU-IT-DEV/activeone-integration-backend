@@ -26,10 +26,10 @@ env_variables:
   DB_PORT: 3306
   DB_DATABASE: pbm_integration
   DB_USERNAME: a1-integration
-  DB_SOCKET: /cloudsql/hdsi-tng-combo-dev-1:asia-southeast1:a1-integration
+  DB_SOCKET: /cloudsql/hdsi-tng-combo-prod-1:asia-southeast1:a1-integration
   APP_NAME: "ActiveOne Shopee"
   APP_URL: "https://activeone-integration-backend-750380878643.asia-southeast1.run.app/"
-  APP_FE_URL: "https://a1-integ-fe-385139891106.asia-southeast1.run.app/"
+  APP_FE_URL: "https://rci-activeonerx-750380878643.asia-southeast1.run.app/"
   APP_API_URL: "https://activeone-integration-backend-750380878643.asia-southeast1.run.app/api"
   APP_ENV: production
   APP_DEBUG: false

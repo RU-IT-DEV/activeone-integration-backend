@@ -43,9 +43,13 @@ class IntellicareHelper
         try {
             $client = Http::post(config('services.intellicare.url') . '/auth', $request);
 
+            if ($client->serverError()) {
+                $client = Http::post(config('services.intellicare.backup_url') . '/auth', $request);
+            }
+
+            $response = $client->json();
             if ($client->failed()) {
-                $response = $client->json();
-    
+
                 $resp_status = $this->custom_crypt->decrypt($response['status']);
                 throw new \Exception($resp_status['message']);
             } else {
@@ -120,9 +124,15 @@ class IntellicareHelper
         ];
 
         try {
-            $client = Http::withHeaders([
+            $httprequest = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $this->access_key
-            ])->post(config('services.intellicare.url') . '/memb/validate-member', $request);
+            ]);
+
+            $client = $httprequest->post(config('services.intellicare.url') . '/auth', $request);
+
+            if ($client->serverError()) {
+                $client = $httprequest->post(config('services.intellicare.backup_url') . '/auth', $request);
+            }
             $response = $this->clientResponse($client->json());
 
             if ($client->failed()) {
@@ -143,12 +153,18 @@ class IntellicareHelper
     public function getDoctors($reqData)
     {
         try {
-            $client = Http::withHeaders([
+            $httprequest = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $this->access_key,
                 'page' => 1,
                 'size' => 1,
                 'prccode' => $reqData['prccode']
-            ])->get(config('services.intellicare.url') . '/doctor/doctors');
+            ]);
+
+            $client = $httprequest->get(config('services.intellicare.url') . '/doctor/doctors');
+
+            if ($client->serverError()) {
+                $client = $httprequest->get(config('services.intellicare.backup_url') . '/doctor/doctors');
+            }
 
             $response = $this->clientResponse($client->json());
             if ($client->failed()) {

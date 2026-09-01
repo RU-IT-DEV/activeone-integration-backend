@@ -50,7 +50,6 @@ return [
     ],
     'intellicare' => [
         'url' => env('INTELLICARE_API_URL'),
-        'backup_url' => env('INTELLICARE_API_BACKUP_URL'),
         'username' => env('INTELLICARE_API_USERNAME'),
         'password' => env('INTELLICARE_API_PASSWORD'),
         'aes_key' => env('INTELLICARE_AES_KEY')

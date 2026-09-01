@@ -50,9 +50,15 @@ class IntellicareCreateTransactionJob implements ShouldQueue
         logger()->info("Intellicare Create Transaction start: ", $this->transaction);
 
         try {
-            $client = Http::withToken(
+            $httprequest = Http::withToken(
                 $this->intellicareHelper->access_key
-            )->post(config('services.intellicare.url') . '/transaction/create', $request);
+            );
+
+            $client = $httprequest->post(config('services.intellicare.url') . '/transaction/create', $request);
+            if ($client->serverError()) {
+                $client = $httprequest->post(config('services.intellicare.backup_url') . '/transaction/create', $request);
+            }
+            
             $response = $this->intellicareHelper->clientResponse($client->json());
             logger()->info("IntellicareJob: Transaction is created. Response: ", $response['data']);
 
@@ -119,6 +125,9 @@ class IntellicareCreateTransactionJob implements ShouldQueue
             }
 
             $client = $request->post(config('services.intellicare.url') . '/prescription/upload');
+            if ($client->serverError()) {
+                $client = $request->post(config('services.intellicare.backup_url') . '/prescription/upload');
+            }
             $response = $this->intellicareHelper->clientResponse($client->json());
             $this->orderModel->intellicare_status = "SUCCESS";
             $this->orderModel->save();

@@ -61,6 +61,7 @@ env_variables:
   SHOPIFY_APP_ID: 96f27f79b853398eda08aeba1626e1a0
   INTELLICARE_API_USERNAME: ac1.admin
   INTELLICARE_API_URL: "https://azure.intellicare.ph/uat/webservice/pharmacy-integration/api"
+  INTELLICARE_API_BACKUP_URL: "https://bcp-site1b.intellicare.com.ph/webservice/pharmacy-integration/api"
   GOOGLE_CLOUD_PROJECT_ID: "hdsi-tng-combo-prod-1"
   GOOGLE_CLOUD_STORAGE_SECRET_NAME: "a1-integrations-secret"
   GOOGLE_CLOUD_TASKS_ENDPOINT: "https://activeone-integration-backend-750380878643.asia-southeast1.run.app/api/tasks/process-queue-job"

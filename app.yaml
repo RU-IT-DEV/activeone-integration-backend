@@ -57,7 +57,7 @@ env_variables:
   APP_CONFIG_CACHE: /tmp/config.php
   APP_ROUTES_CACHE: /tmp/routes.php
   SHOPIFY_STORE_NAME: activeonerx
-  SHOPIFY_URL: https://activeonerx.com
+  SHOPIFY_URL: https://activeonerx.myshopify.com
   SHOPIFY_APP_ID: 96f27f79b853398eda08aeba1626e1a0
   INTELLICARE_API_USERNAME: ac1.admin
   INTELLICARE_API_URL: "https://azure.intellicare.ph/uat/webservice/pharmacy-integration/api"

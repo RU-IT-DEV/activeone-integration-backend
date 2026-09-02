@@ -67,6 +67,7 @@ class OrdersController extends BaseController
             foreach ($lineItems as $key => $item) {
                 $obj_item = (object) $item;
                 $image = null; 
+                $category = null;
                 $taxable = filter_var(
                     $obj_item->merchandise['taxable'],
                     FILTER_VALIDATE_BOOLEAN
@@ -78,6 +79,10 @@ class OrdersController extends BaseController
                     }
                 }
 
+                if (array_key_exists('category', $obj_item->merchandise['product'])) {
+                    $category = $obj_item->merchandise['product']['category']['name'];
+                }
+
                 $orderDetails[] = [
                     'order_id' => $order->id,
                     'shopify_productId' => $obj_item->merchandise['product']['id'], 
@@ -87,7 +92,7 @@ class OrdersController extends BaseController
                     'sku' => $obj_item->merchandise['sku'],
                     'code' => $obj_item->merchandise['sku'], 
                     'title' => $obj_item->merchandise['product']['title'], 
-                    'type' => $obj_item->merchandise['product']['category']['name'], 
+                    'type' => $category, 
                     'variantTitle' => $obj_item->merchandise['title'],
                     'unit' => $obj_item->merchandise['selectedOptions'][0]['name'],
                     'amount' => $obj_item->cost['totalAmount']['amount'], 

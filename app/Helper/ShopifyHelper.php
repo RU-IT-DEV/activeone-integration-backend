@@ -273,8 +273,7 @@ class ShopifyHelper
 
         if ($client->failed()) {
             $response = $client->json();
-            $err_message = array_key_exists("errors", $response) ? $response['errors']:"";
-            logger()->info($err_message);
+            $err_message = $response['errors'][0]['message'];
             throw new \Exception($err_message, 422);
         } else {
             $response = $client->json();
@@ -421,6 +420,7 @@ class ShopifyHelper
             app_path("Helper/GraphQL/Queries/GetCustomerDefaultAddress.graphql")
         );
 
+        logger()->info("Get customer address:" . $id);
         $client = Http::withHeaders([
             'Content-Type' => "application/json",
             'X-Shopify-Access-Token' => $this->x_access_token

@@ -454,7 +454,8 @@ class ShopifyHelper
             app_path('Helper/GraphQL/Mutations/OrderCreate.graphql')
         );
 
-        logger()->info("Order create started...");
+        logger()->info("Order create started...", $this->c_order['customer']);
+        logger()->info("Order create details...", $this->c_order['lineItems']);
 
         $client = Http::withHeaders([
             'X-Shopify-Access-Token' => $this->x_access_token
@@ -462,7 +463,7 @@ class ShopifyHelper
             'query' => $query,
             'variables' => [
                 'options' => [
-                    "inventoryBehaviour" => "BYPASS",
+                    "inventoryBehaviour" => "DECREMENT_OBEYING_POLICY",
                     "sendFulfillmentReceipt" => true,
                     "sendReceipt" => true
                 ],

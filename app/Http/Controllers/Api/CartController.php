@@ -46,7 +46,7 @@ class CartController extends BaseController
                                     if (str_contains($str_typeValue, 'otc')) {
                                         $product['category']['name'] = "OTC";
                                     } else {
-                                        $product['category']['name'] = empty($str_typeValue) ? 'OTC':$str_typeValue;
+                                        $product['category']['name'] = empty($str_typeValue) ? 'OTC':strtoupper($str_typeValue);
                                     }
                                 }
                             }

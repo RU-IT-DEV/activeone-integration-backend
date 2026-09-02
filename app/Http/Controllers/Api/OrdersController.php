@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Dispatchers\JobDispatcher;
 use App\Http\Controllers\Api\BaseController;
+use App\Jobs\IntellicareCreateTransactionJob;
 use App\Services\CustomCrypt;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -161,10 +163,6 @@ class OrdersController extends BaseController
         // $order->load([
         //     'lineItems', 'shippingAddress','billingAddress','intellicareLog'
         // ])->toArray();
-
-        // JobDispatcher::dispatch(
-        //     new IntellicareCreateTransactionJob($order)
-        // );
     }
 
     public function update(Request $request, Order $order) {
@@ -204,5 +202,14 @@ class OrdersController extends BaseController
         }
 
         return $this->sendResponse($metaobject, "Product metaobject retrieved successfully.");
+    }
+
+    public function createIntellicareTransaction(Request $request, Order $order)
+    {
+        JobDispatcher::dispatch(
+            new IntellicareCreateTransactionJob($order->id)
+        );
+        
+        return $this->sendResponse([], "Intellicare transaction created successfully.");
     }
 }

@@ -43,6 +43,7 @@ Route::group(['namespace' => 'Api', 'middleware' => ['cors']], function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('orders', [OrdersController::class, 'index']);
         Route::patch('orders/{order}', [OrdersController::class, 'update']);
+        Route::post('orders/{order}/create-intellicare-transaction', [OrdersController::class, 'createIntellicareTransaction']);
     });
     Route::post('product-metaobject', [OrdersController::class, 'showProductMetaobject']);
     Route::post('tasks/process-queue-job', [ProcessJobsController::class, 'queue_work']);

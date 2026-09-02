@@ -41,6 +41,14 @@ class CartController extends BaseController
                                 if ($metafield['key'] == "medicine_code") {
                                     $product['code'] = $metafield['value'];
                                 }
+                                if ($metafield['key'] == "medicine_type") {
+                                    $str_typeValue = $metafield['value'];
+                                    if (str_contains($str_typeValue, 'OTC')) {
+                                        $product['category']['name'] = "OTC";
+                                    } else {
+                                        $product['category']['name'] = empty($str_typeValue) ? 'OTC':$str_typeValue;
+                                    }
+                                }
                             }
                         }
                     }

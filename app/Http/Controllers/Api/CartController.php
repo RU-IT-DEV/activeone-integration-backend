@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Helper\IntellicareHelper;
 use App\Helper\ShopifyHelper;
 use App\Http\Controllers\Api\BaseController;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 
 class CartController extends BaseController
@@ -55,6 +56,7 @@ class CartController extends BaseController
 
             $cart['data']['cart']['lines']['edges'] = $lineItems;
             $cart['data']['arr_med_diagnosis'] = $diagnosis;
+            $cart['data']['order_session'] = Str::random(40);
             $response = [
                 ...$cart['data']
             ];

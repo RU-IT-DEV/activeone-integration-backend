@@ -12,7 +12,7 @@ class OrdersController extends BaseController
 {
     public function index(Request $request)
     {
-        $perPage = $request->input('per_page', 10);
+        $perPage = $request->input('itemsPerPage', 10);
         $orders = Order::with(['lineItems', 'shippingAddress', 'billingAddress', 'intellicareLog', 'prescriptions'])
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);

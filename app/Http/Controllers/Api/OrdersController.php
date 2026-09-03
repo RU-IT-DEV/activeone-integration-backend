@@ -15,9 +15,29 @@ class OrdersController extends BaseController
     public function index(Request $request)
     {
         $perPage = $request->input('itemsPerPage', 10);
+        $search = $request->input('search', null);
+        $sortBy = $request->input('sortBy', []);
         $orders = Order::with(['lineItems', 'shippingAddress', 'billingAddress', 'intellicareLog', 'prescriptions'])
-            ->orderBy('created_at', 'desc')
-            ->paginate($perPage);
+            ->where('shopify_order_name', '!=', null);
+
+        if ($search) {
+            $orders->where(function ($query) use ($search) {
+                $query->where('shopify_order_name', 'like', "%{$search}%")
+                    ->orWhere('customer_email', 'like', "%{$search}%")
+                    ->orWhere('customer_name', 'like', "%{$search}%")
+                    ->orWhere('totalAmount', 'like', "%{$search}%")
+                    ->orWhere('intellicare_status', 'like', "%{$search}%")
+                    ->orWhere('activeone_status', 'like', "%{$search}%");
+            });
+        }
+
+        if ($sortBy) {
+            foreach ($sortBy as $value) {
+                $orders = $orders->orderBy($value['key'], $value['order']);
+            }
+        }
+
+        $orders = $orders->paginate($perPage);
 
         return $this->sendResponse($orders, "Orders retrieved successfully.");
     }
@@ -209,7 +229,7 @@ class OrdersController extends BaseController
         JobDispatcher::dispatch(
             new IntellicareCreateTransactionJob($order->id)
         );
-        
+
         return $this->sendResponse([], "Intellicare transaction created successfully.");
     }
 }

@@ -84,6 +84,7 @@ class IntellicareHelper
     {
         $str_resp_status = $this->custom_crypt->decrypt($response['status']);
         $arr_resp_status = json_decode($str_resp_status, true);
+        logger()->info("Intellicare Create Transaction Job Client Response: ", $arr_resp_status);
 
         if (isset($arr_resp_status['success'])) {
             if ($arr_resp_status['success'] === FALSE) {
@@ -100,6 +101,7 @@ class IntellicareHelper
         if (is_array($response['data'])) {
             foreach ($response['data'] as $key => $response_data) {
                 $str_resp_data = $this->custom_crypt->decrypt($response_data);
+                logger()->info("Intellicare Create Transaction Job Client Response: ". $str_resp_data);
                 $arr_resp_data[] = json_decode($str_resp_data, true);
             }
         } else {

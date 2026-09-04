@@ -5,6 +5,8 @@ namespace App\Services;
 use Google\Cloud\Storage\StorageClient;
 use Google\Cloud\SecretManager\V1\SecretManagerServiceClient as SecretManagerClient;
 use Illuminate\Support\Str;
+use Spatie\Image\Image; // Optional: For actual JPEG optimization
+use Spatie\Image\Enums\ImageDriver;
 use Symfony\Component\Process\Process;
 use Carbon\Carbon;
 
@@ -72,6 +74,15 @@ class FileUploadService
             ];
         } catch (\Throwable $th) {
             throw new \Exception($th->getMessage(), 1);
+        }
+    }
+
+    public function compressFile()
+    {
+        try {
+            
+        } catch (\Throwable $th) {
+            throw new \Exception($th->getMessage(), 400);
         }
     }
 

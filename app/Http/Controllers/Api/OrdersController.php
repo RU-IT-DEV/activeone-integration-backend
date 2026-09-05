@@ -48,7 +48,7 @@ class OrdersController extends BaseController
         $this->validate($request, [
             'id' => 'required|string',
             'totalAmount' => 'required|numeric',
-            'prccode' => 'required|string',
+            'prccode' => 'nullable|string',
             'diagnosis' => 'required|string',
             'customer' => 'required|array',
             'customer.id' => 'required|string',

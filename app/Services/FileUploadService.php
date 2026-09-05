@@ -75,6 +75,15 @@ class FileUploadService
         }
     }
 
+    public function compressFile()
+    {
+        try {
+            
+        } catch (\Throwable $th) {
+            throw new \Exception($th->getMessage(), 400);
+        }
+    }
+
     private function sanitizePdf($file)
     {
         $tempOriginal = tempnam(sys_get_temp_dir(), 'orig_pdf_');

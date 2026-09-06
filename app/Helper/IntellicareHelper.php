@@ -82,6 +82,7 @@ class IntellicareHelper
      */
     public function clientResponse ($response)
     {
+        logger()->info(json_encode([$response]));
         $str_resp_status = $this->custom_crypt->decrypt($response['status']);
         $arr_resp_status = json_decode($str_resp_status, true);
         logger()->info("Intellicare Create Transaction Job Client Response: ", $arr_resp_status);

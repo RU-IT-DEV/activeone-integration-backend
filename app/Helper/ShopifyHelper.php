@@ -358,20 +358,27 @@ class ShopifyHelper
             'financialStatus' => $order->financialStatus,
 
             'lineItems' => $order->lineItems->map(function ($item) {
-                return [
-                    'priceSet' => [
-                        'shopMoney' => [
-                            'amount' => $item->shopify_product_price,
-                            'currencyCode' => 'PHP',
+                $qty = (int) $item->quantity;
+                if ($qty > 0) {
+                    return [
+                        'priceSet' => [
+                            'shopMoney' => [
+                                'amount' => $item->shopify_product_price,
+                                'currencyCode' => 'PHP',
+                            ],
                         ],
-                    ],
-                    'productId' => $item->shopify_productId,
-                    'quantity' => (int) $item->quantity,
-                    'sku' => $item->sku,
-                    'taxable' => (bool) $item->taxable,
-                    'title' => $item->title,
-                    'variantTitle' => $item->variantTitle,
-                ];
+                        'productId' => $item->shopify_productId,
+                        'quantity' => (int) $item->quantity,
+                        'sku' => $item->sku,
+                        'taxable' => (bool) $item->taxable,
+                        'title' => $item->title,
+                        'variantTitle' => $item->variantTitle,
+                    ];
+                }
+
+                return false;
+            })->filter(function ($item) {
+                return $item !== false;
             })->values()->all(),
 
             'test' => (bool) $order->test,

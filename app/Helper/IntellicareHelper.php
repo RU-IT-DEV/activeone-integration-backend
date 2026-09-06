@@ -162,7 +162,7 @@ class IntellicareHelper
             }
         } catch (\Exception $e) {
             \Log::error('Intellicare search doctor PRC failed: ' . $e->getMessage());
-            throw new \Exception('Intellicare search doctor PRC failed: ' . $e->getMessage(), 400);
+            throw new \Exception('Intellicare search doctor PRC failed: ' . $e->getMessage() . ": You may leave it as blank.", 400);
         }
     }
 

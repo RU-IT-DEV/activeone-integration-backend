@@ -199,16 +199,22 @@ class IntellicareHelper
             'prccode' => $intellicareLog->prccode,
             'diagnosis' => $this->diagnosis($intellicareLog->diagnosis),
             'medicines' => $intellicareLog->medicines->map(function ($item) {
-                return [
-                    'code' => $item->code,
-                    'quantity' => $item->quantity,
-                    'unit' => $item->unit,
-                    'gross' => 1,
-                    'gross_wo_vat' => 0.8,
-                    'vat_amount' => 0.2,
-                    'type' => $item->type,
-                    'with_prescription' => (bool) $item->is_prescribed  
-                ];
+                $qty = $item->quantity;
+                if ($qty > 0) {
+                    return [
+                        'code' => $item->code,
+                        'quantity' => $item->quantity,
+                        'unit' => $item->unit,
+                        'gross' => 1,
+                        'gross_wo_vat' => 0.8,
+                        'vat_amount' => 0.2,
+                        'type' => $item->type,
+                        'with_prescription' => (bool) $item->is_prescribed  
+                    ];
+                }
+                return false;
+            })->filter(function ($item) {
+                return $item !== false;
             })->values()->all(),
         ];
     }

@@ -49,7 +49,7 @@ class IntellicareCreateTransactionJob implements ShouldQueue
 
         logger()->info("Intellicare Create Transaction start: ", $this->transaction);
 
-        if (is_null($order->intellicareLog->reference_number)) {
+        if (!is_null($order->intellicareLog->reference_number)) {
             logger()->info("IntellicareJob: Transaction already exists. Reference number: " . $order->intellicareLog->reference_number);
             $this->uploadPrescriptions();
             return;

@@ -82,37 +82,42 @@ class IntellicareHelper
      */
     public function clientResponse ($response)
     {
-        $str_resp_status = $this->custom_crypt->decrypt($response['status']);
-        $arr_resp_status = json_decode($str_resp_status, true);
-        logger()->info("Intellicare Create Transaction Job Client Response: ", $arr_resp_status);
-
-        if (isset($arr_resp_status['success'])) {
-            if ($arr_resp_status['success'] === FALSE) {
-                throw new \Exception($arr_resp_status['message']);
+        logger()->info(json_encode([$response]));
+        if (!is_null($response)) {
+            $str_resp_status = $this->custom_crypt->decrypt($response['status']);
+            $arr_resp_status = json_decode($str_resp_status, true);
+            logger()->info("Intellicare Create Transaction Job Client Response: ", $arr_resp_status);
+    
+            if (isset($arr_resp_status['success'])) {
+                if ($arr_resp_status['success'] === FALSE) {
+                    throw new \Exception($arr_resp_status['message']);
+                }
+            } else if (isset($arr_resp_status['Success'])) {
+                if ($arr_resp_status['Success'] === FALSE) {
+                    throw new \Exception($arr_resp_status['Message']);
+                }
             }
-        } else if (isset($arr_resp_status['Success'])) {
-            if ($arr_resp_status['Success'] === FALSE) {
-                throw new \Exception($arr_resp_status['Message']);
+    
+            $str_resp_data = "";
+            $arr_resp_data = [];
+            if (is_array($response['data'])) {
+                foreach ($response['data'] as $key => $response_data) {
+                    $str_resp_data = $this->custom_crypt->decrypt($response_data);
+                    logger()->info("Intellicare Create Transaction Job Client Response: ". $str_resp_data);
+                    $arr_resp_data[] = json_decode($str_resp_data, true);
+                }
+            } else {
+                $str_resp_data = $this->custom_crypt->decrypt($response['data']);
+                $arr_resp_data = json_decode($str_resp_data, true);
             }
-        }
-
-        $str_resp_data = "";
-        $arr_resp_data = [];
-        if (is_array($response['data'])) {
-            foreach ($response['data'] as $key => $response_data) {
-                $str_resp_data = $this->custom_crypt->decrypt($response_data);
-                logger()->info("Intellicare Create Transaction Job Client Response: ". $str_resp_data);
-                $arr_resp_data[] = json_decode($str_resp_data, true);
-            }
+    
+            return [
+                'status' => $arr_resp_status,
+                'data' => $arr_resp_data
+            ];
         } else {
-            $str_resp_data = $this->custom_crypt->decrypt($response['data']);
-            $arr_resp_data = json_decode($str_resp_data, true);
+            throw new \Exception("Intellicare API response is null.");
         }
-
-        return [
-            'status' => $arr_resp_status,
-            'data' => $arr_resp_data
-        ];
     }
 
     public function validateMember($data)
@@ -194,16 +199,22 @@ class IntellicareHelper
             'prccode' => $intellicareLog->prccode,
             'diagnosis' => $this->diagnosis($intellicareLog->diagnosis),
             'medicines' => $intellicareLog->medicines->map(function ($item) {
-                return [
-                    'code' => $item->code,
-                    'quantity' => $item->quantity,
-                    'unit' => $item->unit,
-                    'gross' => 1,
-                    'gross_wo_vat' => 0.8,
-                    'vat_amount' => 0.2,
-                    'type' => $item->type,
-                    'with_prescription' => (bool) $item->is_prescribed  
-                ];
+                $qty = $item->quantity;
+                if ($qty > 0) {
+                    return [
+                        'code' => $item->code,
+                        'quantity' => $item->quantity,
+                        'unit' => $item->unit,
+                        'gross' => 1,
+                        'gross_wo_vat' => 0.8,
+                        'vat_amount' => 0.2,
+                        'type' => $item->type,
+                        'with_prescription' => (bool) $item->is_prescribed  
+                    ];
+                }
+                return false;
+            })->filter(function ($item) {
+                return $item !== false;
             })->values()->all(),
         ];
     }

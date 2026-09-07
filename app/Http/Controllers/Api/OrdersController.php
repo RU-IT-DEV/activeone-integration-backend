@@ -105,24 +105,26 @@ class OrdersController extends BaseController
                     $category = $obj_item->merchandise['product']['category']['name'];
                 }
 
-                $orderDetails[] = [
-                    'order_id' => $order->id,
-                    'shopify_productId' => $obj_item->merchandise['product']['id'], 
-                    'shopify_product_price' => $obj_item->merchandise['price']['amount'],
-                    'image_url' => $image,
-                    'quantity' => $obj_item->quantity, 
-                    'sku' => $obj_item->merchandise['sku'],
-                    'code' => $obj_item->merchandise['sku'], 
-                    'title' => $obj_item->merchandise['product']['title'], 
-                    'type' => $category, 
-                    'variantTitle' => $obj_item->merchandise['title'],
-                    'unit' => $obj_item->merchandise['selectedOptions'][0]['name'],
-                    'amount' => $obj_item->cost['totalAmount']['amount'], 
-                    'vat_amount' => $obj_item->cost['tax']['amount'], 
-                    'no_vat_amount' => $obj_item->cost['deductableToEmployee']['amount'], 
-                    'taxable' => $taxable,
-                    'is_prescribed' => true
-                ];
+                if ($obj_item->quantity > 0) {
+                    $orderDetails[] = [
+                        'order_id' => $order->id,
+                        'shopify_productId' => $obj_item->merchandise['product']['id'], 
+                        'shopify_product_price' => $obj_item->merchandise['price']['amount'],
+                        'image_url' => $image,
+                        'quantity' => $obj_item->quantity, 
+                        'sku' => $obj_item->merchandise['sku'],
+                        'code' => $obj_item->merchandise['sku'], 
+                        'title' => $obj_item->merchandise['product']['title'], 
+                        'type' => $category, 
+                        'variantTitle' => $obj_item->merchandise['title'],
+                        'unit' => $obj_item->merchandise['selectedOptions'][0]['name'],
+                        'amount' => $obj_item->cost['totalAmount']['amount'], 
+                        'vat_amount' => $obj_item->cost['tax']['amount'], 
+                        'no_vat_amount' => $obj_item->cost['deductableToEmployee']['amount'], 
+                        'taxable' => $taxable,
+                        'is_prescribed' => true
+                    ];
+                }
 
             }
             $order->lineItems()->createMany($orderDetails);

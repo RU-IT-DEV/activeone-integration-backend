@@ -387,6 +387,71 @@ class ShopifyHelper
         return $this;
     }
 
+    public function job_transformOrderData(Order $order)
+    {
+        return [
+            'billingAddress' => $order->billingAddress->only([
+                'address1',
+                'address2',
+                'city',
+                'countryCode',
+                'provinceCode',
+                'zip',
+                'firstName',
+                'lastName',
+                'phone',
+            ]),
+
+            'shippingAddress' => $order->shippingAddress->only([
+                'address1',
+                'address2',
+                'city',
+                'countryCode',
+                'provinceCode',
+                'zip',
+                'firstName',
+                'lastName',
+                'phone',
+            ]),
+
+            'email' => $order->customer_email,
+
+            'customer' => [
+                'toUpsert' => [
+                    'email' => $order->customer_email,
+                    'id' => $order->customer_id
+                ]
+            ],
+            'financialStatus' => $order->financialStatus,
+
+            'lineItems' => $order->lineItems->map(function ($item) {
+                $qty = (int) $item->quantity;
+                if ($qty > 0) {
+                    return [
+                        'priceSet' => [
+                            'shopMoney' => [
+                                'amount' => $item->shopify_product_price,
+                                'currencyCode' => 'PHP',
+                            ],
+                        ],
+                        'productId' => $item->shopify_productId,
+                        'quantity' => (int) $item->quantity,
+                        'sku' => $item->sku,
+                        'taxable' => (bool) $item->taxable,
+                        'title' => $item->title,
+                        'variantTitle' => $item->variantTitle,
+                    ];
+                }
+
+                return false;
+            })->filter(function ($item) {
+                return $item !== false;
+            })->values()->all(),
+
+            'test' => (bool) $order->test,
+        ];
+    }
+
     public function getMetaobject($id)
     {
         $apiUrl = $this->apiUrl;
@@ -587,5 +652,41 @@ class ShopifyHelper
         }
 
         return $this;
+    }
+
+    public function getProductBySku($sku)
+    {
+        $apiUrl = $this->apiUrl;
+        $query = file_get_contents(
+            app_path("Helper/GraphQL/Queries/GetProduct.graphql")
+        );
+
+        $client = Http::withHeaders([
+            'Content-Type' => "application/json",
+            'X-Shopify-Access-Token' => $this->x_access_token
+        ])->post("$apiUrl/admin/api/2026-07/graphql.json", [
+            'query' => $query,
+            'variables' => [
+                'query' => "sku:$sku"
+            ]
+        ]);
+
+        if ($client->failed()) {
+            $response = $client->json();
+            $err_message = array_key_exists("errors", $response) ? $response['errors']:"";
+            logger()->info($err_message);
+            throw new \Exception($err_message, 422);
+        } else {
+            $response = $client->json();
+            if (array_key_exists("errors", $response)) {
+                $err_message = $response['errors'][0]['message'];
+                throw new \Exception($err_message, 422);
+            } else {
+                if (empty($response['data']['products']['nodes'])) {
+                    return false;
+                }
+                return $response['data']['products']['nodes'][0];
+            }
+        }
     }
 }

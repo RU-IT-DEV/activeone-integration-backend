@@ -214,8 +214,11 @@ class OrdersController extends BaseController
                 );
             }
 
-    
-            return $this->sendResponse([], "Order {$order->shopify_order_name} is {$order->activeone_status}.");
+            $order->refresh();
+            $order->load([
+                'lineItems', 'shippingAddress', 'billingAddress', 'intellicareLog', 'prescriptions'
+            ]);
+            return $this->sendResponse($order, "Order {$order->shopify_order_name} is {$order->activeone_status}.");
         } catch (\Exception $e) {
             return $this->sendError($e->getMessage(), [], 400);
         }

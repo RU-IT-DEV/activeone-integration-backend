@@ -208,7 +208,7 @@ class OrdersController extends BaseController
             $order->activeone_status = $request->input('activeone_status');
             $order->save();
 
-            if (is_null($order->shopify_order_name)) {
+            if (is_null($order->shopify_order_name) && $order->activeone_status == "APPROVED") {
                 JobDispatcher::dispatch(
                     new ShopifyCreateOrderJob($order->id)
                 );

@@ -208,11 +208,17 @@ class OrdersController extends BaseController
             $order->activeone_status = $request->input('activeone_status');
             $order->save();
 
-            JobDispatcher::dispatch(
-                new ShopifyCreateOrderJob($order->id)
-            );
-    
-            return $this->sendResponse([], "Order {$order->shopify_order_name} is {$order->activeone_status}.");
+            if (is_null($order->shopify_order_name)) {
+                JobDispatcher::dispatch(
+                    new ShopifyCreateOrderJob($order->id)
+                );
+            }
+
+            $order->refresh();
+            $order->load([
+                'lineItems', 'shippingAddress', 'billingAddress', 'intellicareLog', 'prescriptions'
+            ]);
+            return $this->sendResponse($order, "Order {$order->shopify_order_name} is {$order->activeone_status}.");
         } catch (\Exception $e) {
             return $this->sendError($e->getMessage(), [], 400);
         }

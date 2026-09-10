@@ -136,11 +136,11 @@ class ProductController extends BaseController
                 'is_prescribed' => true,
                 'reason' => $obj_item['reason']
             ];
-            $order->lineItems()->create($orderDetail);
+            $lineItem = $order->lineItems()->create($orderDetail);
 
             return $this->sendResponse([
                 'type' => 'ADD',
-                'order_item' => $orderDetail
+                'order_item' => $lineItem
             ], "Successfuly added an item");
         } catch (Exception $e) {
             return $this->sendError($e->getMessage(), "Failed to save product.", 400);

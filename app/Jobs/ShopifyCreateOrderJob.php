@@ -38,7 +38,7 @@ class ShopifyCreateOrderJob implements ShouldQueue
 
         $this->shopifyHelper = new ShopifyHelper;
         $this->orderModel = $order;
-        $this->order = $this->shopifyHelper->transformOrderData($order);
+        $this->order = $this->shopifyHelper->job_transformOrderData($order);
 
         logger()->info("ShopifyCreateOrderJob is running...");
         $apiUrl = $this->shopifyHelper->apiUrl;
@@ -52,7 +52,7 @@ class ShopifyCreateOrderJob implements ShouldQueue
             'query' => $query,
             'variables' => [
                 'options' => [
-                    "inventoryBehaviour" => "BYPASS",
+                    "inventoryBehaviour" => "DECREMENT_OBEYING_POLICY",
                     "sendFulfillmentReceipt" => true,
                     "sendReceipt" => true
                 ],
@@ -80,8 +80,6 @@ class ShopifyCreateOrderJob implements ShouldQueue
                     $this->orderModel->save();
                     $this->orderModel->intellicareLog->receipt_number = str_replace("#", "", $order['name']);
                     $this->orderModel->intellicareLog->save();
-
-                    $this->clearCart();
 
                     JobDispatcher::dispatch(
                         new IntellicareCreateTransactionJob($this->orderModel->id)

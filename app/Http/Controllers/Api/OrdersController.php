@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Dispatchers\JobDispatcher;
 use App\Http\Controllers\Api\BaseController;
+use App\Helper\ShopifyHelper;
 use App\Jobs\IntellicareCreateTransactionJob;
+use App\Jobs\ShopifyCreateOrderJob;
 use App\Services\CustomCrypt;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,8 +19,7 @@ class OrdersController extends BaseController
         $perPage = $request->input('itemsPerPage', 10);
         $search = $request->input('search', null);
         $sortBy = $request->input('sortBy', []);
-        $orders = Order::with(['lineItems', 'shippingAddress', 'billingAddress', 'intellicareLog', 'prescriptions'])
-            ->where('shopify_order_name', '!=', null);
+        $orders = Order::with(['lineItems', 'shippingAddress', 'billingAddress', 'intellicareLog', 'prescriptions']);
 
         if ($search) {
             $orders->where(function ($query) use ($search) {
@@ -40,6 +41,13 @@ class OrdersController extends BaseController
         $orders = $orders->paginate($perPage);
 
         return $this->sendResponse($orders, "Orders retrieved successfully.");
+    }
+
+    public function show(Request $request, Order $order) 
+    {
+        $order->load(['lineItems', 'shippingAddress', 'billingAddress', 'intellicareLog', 'prescriptions']);
+        
+        return $this->sendResponse($order, "Order {$order->id} is retrieved");
     }
     public function store(Request $request)
     {
@@ -80,7 +88,7 @@ class OrdersController extends BaseController
                 'totalAmount' => $reqData['totalAmount'],
                 'test' => config('app.env') !== 'production', 
                 'intellicare_status' => 'TRXN_CREATE', 
-                'shopify_status' => 'PENDING',
+                'shopify_status' => 'FOR_VERIFICATION',
                 'activeone_status' => 'TRXN_CREATED'
             ]);
             $address = (object) $reqData['address'];
@@ -196,10 +204,21 @@ class OrdersController extends BaseController
         ]);
 
         try {
+            $order->shopify_status = "PENDING";
             $order->activeone_status = $request->input('activeone_status');
             $order->save();
-    
-            return $this->sendResponse([], "Order {$order->shopify_order_name} is {$order->activeone_status}.");
+
+            if (is_null($order->shopify_order_name)) {
+                JobDispatcher::dispatch(
+                    new ShopifyCreateOrderJob($order->id)
+                );
+            }
+
+            $order->refresh();
+            $order->load([
+                'lineItems', 'shippingAddress', 'billingAddress', 'intellicareLog', 'prescriptions'
+            ]);
+            return $this->sendResponse($order, "Order {$order->shopify_order_name} is {$order->activeone_status}.");
         } catch (\Exception $e) {
             return $this->sendError($e->getMessage(), [], 400);
         }

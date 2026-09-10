@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\OrderPrescriptionController;
 use App\Http\Controllers\Api\OrdersController;
 use App\Http\Controllers\Api\ProcessJobsController;
 use App\Http\Controllers\Api\Shopify\CustomerController;
+use App\Http\Controllers\Api\Shopify\ProductController;
 use App\Http\Controllers\Api\UsersController;
 use Illuminate\Support\Facades\Route;
 
@@ -52,7 +53,16 @@ Route::group(['namespace' => 'Api', 'middleware' => ['cors']], function () {
 
     Route::prefix('admin')->group(function () {
         Route::post('login-with-msal', [AuthController::class, 'verifyAzureToken']);
-        Route::get('refresh-token', [AuthController::class, 'refreshToken'])->middleware('auth:sanctum');
+
+        Route::middleware('auth:sanctum')->group(function () {
+            Route::get('refresh-token', [AuthController::class, 'refreshToken']);
+            Route::get('orders/{order}/product', [ProductController::class, 'show']);
+            Route::patch('orders/{order}/product/{orderDetail}', [ProductController::class, 'update']);
+
+            Route::get('orders/{order}', [OrdersController::class, 'show']);
+            Route::post('orders/{order}/product', [ProductController::class, 'store']);
+            Route::delete('orders/{order}/product/{orderDetail}', [ProductController::class, 'remove']);
+        });
     });
 
     // Route::post('cart-session', []);

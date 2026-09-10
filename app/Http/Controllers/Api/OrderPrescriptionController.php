@@ -45,10 +45,7 @@ class OrderPrescriptionController extends BaseController
             // Runs ONLY if the outer transaction succeeds completely
             DB::afterCommit(function () use ($order) {
                 $shopifyHelper = new ShopifyHelper();
-                $shopifyHelper
-                    ->transformOrderData($order)
-                    ->orderCreate($order)
-                    ->clearCart($order);
+                $shopifyHelper->clearCart($order);
             });
                 
             $order->refresh();

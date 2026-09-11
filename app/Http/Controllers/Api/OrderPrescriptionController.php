@@ -8,13 +8,15 @@ use App\Jobs\ShopifyCreateOrderJob;
 use App\Http\Controllers\Api\BaseController;
 use App\Models\Order;
 use App\Services\FileUploadService;
+use App\Services\OrderLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class OrderPrescriptionController extends BaseController
 {
-    public function store(Request $request, Order $order, FileUploadService $fileUplService)
-    {
+    public function store(Request $request, Order $order, FileUploadService $fileUplService,
+        OrderLogService $orderLogService
+    ) {
         $files = $request->file('attachments', []);
 
         $this->validate($request, [
@@ -42,6 +44,10 @@ class OrderPrescriptionController extends BaseController
             }
             DB::commit();
 
+            $order->load(['prescriptions' => function ($query) {
+                return $query->select(['order_id', 'file_path', 'id']);
+            }]);
+            $orderLogService->update($order->id, $order);
             // Runs ONLY if the outer transaction succeeds completely
             DB::afterCommit(function () use ($order) {
                 $shopifyHelper = new ShopifyHelper();

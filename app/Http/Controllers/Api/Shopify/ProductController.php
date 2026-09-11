@@ -6,6 +6,7 @@ use App\Helper\ShopifyHelper;
 use App\Http\Controllers\Api\BaseController;
 use App\Models\Order;
 use App\Models\OrderDetails;
+use App\Services\OrderLogService;
 use Exception;
 use Illuminate\Http\Request;
 
@@ -75,8 +76,11 @@ class ProductController extends BaseController
         }
     }
     
-    public function store(Request $request, Order $order)
-    {
+    public function store(
+        Request $request, 
+        Order $order, 
+        OrderLogService $orderLogService
+    ) {
         $this->validate($request, [
             'id' => 'required',
             'title' => 'required|string',
@@ -138,6 +142,8 @@ class ProductController extends BaseController
             ];
             $lineItem = $order->lineItems()->create($orderDetail);
 
+            $orderLogService->orderDetails->store($lineItem->id, $lineItem);
+
             return $this->sendResponse([
                 'type' => 'ADD',
                 'order_item' => $lineItem
@@ -147,8 +153,12 @@ class ProductController extends BaseController
         }
     }
 
-    public function update(Request $request, Order $order, OrderDetails $orderDetail)
-    {
+    public function update(
+        Request $request, 
+        Order $order, 
+        OrderDetails $orderDetail, 
+        OrderLogService $orderLogService
+    ) {
         $this->validate($request, [
             'id' => 'required',
             'dbExistId' => 'required|exists:order_details,id',
@@ -167,16 +177,22 @@ class ProductController extends BaseController
                 'reason' => $data['reason']
             ]);
 
+            $orderLogService->orderDetails->update($orderDetail->id, $orderDetail);
+
             return $this->sendResponse($orderDetail, "Success updated the product.");
         } catch (Exception $e) {
             return $this->sendError($e->getMessage(), [], 400);
         }
     }
 
-    public function remove(Request $request, Order $order, OrderDetails $orderDetail)
-    {
+    public function remove(
+        Request $request, 
+        Order $order, 
+        OrderDetails $orderDetail, 
+        OrderLogService $orderLogService
+    ) {
+        $orderLogService->orderDetails->delete($orderDetail->id, $orderDetail);
         $orderDetail->delete();
-
         return $this->sendResponse([], "Item removed");
     }
 }

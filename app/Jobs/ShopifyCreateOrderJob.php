@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Dispatchers\JobDispatcher;
 use App\Helper\ShopifyHelper;
 use App\Models\Order;
+use App\Services\OrderLogService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -29,6 +30,7 @@ class ShopifyCreateOrderJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $orderLogService = new OrderLogService;
         $order = Order::with([
             'lineItems',
             'shippingAddress',
@@ -45,6 +47,13 @@ class ShopifyCreateOrderJob implements ShouldQueue
         $query = file_get_contents(
             app_path('Helper/GraphQL/Mutations/OrderCreate.graphql')
         );
+
+        $orderLogService->shopify->createShopifyCall($this->orderModel->id, [
+            'httpRequest' => "$apiUrl/admin/api/2026-07/graphql.json",
+            'data' => [
+                'order_id' => $this->orderModel->id
+            ]
+        ]);
 
         $client = Http::withHeaders([
             'X-Shopify-Access-Token' => $this->shopifyHelper->x_access_token
@@ -73,13 +82,24 @@ class ShopifyCreateOrderJob implements ShouldQueue
                 $resp_data = $response['data'];
                 $orderCreate = $resp_data['orderCreate'];
                 if (count($orderCreate['userErrors']) > 0) {
+                    $this->orderModel->shopify_status = "ORDER_ERR";
+                    $this->orderModel->save();
+                    $orderLogService->update($this->orderModel->id, [
+                        'shopify_status' => "ORDER_ERR",
+                    ])->shopify->createShopifyError($this->orderModel->id, "Shopify didn't create your order.");
                     throw new \Exception($resp_data['userErrors'], 1);
                 } else {
                     $order = $resp_data['orderCreate']['order'];
+                    $this->orderModel->shopify_status = "SUCCESS";
                     $this->orderModel->shopify_order_name = $order['name'];
                     $this->orderModel->save();
                     $this->orderModel->intellicareLog->receipt_number = str_replace("#", "", $order['name']);
                     $this->orderModel->intellicareLog->save();
+
+                    $orderLogService->update($this->orderModel->id, [
+                        'shopify_order_name' => $order['name'],
+                        'shopify_status' => "SUCCESS",
+                    ]);
 
                     JobDispatcher::dispatch(
                         new IntellicareCreateTransactionJob($this->orderModel->id)

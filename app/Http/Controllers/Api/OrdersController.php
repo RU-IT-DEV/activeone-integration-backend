@@ -8,6 +8,7 @@ use App\Helper\ShopifyHelper;
 use App\Jobs\IntellicareCreateTransactionJob;
 use App\Jobs\ShopifyCreateOrderJob;
 use App\Services\CustomCrypt;
+use App\Services\OrderLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Order;
@@ -49,7 +50,7 @@ class OrdersController extends BaseController
         
         return $this->sendResponse($order, "Order {$order->id} is retrieved");
     }
-    public function store(Request $request)
+    public function store(Request $request, OrderLogService $orderLogService)
     {
         $reqData = $request->all();
 
@@ -172,6 +173,8 @@ class OrdersController extends BaseController
             return $order;
         });
 
+        $orderLogService->store($order->id, $order);
+
         $response = [
             'id' => $order->id,
             'customer_id' => $order->customer_id,
@@ -195,7 +198,7 @@ class OrdersController extends BaseController
         // ])->toArray();
     }
 
-    public function update(Request $request, Order $order) {
+    public function update(Request $request, Order $order, OrderLogService $orderLogService) {
         $this->validate($request, [
             'activeone_status' => 'required|in:APPROVED,REJECTED'
         ], [
@@ -204,6 +207,9 @@ class OrdersController extends BaseController
         ]);
 
         try {
+            if (in_array($order->activeone_status, ['APPROVED','REJECTED'])) {
+                throw new \Exception("You cannot change status of an order twice. This order has already been {$order->activeone_status}.", 400);
+            }
             $order->shopify_status = "PENDING";
             $order->activeone_status = $request->input('activeone_status');
             $order->save();
@@ -218,6 +224,13 @@ class OrdersController extends BaseController
             $order->load([
                 'lineItems', 'shippingAddress', 'billingAddress', 'intellicareLog', 'prescriptions'
             ]);
+
+            if ($request->input('activeone_status') == 'APPROVED') {
+                $orderLogService->approve($order->id, $order);
+            } else if ($request->input('activeone_status') == 'REJECTED') {
+                $order->reason = $request->input('reason');
+                $orderLogService->reject($order->id, $order);
+            }
             return $this->sendResponse($order, "Order {$order->shopify_order_name} is {$order->activeone_status}.");
         } catch (\Exception $e) {
             return $this->sendError($e->getMessage(), [], 400);

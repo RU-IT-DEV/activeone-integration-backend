@@ -131,6 +131,18 @@ class OrderLogService
     public $prescription;
     public $shopify;
 
+    public $arr_reject_reason_email_msg = [
+        'DUPLICATE ORDER' => "This ordered was cancelled due to duplication.",
+        'INCOMPLETE RX DETAILS' => "This order was cancelled due to incomplete prescirptipn details. Please review uploaded prescription, and reoder.",
+        'MISMATCH: PRODUCT' => "This ordered was cancelled due to wrong generic name / brand name placed. Please double check order placed vs prescription, and reoder.",
+        'MISMATCH: DOSAGE' => "This ordered was cancelled due to mismatch of dosage. Please double check order placed vs prescription, and reoder.",
+        'MISMATCH: QUANTITY' => "This ordered was cancelled due to mismatch of quantity. Please double check order placed vs prescription, and reoder.",
+        'NO/WRONG RX ATTACHED' => "This order was cancelled due to wrong attached prescription. Please review uploaded prescription, and reoder.",
+        'RX > 30 DAYS DATE' => "This order exceeds the 30 day validity of prescription. Please secure a new prescription from your doctor.",
+        'RX UTILIZED' => "This order was cancelled since prescription has been used to buy from us and full qty dispensed",
+        'RX EXPIRED > 1 YEAR DATE' => "We cannot proceed with the order because prescription exceeds 1 year validity. Please secure a new prescription from your doctor.",
+    ];
+
     public function __construct()
     {
         $this->intellicare = new IntellicareLogService();

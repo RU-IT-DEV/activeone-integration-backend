@@ -18,4 +18,9 @@ class OrderLog extends Model
     public $casts = [
         'value' => 'array'
     ];
+
+    public function order()
+    {
+        return $this->belongsTo(Order::class, 'id', 'auditable_id')->where('table', 'orders');
+    }
 }

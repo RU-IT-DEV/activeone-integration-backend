@@ -4,9 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Dispatchers\JobDispatcher;
 use App\Http\Controllers\Api\BaseController;
-use App\Helper\ShopifyHelper;
 use App\Jobs\IntellicareCreateTransactionJob;
 use App\Jobs\ShopifyCreateOrderJob;
+use App\Mail\PharmaRejectionMail;
+use Illuminate\Support\Facades\Mail;
 use App\Services\CustomCrypt;
 use App\Services\OrderLogService;
 use Illuminate\Http\Request;
@@ -46,7 +47,17 @@ class OrdersController extends BaseController
 
     public function show(Request $request, Order $order) 
     {
-        $order->load(['lineItems', 'shippingAddress', 'billingAddress', 'intellicareLog', 'prescriptions']);
+        $order->load([
+            'lineItems', 'shippingAddress', 'billingAddress', 'intellicareLog', 'prescriptions', 
+            'rejected' => function ($query) {
+                return $query->select(
+                    'auditable_id', 
+                    'value', 
+                    'created_at',
+                    DB::raw("JSON_EXTRACT(value, '$.order_reason') as reason")
+                );
+            }
+        ]);
         
         return $this->sendResponse($order, "Order {$order->id} is retrieved");
     }
@@ -207,6 +218,7 @@ class OrdersController extends BaseController
         ]);
 
         try {
+            DB::beginTransaction();
             if (in_array($order->activeone_status, ['APPROVED','REJECTED'])) {
                 throw new \Exception("You cannot change status of an order twice. This order has already been {$order->activeone_status}.", 400);
             }
@@ -228,11 +240,22 @@ class OrdersController extends BaseController
             if ($request->input('activeone_status') == 'APPROVED') {
                 $orderLogService->approve($order->id, $order);
             } else if ($request->input('activeone_status') == 'REJECTED') {
-                $order->reason = $request->input('reason');
+                $order->order_reason = $request->input('reason');
                 $orderLogService->reject($order->id, $order);
+                
+                $mail_msg = $order->order_reason;
+
+                if (isset($orderLogService->arr_reject_reason_email_msg[$order->order_reason])) {
+                    $mail_msg = $orderLogService->arr_reject_reason_email_msg[$order->order_reason];
+                }
+                Mail::to($order->customer_email)
+                    ->send(new PharmaRejectionMail($order, $mail_msg));
             }
+
+            DB::commit();
             return $this->sendResponse($order, "Order {$order->shopify_order_name} is {$order->activeone_status}.");
         } catch (\Exception $e) {
+            DB::rollback();
             return $this->sendError($e->getMessage(), [], 400);
         }
     }

@@ -5,7 +5,11 @@ namespace App\Http\Controllers\Api;
 use App\Dispatchers\JobDispatcher;
 use App\Http\Controllers\Api\BaseController;
 use App\Jobs\IntellicareCreateTransactionJob;
+use App\Jobs\ShopifyCreateOrderJob;
+use App\Mail\PharmaRejectionMail;
+use Illuminate\Support\Facades\Mail;
 use App\Services\CustomCrypt;
+use App\Services\OrderLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Order;
@@ -17,8 +21,7 @@ class OrdersController extends BaseController
         $perPage = $request->input('itemsPerPage', 10);
         $search = $request->input('search', null);
         $sortBy = $request->input('sortBy', []);
-        $orders = Order::with(['lineItems', 'shippingAddress', 'billingAddress', 'intellicareLog', 'prescriptions'])
-            ->where('shopify_order_name', '!=', null);
+        $orders = Order::with(['lineItems', 'shippingAddress', 'billingAddress', 'intellicareLog', 'prescriptions']);
 
         if ($search) {
             $orders->where(function ($query) use ($search) {
@@ -41,7 +44,24 @@ class OrdersController extends BaseController
 
         return $this->sendResponse($orders, "Orders retrieved successfully.");
     }
-    public function store(Request $request)
+
+    public function show(Request $request, Order $order) 
+    {
+        $order->load([
+            'lineItems', 'shippingAddress', 'billingAddress', 'intellicareLog', 'prescriptions', 
+            'rejected' => function ($query) {
+                return $query->select(
+                    'auditable_id', 
+                    'value', 
+                    'created_at',
+                    DB::raw("JSON_EXTRACT(value, '$.order_reason') as reason")
+                );
+            }
+        ]);
+        
+        return $this->sendResponse($order, "Order {$order->id} is retrieved");
+    }
+    public function store(Request $request, OrderLogService $orderLogService)
     {
         $reqData = $request->all();
 
@@ -80,7 +100,7 @@ class OrdersController extends BaseController
                 'totalAmount' => $reqData['totalAmount'],
                 'test' => config('app.env') !== 'production', 
                 'intellicare_status' => 'TRXN_CREATE', 
-                'shopify_status' => 'PENDING',
+                'shopify_status' => 'FOR_VERIFICATION',
                 'activeone_status' => 'TRXN_CREATED'
             ]);
             $address = (object) $reqData['address'];
@@ -164,6 +184,8 @@ class OrdersController extends BaseController
             return $order;
         });
 
+        $orderLogService->store($order->id, $order);
+
         $response = [
             'id' => $order->id,
             'customer_id' => $order->customer_id,
@@ -187,7 +209,7 @@ class OrdersController extends BaseController
         // ])->toArray();
     }
 
-    public function update(Request $request, Order $order) {
+    public function update(Request $request, Order $order, OrderLogService $orderLogService) {
         $this->validate($request, [
             'activeone_status' => 'required|in:APPROVED,REJECTED'
         ], [
@@ -196,11 +218,44 @@ class OrdersController extends BaseController
         ]);
 
         try {
+            DB::beginTransaction();
+            if (in_array($order->activeone_status, ['APPROVED','REJECTED'])) {
+                throw new \Exception("You cannot change status of an order twice. This order has already been {$order->activeone_status}.", 400);
+            }
+            $order->shopify_status = "PENDING";
             $order->activeone_status = $request->input('activeone_status');
             $order->save();
-    
-            return $this->sendResponse([], "Order {$order->shopify_order_name} is {$order->activeone_status}.");
+
+            if (is_null($order->shopify_order_name) && $order->activeone_status == "APPROVED") {
+                JobDispatcher::dispatch(
+                    new ShopifyCreateOrderJob($order->id)
+                );
+            }
+
+            $order->refresh();
+            $order->load([
+                'lineItems', 'shippingAddress', 'billingAddress', 'intellicareLog', 'prescriptions'
+            ]);
+
+            if ($request->input('activeone_status') == 'APPROVED') {
+                $orderLogService->approve($order->id, $order);
+            } else if ($request->input('activeone_status') == 'REJECTED') {
+                $order->order_reason = $request->input('reason');
+                $orderLogService->reject($order->id, $order);
+                
+                $mail_msg = $order->order_reason;
+
+                if (isset($orderLogService->arr_reject_reason_email_msg[$order->order_reason])) {
+                    $mail_msg = $orderLogService->arr_reject_reason_email_msg[$order->order_reason];
+                }
+                Mail::to($order->customer_email)
+                    ->send(new PharmaRejectionMail($order, $mail_msg));
+            }
+
+            DB::commit();
+            return $this->sendResponse($order, "Order {$order->shopify_order_name} is {$order->activeone_status}.");
         } catch (\Exception $e) {
+            DB::rollback();
             return $this->sendError($e->getMessage(), [], 400);
         }
     }

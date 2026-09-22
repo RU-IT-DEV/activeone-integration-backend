@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Helper\IntellicareHelper;
 use App\Models\Order;
 use App\Services\FileUploadService;
+use App\Services\OrderLogService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -33,6 +34,7 @@ class IntellicareCreateTransactionJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $orderLogService = new OrderLogService();
         $order = Order::with([
             'intellicareLog.medicines',
             'intellicareLog.prescriptions'
@@ -56,6 +58,11 @@ class IntellicareCreateTransactionJob implements ShouldQueue
         }
 
         try {
+            $url = config('services.intellicare.url') . '/transaction/create';
+            $orderLogService->intellicare->createTransactionCall($order->intellicareLog->id, [
+                'httpRequest' => $url,
+                'data' => $this->transaction
+            ]);
             $client = Http::withToken(
                 $this->intellicareHelper->access_key
             )->post(config('services.intellicare.url') . '/transaction/create', $request);
@@ -72,6 +79,8 @@ class IntellicareCreateTransactionJob implements ShouldQueue
                 $this->orderModel->intellicareLog->loa_date = $response['data']['loa_date'];
                 $this->orderModel->intellicareLog->save();
 
+                $orderLogService->update($order->id, $this->orderModel);
+
                 $this->uploadPrescriptions();
             }
         } catch (\Exception $e) {
@@ -81,6 +90,9 @@ class IntellicareCreateTransactionJob implements ShouldQueue
             } else {
                 $this->orderModel->intellicare_status = "TRXN_ERROR";
                 $this->orderModel->save();
+                $orderLogService
+                    ->update($this->orderModel->id, $this->orderModel)
+                    ->intellicare->createTransactionError($this->orderModel->intellicareLog->id, $e->getMessage());
                 \Log::error('Intellicare createTransaction failed: ' . $e->getMessage());
                 throw new \Exception('Intellicare createTransaction failed: ' . $e->getMessage(), 400);
             }
@@ -89,6 +101,7 @@ class IntellicareCreateTransactionJob implements ShouldQueue
 
     private function uploadPrescriptions ()
     {
+        $orderLogService = new OrderLogService();
         $fileUplService = new FileUploadService();
 
         $intellicareLog = $this->orderModel->intellicareLog;
@@ -123,11 +136,18 @@ class IntellicareCreateTransactionJob implements ShouldQueue
                     $newFileName
                 );
             }
-
-            $client = $request->post(config('services.intellicare.url') . '/prescription/upload');
+            $url = config('services.intellicare.url') . '/prescription/upload';
+            $orderLogService->intellicare->createTransactionCall($intellicareLog->id, [
+                'httpRequest' => $url,
+                'data' => $request
+            ]);
+            $client = $request->post($url);
             $response = $this->intellicareHelper->clientResponse($client->json());
             $this->orderModel->intellicare_status = "SUCCESS";
             $this->orderModel->save();
+            $orderLogService->update($this->orderModel->id, [
+                'intellicare_status' => "SUCCESS"
+            ]);
             // logger()->info("Response from upload prescription: ", $client->json());
 
             // Always close the streams
@@ -139,6 +159,9 @@ class IntellicareCreateTransactionJob implements ShouldQueue
         } catch (\Exception $e) {
             $this->orderModel->intellicare_status = "TRXN_PRX_ERROR";
             $this->orderModel->save();
+            $orderLogService->update($this->orderModel->id, [
+                'intellicare_status' => "TRXN_PRX_ERROR"
+            ])->intellicare->createTransactionError($intellicareLog->id, $e->getMessage());
             logger()->error('Intellicare uploadPrescription failed: ' . $e->getMessage());
             throw new \Exception('Intellicare uploadPrescription failed: ' . $e->getMessage(), 400);
         }

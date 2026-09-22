@@ -20,10 +20,12 @@ class FileSystemController extends Controller
 
         $stream = $object->downloadAsStream();
         $content = $stream->getContents();
+        $size = $object->info()['size'] ?? 0;
         $mime = $object->info()['contentType'] ?? 'application/octet-stream';
 
         return response($content, 200)
             ->header('Content-Type', $mime)
-            ->header('Content-Disposition', 'inline');
+            ->header('Content-Disposition', 'inline')
+            ->header('Content-Length', $size);
     }
 }

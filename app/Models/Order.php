@@ -38,4 +38,12 @@ class Order extends Model
     {
         return $this->hasMany(OrderPrescription::class, 'order_id');
     }
+
+    public function rejected()
+    {
+        return $this->hasOne(OrderLog::class, 'auditable_id')
+            ->where('table', 'orders')
+            ->where('action', 'reject')
+            ->orderBy('id', 'DESC');
+    }
 }

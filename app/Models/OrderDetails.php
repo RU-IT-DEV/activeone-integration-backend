@@ -11,7 +11,7 @@ class OrderDetails extends Model
         'image_url', 'quantity', 'sku',
         'code', 'title', 'type', 'variantTitle', 'unit',
         'amount', 'vat_amount', 'no_vat_amount', 'taxable',
-        'is_prescribed'
+        'is_prescribed', 'reason'
     ];
 
     public function order()

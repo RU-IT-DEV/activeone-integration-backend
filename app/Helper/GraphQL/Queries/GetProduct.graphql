@@ -1,0 +1,37 @@
+query GetProducts($query: String!) {
+  products(first: 1, query: $query) {
+    nodes {
+      id
+      title
+      handle
+      category { name }
+      featuredImage {
+        url
+        altText
+      }
+      variants (first: 10) { 
+        nodes {
+          title
+          displayName
+          sku
+          taxable
+          price
+          selectedOptions {
+            name
+            value
+          }
+        }
+      }
+      metafields (first: 10) {
+        ... on MetafieldConnection {
+          nodes {
+            namespace
+            key
+            value
+            type
+          }
+        }
+      }
+    }
+  }
+}

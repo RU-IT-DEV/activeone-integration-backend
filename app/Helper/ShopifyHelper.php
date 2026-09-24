@@ -102,7 +102,13 @@ class ShopifyHelper
                     'key' => 'contract',
                     'value' => $data['contract'],
                     'type' => 'single_line_text_field'
-                ]
+                ],
+                [
+                    'namespace' => 'custom',
+                    'key' => 'personal_email_address',
+                    'value' => $data['email_personal'],
+                    'type' => 'single_line_text_field'
+                ],
             ]
         ];
 

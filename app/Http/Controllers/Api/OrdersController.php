@@ -21,7 +21,8 @@ class OrdersController extends BaseController
         $perPage = $request->input('itemsPerPage', 10);
         $search = $request->input('search', null);
         $sortBy = $request->input('sortBy', []);
-        $orders = Order::with(['lineItems', 'shippingAddress', 'billingAddress', 'intellicareLog', 'prescriptions']);
+        $orders = Order::with(['lineItems', 'shippingAddress', 'billingAddress', 'intellicareLog', 'prescriptions'])
+            ->where('shopify_status', '!=', 'TRXN_ERROR');
 
         if ($search) {
             $orders->where(function ($query) use ($search) {
@@ -88,120 +89,126 @@ class OrdersController extends BaseController
             // Add more validation rules as needed
         ]);
 
-        $order = DB::transaction(function () use ($reqData) {
-            $customer = (object) $reqData['customer'];
-
-            $order = Order::create([
-                'customer_id' => $customer->id,
-                'customer_email' => $customer->email,
-                'customer_name' => "{$customer->firstName} {$customer->lastName}",
-                'shopify_cart_id' => $reqData['id'],
-                'financialStatus' => 'PENDING', 
-                'totalAmount' => $reqData['totalAmount'],
-                'test' => config('app.env') !== 'production', 
-                'intellicare_status' => 'TRXN_CREATE', 
-                'shopify_status' => 'FOR_VERIFICATION',
-                'activeone_status' => 'TRXN_CREATED'
-            ]);
-            $address = (object) $reqData['address'];
-            $lineItems = $reqData['edges'];
-            $orderDetails = [];
-            foreach ($lineItems as $key => $item) {
-                $obj_item = (object) $item;
-                $image = null; 
-                $category = null;
-                $taxable = filter_var(
-                    $obj_item->merchandise['taxable'],
-                    FILTER_VALIDATE_BOOLEAN
-                );
-
-                if (isset($obj_item->merchandise['image'])) {
-                    if (!is_null($obj_item->merchandise['image'])) {
-                        $image = $obj_item->merchandise['image']['url'];
+        try {
+            $order = DB::transaction(function () use ($reqData) {
+                $customer = (object) $reqData['customer'];
+    
+                $order = Order::create([
+                    'customer_id' => $customer->id,
+                    'customer_email' => $customer->email,
+                    'customer_name' => "{$customer->firstName} {$customer->lastName}",
+                    'shopify_cart_id' => $reqData['id'],
+                    'financialStatus' => 'PENDING', 
+                    'totalAmount' => $reqData['totalAmount'],
+                    'test' => config('app.env') !== 'production', 
+                    'intellicare_status' => 'TRXN_CREATE', 
+                    'shopify_status' => 'FOR_VERIFICATION',
+                    'activeone_status' => 'TRXN_CREATED'
+                ]);
+                $address = (object) $reqData['address'];
+                $lineItems = $reqData['edges'];
+                $orderDetails = [];
+                foreach ($lineItems as $key => $item) {
+                    $obj_item = (object) $item;
+                    $image = null; 
+                    $category = null;
+                    $taxable = filter_var(
+                        $obj_item->merchandise['taxable'],
+                        FILTER_VALIDATE_BOOLEAN
+                    );
+    
+                    if (isset($obj_item->merchandise['image'])) {
+                        if (!is_null($obj_item->merchandise['image'])) {
+                            $image = $obj_item->merchandise['image']['url'];
+                        }
                     }
+    
+                    if (array_key_exists('category', $obj_item->merchandise['product'])) {
+                        $category = $obj_item->merchandise['product']['category']['name'];
+                    }
+    
+                    if ($obj_item->quantity > 0) {
+                        $orderDetails[] = [
+                            'order_id' => $order->id,
+                            'shopify_productId' => $obj_item->merchandise['product']['id'], 
+                            'shopify_product_price' => $obj_item->merchandise['price']['amount'],
+                            'image_url' => $image,
+                            'quantity' => $obj_item->quantity, 
+                            'sku' => $obj_item->merchandise['sku'],
+                            'code' => $obj_item->merchandise['sku'], 
+                            'title' => $obj_item->merchandise['product']['title'], 
+                            'type' => $category, 
+                            'variantTitle' => $obj_item->merchandise['title'],
+                            'unit' => $obj_item->merchandise['selectedOptions'][0]['name'],
+                            'amount' => $obj_item->cost['totalAmount']['amount'], 
+                            'vat_amount' => $obj_item->cost['tax']['amount'], 
+                            'no_vat_amount' => $obj_item->cost['deductableToEmployee']['amount'], 
+                            'taxable' => $taxable,
+                            'is_prescribed' => true
+                        ];
+                    }
+    
                 }
-
-                if (array_key_exists('category', $obj_item->merchandise['product'])) {
-                    $category = $obj_item->merchandise['product']['category']['name'];
-                }
-
-                if ($obj_item->quantity > 0) {
-                    $orderDetails[] = [
-                        'order_id' => $order->id,
-                        'shopify_productId' => $obj_item->merchandise['product']['id'], 
-                        'shopify_product_price' => $obj_item->merchandise['price']['amount'],
-                        'image_url' => $image,
-                        'quantity' => $obj_item->quantity, 
-                        'sku' => $obj_item->merchandise['sku'],
-                        'code' => $obj_item->merchandise['sku'], 
-                        'title' => $obj_item->merchandise['product']['title'], 
-                        'type' => $category, 
-                        'variantTitle' => $obj_item->merchandise['title'],
-                        'unit' => $obj_item->merchandise['selectedOptions'][0]['name'],
-                        'amount' => $obj_item->cost['totalAmount']['amount'], 
-                        'vat_amount' => $obj_item->cost['tax']['amount'], 
-                        'no_vat_amount' => $obj_item->cost['deductableToEmployee']['amount'], 
-                        'taxable' => $taxable,
-                        'is_prescribed' => true
-                    ];
-                }
-
-            }
-            $order->lineItems()->createMany($orderDetails);
-
-            $addressData = [
-                'address1' => $address->address,
-                'address2' => "{$address->address2} {$address->barangay}",
-                'city' => $address->city,
-                'countryCode' => $address->country,
-                'provinceCode' => $address->region,
-                'zip' => $address->postalCode,
-                'firstName' => $customer->firstName,
-                'lastName' => $customer->lastName,
-                'phone' => $address->phone ?? null,
+                $order->lineItems()->createMany($orderDetails);
+    
+                $addressData = [
+                    'address1' => $address->address,
+                    'address2' => "{$address->address2} {$address->barangay}",
+                    'city' => $address->city,
+                    'countryCode' => $address->country,
+                    'provinceCode' => $address->region,
+                    'zip' => $address->postalCode,
+                    'firstName' => $customer->firstName,
+                    'lastName' => $customer->lastName,
+                    'phone' => $address->phone ?? null,
+                ];
+    
+                $order->shippingAddress()->create($addressData);
+                $order->billingAddress()->create($addressData);
+    
+                $order->intellicareLog()->create([
+                    'order_id' => $order->id,
+                    'account_no' => $customer->account_no,
+                    'first_name' => $customer->firstName,
+                    'last_name' => $customer->lastName,
+                    'birth_date' => $customer->birth_date,
+                    'contract' => $customer->contract,
+                    'branch' => 'NCR-PS',
+                    'prccode' => $reqData['prccode'],
+                    'diagnosis' => explode(",", $reqData['diagnosis']),
+                    'prescription_location' => ''
+                ]);
+    
+                $order->load([
+                    'lineItems', 'shippingAddress','billingAddress','intellicareLog'
+                ])->toArray();
+                
+                return $order;
+            });
+    
+            $orderLogService->store($order->id, $order);
+    
+            $response = [
+                'id' => $order->id,
+                'customer_id' => $order->customer_id,
+                'customer_email' => $order->customer_email,
+                'customer_name' => $order->customer_name,
+                'shopify_cart_id' => $order->shopify_cart_id,
+                'financialStatus' => $order->financialStatus,
+                'totalAmount' => $order->totalAmount,
+                'test' => $order->test,
+                'intellicare_status' => $order->intellicare_status,
+                'shopify_status' => $order->shopify_status,
+                'activeone_status' => $order->activeone_status,
+                'isp' => $order->intellicareLog
             ];
-
-            $order->shippingAddress()->create($addressData);
-            $order->billingAddress()->create($addressData);
-
-            $order->intellicareLog()->create([
-                'order_id' => $order->id,
-                'account_no' => $customer->account_no,
-                'first_name' => $customer->firstName,
-                'last_name' => $customer->lastName,
-                'birth_date' => $customer->birth_date,
-                'contract' => $customer->contract,
-                'branch' => 'NCR-PS',
-                'prccode' => $reqData['prccode'],
-                'diagnosis' => explode(",", $reqData['diagnosis']),
-                'prescription_location' => ''
-            ]);
-
-            $order->load([
-                'lineItems', 'shippingAddress','billingAddress','intellicareLog'
-            ])->toArray();
-            
-            return $order;
-        });
-
-        $orderLogService->store($order->id, $order);
-
-        $response = [
-            'id' => $order->id,
-            'customer_id' => $order->customer_id,
-            'customer_email' => $order->customer_email,
-            'customer_name' => $order->customer_name,
-            'shopify_cart_id' => $order->shopify_cart_id,
-            'financialStatus' => $order->financialStatus,
-            'totalAmount' => $order->totalAmount,
-            'test' => $order->test,
-            'intellicare_status' => $order->intellicare_status,
-            'shopify_status' => $order->shopify_status,
-            'activeone_status' => $order->activeone_status,
-            'isp' => $order->intellicareLog
-        ];
-
-        return $this->sendResponse($response, "Order has been added.");
+    
+            return $this->sendResponse($response, "Order has been added.");
+        } catch (\Exception $e) {
+            logger()->error($e->getMessage());
+            DB::rollback();
+            return $this->sendError($e->getMessage(), [], 500);
+        }
 
         // $order = Order::where('intellicare_status', 'TRXN_SENT')->first();
         // $order->load([

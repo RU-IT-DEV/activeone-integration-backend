@@ -40,11 +40,11 @@ class ProductController extends BaseController
             }));
 
             if (count($product_type) > 0) {
-                $str_typeValue = $product_type[0]['value'];
-                if (str_contains($str_typeValue, 'OTC')) {
+                $str_typeValue = strtolower($product_type[0]['value']);
+                if (str_contains($str_typeValue, 'otc')) {
                     $product['category']['name'] = "OTC";
                 } else {
-                    $product['category']['name'] = empty($str_typeValue) ? 'OTC':$str_typeValue;
+                    $product['category']['name'] = empty($str_typeValue) ? 'OTC':strtoupper($str_typeValue);
                 }
             }
 

@@ -21,8 +21,17 @@ class OrdersController extends BaseController
         $perPage = $request->input('itemsPerPage', 10);
         $search = $request->input('search', null);
         $sortBy = $request->input('sortBy', []);
-        $orders = Order::with(['lineItems', 'shippingAddress', 'billingAddress', 'intellicareLog', 'prescriptions'])
-            ->where('shopify_status', '!=', 'TRXN_ERROR');
+        $orders = Order::with([
+            'lineItems', 'shippingAddress', 'billingAddress', 'intellicareLog', 'prescriptions',
+            'statusUpdatedBy' => function ($query) {
+                return $query->select(
+                    'auditable_id', 
+                    'auditable_by',
+                    'created_at',
+                    DB::raw("JSON_EXTRACT(value, '$.order_reason') as reason")
+                );
+            }, 'statusUpdatedBy.user'
+        ])->where('shopify_status', '!=', 'TRXN_ERROR');
 
         if ($search) {
             $orders->where(function ($query) use ($search) {

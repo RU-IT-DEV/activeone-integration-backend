@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\OrderLog;
+use Illuminate\Support\Facades\Auth;
 
 class IntellicareLogService
 {
@@ -92,6 +93,7 @@ class OrderDetailService
         return OrderLog::create([
             'table' => 'order_details',
             'auditable_id' => $auditable_id,
+            'auditable_by' => Auth::user()->id,
             'action' => 'create',
             'status' => 1,
             'summary' => 'An item has been added to an order',
@@ -104,6 +106,7 @@ class OrderDetailService
         return OrderLog::create([
             'table' => 'order_details',
             'auditable_id' => $auditable_id,
+            'auditable_by' => Auth::user()->id,
             'action' => 'update',
             'status' => 1,
             'summary' => 'An order item has been updated',
@@ -116,6 +119,7 @@ class OrderDetailService
         return OrderLog::create([
             'table' => 'order_details',
             'auditable_id' => $auditable_id,
+            'auditable_by' => Auth::user()->id,
             'action' => 'delete',
             'status' => 1,
             'summary' => 'An order item has been deleted',
@@ -189,6 +193,7 @@ class OrderLogService
         OrderLog::create([
             'table' => 'orders',
             'auditable_id' => $auditable_id,
+            'auditable_by' => Auth::user()->id,
             'action' => 'approve',
             'status' => 1,
             'summary' => 'Order status has been updated to APPROVED.',
@@ -203,6 +208,7 @@ class OrderLogService
         OrderLog::create([
             'table' => 'orders',
             'auditable_id' => $auditable_id,
+            'auditable_by' => Auth::user()->id,
             'action' => 'reject',
             'status' => 1,
             'summary' => 'Order status has been updated to REJECTED.',

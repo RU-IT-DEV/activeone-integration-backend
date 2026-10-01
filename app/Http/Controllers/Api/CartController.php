@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Helper\IntellicareHelper;
 use App\Helper\ShopifyHelper;
 use App\Http\Controllers\Api\BaseController;
+use App\Models\ShopifyCheckoutSession;
 use Illuminate\Http\Request;
 
 class CartController extends BaseController
@@ -14,7 +15,9 @@ class CartController extends BaseController
         $data = $request->all();
 
         try {
-            $cart = $shopifyHelper->getCart($request->cartToken);
+            $session = ShopifyCheckoutSession::where('session', $request->cartToken)->first();
+
+            $cart = $shopifyHelper->getCart($session->cart_token);
 
             $lineItems = data_get($cart, 'data.cart.lines.edges', []);
 
@@ -63,6 +66,12 @@ class CartController extends BaseController
 
             $cart['data']['cart']['lines']['edges'] = $lineItems;
             $cart['data']['arr_med_diagnosis'] = $diagnosis;
+
+            if (is_null($cart['data']['buyerIdentity']['customer'])) {
+                $customer = $shopifyHelper->getCustomerDetails($session->shopify_customer_id);
+                $cart['data']['buyerIdentity']['customer'] = $customer;
+            }
+            
             $response = [
                 ...$cart['data']
             ];

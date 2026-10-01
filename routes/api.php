@@ -12,7 +12,6 @@ use App\Http\Controllers\Api\ProcessJobsController;
 use App\Http\Controllers\Api\Shopify\CustomerController;
 use App\Http\Controllers\Api\Shopify\ProductController;
 use App\Http\Controllers\Api\UsersController;
-use App\Http\Middleware\VerifyShopifyProxy;
 use Illuminate\Support\Facades\Route;
 
  
@@ -41,11 +40,6 @@ Route::group(['namespace' => 'Api', 'middleware' => ['cors']], function () {
     
     Route::post('order', [OrdersController::class, 'store']);
     Route::post('order/{order}/prescriptions', [OrderPrescriptionController::class, 'store']);
-
-    Route::get('/shopify/proxy/checkout', [
-        CustomerController::class,
-        'checkout',
-    ])->middleware(VerifyShopifyProxy::class);;
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('orders', [OrdersController::class, 'index']);

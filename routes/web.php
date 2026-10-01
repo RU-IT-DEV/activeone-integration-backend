@@ -2,6 +2,7 @@
 
 use App\Models\MemberClaims;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
 use App\Http\Controllers\GoogleAuthController;
 use App\Http\Controllers\Api\Shopify\CustomerController;
 use App\Http\Middleware\VerifyShopifyProxy;
@@ -46,7 +47,7 @@ Route::get('/shopify/proxy/{path?}', function (Request $request, $path = null) {
 // Route::get('/shopify/proxy/checkout', [
 //     CustomerController::class,
 //     'checkout',
-// ]);
+// ])->middleware(VerifyShopifyProxy::class);
 Route::get('/check-database', [DatabaseController::class, 'checkDatabaseConnection']);
 Route::get('/run-artisan/{command}', function ($command) {
     Artisan::call($command, ['--force' => true]);

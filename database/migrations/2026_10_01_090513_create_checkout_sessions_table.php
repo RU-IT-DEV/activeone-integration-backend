@@ -13,12 +13,21 @@ return new class extends Migration
     {
         Schema::create('checkout_sessions', function (Blueprint $table) {
             $table->id();
-            $table->string('token_hash');
+            $table->string('token', 64)->unique();
+
+            $table->string('shop');
             $table->string('shopify_customer_id');
-            $table->string('shopify_cart_token');
-            $table->datetime('expires_at');
-            $table->datetime('used_at');
+            $table->text('cart_token');
+
+            $table->timestamp('expires_at');
+            $table->timestamp('used_at')->nullable();
+
             $table->timestamps();
+
+            $table->index([
+                'shop',
+                'shopify_customer_id',
+            ]);
         });
     }
 

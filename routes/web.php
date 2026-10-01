@@ -33,22 +33,25 @@ Route::get('/login', function () {
    # Route::get('auth/google/call-back', [GoogleAuthController::class,'handleGoogleCallback']);
 
 #Test Database connection
-Route::get('/shopify/proxy/{path?}', function (Request $request, $path = null) {
-    return response()->json([
-        'success' => true,
-        'path' => $path,
-        'shop' => $request->query('shop'),
-        'customer_id' => $request->query('logged_in_customer_id'),
-        'cart_token' => $request->query('cart_token'),
-        'timestamp' => $request->query('timestamp'),
-        'signature' => $request->query('signature'),
-    ]);
-})->where('path', '.*')->middleware(VerifyShopifyProxy::class);
-// Route::get('/shopify/proxy/checkout', [
-//     CustomerController::class,
-//     'checkout',
-// ])->middleware(VerifyShopifyProxy::class);
+// Route::get('/shopify/proxy/{path?}', function (Request $request, $path = null) {
+//     return response()->json([
+//         'success' => true,
+//         'path' => $path,
+//         'shop' => $request->query('shop'),
+//         'customer_id' => $request->query('logged_in_customer_id'),
+//         'cart_token' => $request->query('cart_token'),
+//         'timestamp' => $request->query('timestamp'),
+//         'signature' => $request->query('signature'),
+//     ]);
+// })->where('path', '.*')->middleware(VerifyShopifyProxy::class);
+
+Route::get('/shopify/proxy/checkout', [
+    CustomerController::class,
+    'checkout',
+])->middleware(VerifyShopifyProxy::class);
+
 Route::get('/check-database', [DatabaseController::class, 'checkDatabaseConnection']);
+
 Route::get('/run-artisan/{command}', function ($command) {
     Artisan::call($command, ['--force' => true]);
     return "Command '{$command}' executed: " . Artisan::output();

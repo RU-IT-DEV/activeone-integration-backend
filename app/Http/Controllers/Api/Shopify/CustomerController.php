@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Shopify;
 
 use App\Helper\ShopifyHelper;
 use App\Http\Controllers\Api\BaseController;
+use App\Models\ShopifyCheckoutSession;
 use Illuminate\Http\Request;
 
 class CustomerController extends BaseController
@@ -17,12 +18,29 @@ class CustomerController extends BaseController
 
     public function checkout(Request $request)
     {
-        return response()->json([
+        $customerId = $request->query('logged_in_customer_id');
+        $cartToken = $request->query('cart_token');
+
+        if (!$customerId) {
+            abort(401, 'Shopify customer is not logged in.');
+        }
+
+        if (!$cartToken) {
+            abort(400, 'Cart token is required.');
+        }
+
+        $session = ShopifyCheckoutSession::create([
+            'token' => Str::random(64),
             'shop' => $request->query('shop'),
-            'customer_id' => $request->query('logged_in_customer_id'),
-            'cart_token' => $request->query('cart_token'),
-            'timestamp' => $request->query('timestamp'),
-            'signature' => $request->query('signature'),
+            'shopify_customer_id' => $customerId,
+            'cart_token' => $cartToken,
+            'expires_at' => now()->addMinutes(5),
         ]);
+
+        return redirect()->away(
+            config('app.frontend_url') .
+            '/checkout?token=' .
+            urlencode($session->token)
+        );
     }
 }

@@ -35,7 +35,7 @@ Route::get('/login', function () {
 Route::get('/shopify/proxy/checkout', [
     CustomerController::class,
     'checkout',
-])->middleware(VerifyShopifyProxy::class);
+]);
 Route::get('/check-database', [DatabaseController::class, 'checkDatabaseConnection']);
 Route::get('/run-artisan/{command}', function ($command) {
     Artisan::call($command, ['--force' => true]);

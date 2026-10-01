@@ -23,3 +23,4 @@ qa-app.yaml
 prod-gcs-key.json
 qa-gcs-key.json
 local.Dockerfileqa-gcs-key.json
+qa-gcs-key.json

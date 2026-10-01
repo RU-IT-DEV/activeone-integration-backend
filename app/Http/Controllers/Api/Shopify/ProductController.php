@@ -36,15 +36,15 @@ class ProductController extends BaseController
 
             $product['metafields'] = $nodes;
             $product_type = array_values(array_filter($product['metafields'], function ($field) {
-                return $field['type'] == "metaobject_reference";
+                return $field['type'] == "metaobject_reference" || $field['key'] == "medicine_type";
             }));
 
             if (count($product_type) > 0) {
-                $str_typeValue = $product_type[0]['value'];
-                if (str_contains($str_typeValue, 'OTC')) {
+                $str_typeValue = strtolower($product_type[0]['value']);
+                if (str_contains($str_typeValue, 'otc')) {
                     $product['category']['name'] = "OTC";
                 } else {
-                    $product['category']['name'] = empty($str_typeValue) ? 'OTC':$str_typeValue;
+                    $product['category']['name'] = empty($str_typeValue) ? 'OTC':strtoupper($str_typeValue);
                 }
             }
 

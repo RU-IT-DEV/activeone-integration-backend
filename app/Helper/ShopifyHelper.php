@@ -270,7 +270,7 @@ class ShopifyHelper
         ])->post("$apiUrl/admin/api/2026-07/graphql.json", [
             'query' => $query,
             'variables' => [
-                'customerId' => $customer_id,
+                'customerId' => "gid://shopify/Customer/{$customer_id}",
             ]
         ]);
 
@@ -510,7 +510,11 @@ class ShopifyHelper
             $response = $client->json();
             $err_message = array_key_exists("errors", $response) ? $response['errors']:"";
             logger()->info($err_message);
-            throw new \Exception($err_message[0]['message'], 422);
+            if (is_array($err_message)) {
+                throw new \Exception($err_message[0]['message'], 422);
+            } else {
+                throw new \Exception($err_message, 422);
+            }
         } else {
             $response = $client->json();
             if (array_key_exists("errors", $response)) {

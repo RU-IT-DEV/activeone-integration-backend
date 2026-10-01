@@ -67,9 +67,18 @@ class CartController extends BaseController
             $cart['data']['cart']['lines']['edges'] = $lineItems;
             $cart['data']['arr_med_diagnosis'] = $diagnosis;
 
-            if (is_null($cart['data']['buyerIdentity']['customer'])) {
+            if (is_null($cart['data']['cart']['buyerIdentity']['customer'])) {
                 $customer = $shopifyHelper->getCustomerDetails($session->shopify_customer_id);
-                $cart['data']['buyerIdentity']['customer'] = $customer;
+                $cart['data']['cart']['buyerIdentity']['email'] = $customer['email'];
+                $cart['data']['cart']['buyerIdentity']['phone'] = $customer['phone'];
+                $cart['data']['cart']['buyerIdentity']['customer'] = [
+                    'id' => $customer['id'],
+                    'firstName' => $customer['firstName'],
+                    'lastName' => $customer['lastName'],
+                    'email' => $customer['email'],
+                    'phone' => $customer['phone'],
+                    'metafields' => $customer['metafields']['nodes']
+                ];
             }
             
             $response = [

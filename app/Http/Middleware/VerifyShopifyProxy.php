@@ -36,6 +36,13 @@ class VerifyShopifyProxy
             $message,
             config('services.shopify.api_secret')
         );
+
+        \Log::info('Shopify Proxy Signature', [
+            'params' => $params,
+            'message' => $message,
+            'received' => $signature,
+            'calculated' => $calculated,
+        ]);
         
         if (!hash_equals($calculated, $signature)) {
             abort(401, 'Invalid Shopify proxy signature.');

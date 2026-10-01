@@ -22,6 +22,7 @@ class CustomerController extends BaseController
             'customer_id' => $request->query('logged_in_customer_id'),
             'cart_token' => $request->query('cart_token'),
             'timestamp' => $request->query('timestamp'),
+            'signature' => $request->query('signature'),
         ]);
     }
 }

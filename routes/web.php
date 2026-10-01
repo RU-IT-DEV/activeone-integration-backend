@@ -3,6 +3,7 @@
 use App\Models\MemberClaims;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\GoogleAuthController;
+use App\Http\Controllers\Api\Shopify\CustomerController;
 use App\Http\Middleware\VerifyShopifyProxy;
 use App\Http\Controllers\DatabaseController;
 

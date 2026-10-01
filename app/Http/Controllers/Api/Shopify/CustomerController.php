@@ -14,4 +14,14 @@ class CustomerController extends BaseController
         logger()->info($customer_id);
         return $this->sendResponse($shopifyHelper->getCustomer($customer_id), "Success.");
     }
+
+    public function checkout(Request $request)
+    {
+        return response()->json([
+            'shop' => $request->query('shop'),
+            'customer_id' => $request->query('logged_in_customer_id'),
+            'cart_token' => $request->query('cart_token'),
+            'timestamp' => $request->query('timestamp'),
+        ]);
+    }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Shopify;
 use App\Helper\ShopifyHelper;
 use App\Http\Controllers\Api\BaseController;
 use App\Models\ShopifyCheckoutSession;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 
 class CustomerController extends BaseController

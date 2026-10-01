@@ -34,7 +34,7 @@ class VerifyShopifyProxy
         $calculated = hash_hmac(
             'sha256',
             $message,
-            config('services.shopify.api_secret')
+            config('services.shopify.access_token')
         );
         
         if (!hash_equals($calculated, $signature)) {

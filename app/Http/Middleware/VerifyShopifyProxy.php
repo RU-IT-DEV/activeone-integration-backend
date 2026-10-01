@@ -15,6 +15,12 @@ class VerifyShopifyProxy
      */
     public function handle(Request $request, Closure $next): Response
     {
+        \Log::info('Shopify Proxy Config', [
+            'api_secret_exists' => !empty(config('services.shopify.access_token')),
+            'api_secret_length' => strlen(config('services.shopify.access_token') ?? ''),
+            'api_secret_hash' => hash('sha256', config('services.shopify.access_token') ?? ''),
+        ]);
+
         $params = $request->query();
 
         $signature = $params['signature'] ?? null;

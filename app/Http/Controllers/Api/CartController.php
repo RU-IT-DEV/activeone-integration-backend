@@ -15,7 +15,7 @@ class CartController extends BaseController
         $data = $request->all();
 
         try {
-            $session = ShopifyCheckoutSession::where('session', $request->cartToken)->first();
+            $session = ShopifyCheckoutSession::where('token', $request->cartToken)->first();
 
             $cart = $shopifyHelper->getCart($session->cart_token);
 

@@ -3,6 +3,7 @@
 use App\Models\MemberClaims;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\GoogleAuthController;
+use App\Http\Middleware\VerifyShopifyProxy;
 use App\Http\Controllers\DatabaseController;
 
 
@@ -30,6 +31,10 @@ Route::get('/login', function () {
    # Route::get('auth/google/call-back', [GoogleAuthController::class,'handleGoogleCallback']);
 
 #Test Database connection
+Route::get('/shopify/proxy/checkout', [
+    CustomerController::class,
+    'checkout',
+])->middleware(VerifyShopifyProxy::class);
 Route::get('/check-database', [DatabaseController::class, 'checkDatabaseConnection']);
 Route::get('/run-artisan/{command}', function ($command) {
     Artisan::call($command, ['--force' => true]);

@@ -177,7 +177,8 @@ class ProductController extends BaseController
                 'reason' => $data['reason']
             ]);
 
-            $orderLogService->orderDetails->update($orderDetail->id, $orderDetail);
+            $additional_summary = "Quantity updated to {$data['quantity']}, Reason updated to {$data['reason']}";
+            $orderLogService->orderDetails->update($orderDetail->id, $orderDetail, $additional_summary);
 
             return $this->sendResponse($orderDetail, "Success updated the product.");
         } catch (Exception $e) {

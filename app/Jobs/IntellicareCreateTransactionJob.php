@@ -79,7 +79,7 @@ class IntellicareCreateTransactionJob implements ShouldQueue
                 $this->orderModel->intellicareLog->loa_date = $response['data']['loa_date'];
                 $this->orderModel->intellicareLog->save();
 
-                $orderLogService->update($order->id, $this->orderModel);
+                $orderLogService->update($order->id, $this->orderModel, "Intellicare transaction created. Reference number: " . $response['data']['approval_code']);
 
                 $this->uploadPrescriptions();
             }
@@ -91,7 +91,7 @@ class IntellicareCreateTransactionJob implements ShouldQueue
                 $this->orderModel->intellicare_status = "TRXN_ERROR";
                 $this->orderModel->save();
                 $orderLogService
-                    ->update($this->orderModel->id, $this->orderModel)
+                    ->update($this->orderModel->id, $this->orderModel, "Intellicare status updated to TRXN_ERROR.")
                     ->intellicare->createTransactionError($this->orderModel->intellicareLog->id, $e->getMessage());
                 \Log::error('Intellicare createTransaction failed: ' . $e->getMessage());
                 throw new \Exception('Intellicare createTransaction failed: ' . $e->getMessage(), 400);
@@ -147,7 +147,7 @@ class IntellicareCreateTransactionJob implements ShouldQueue
             $this->orderModel->save();
             $orderLogService->update($this->orderModel->id, [
                 'intellicare_status' => "SUCCESS"
-            ]);
+            ], "Intellicare status updated to SUCCESS after prescription upload.");
             // logger()->info("Response from upload prescription: ", $client->json());
 
             // Always close the streams
@@ -161,7 +161,8 @@ class IntellicareCreateTransactionJob implements ShouldQueue
             $this->orderModel->save();
             $orderLogService->update($this->orderModel->id, [
                 'intellicare_status' => "TRXN_PRX_ERROR"
-            ])->intellicare->createTransactionError($intellicareLog->id, $e->getMessage());
+            ], "Prescription upload failed. Intellicare status updated to TRXN_PRX_ERROR.")
+            ->intellicare->createTransactionError($intellicareLog->id, $e->getMessage());
             logger()->error('Intellicare uploadPrescription failed: ' . $e->getMessage());
             throw new \Exception('Intellicare uploadPrescription failed: ' . $e->getMessage(), 400);
         }

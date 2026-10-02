@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\ProcessJobsController;
 use App\Http\Controllers\Api\Shopify\CustomerController;
 use App\Http\Controllers\Api\Shopify\ProductController;
 use App\Http\Controllers\Api\UsersController;
+use App\Http\Controllers\OrderHistoryController;
 use Illuminate\Support\Facades\Route;
 
  
@@ -56,12 +57,17 @@ Route::group(['namespace' => 'Api', 'middleware' => ['cors']], function () {
 
         Route::middleware('auth:sanctum')->group(function () {
             Route::get('refresh-token', [AuthController::class, 'refreshToken']);
-            Route::get('orders/{order}/product', [ProductController::class, 'show']);
-            Route::patch('orders/{order}/product/{orderDetail}', [ProductController::class, 'update']);
 
-            Route::get('orders/{order}', [OrdersController::class, 'show']);
-            Route::post('orders/{order}/product', [ProductController::class, 'store']);
-            Route::delete('orders/{order}/product/{orderDetail}', [ProductController::class, 'remove']);
+            Route::prefix('orders')->group(function () {
+                Route::get('{order}/product', [ProductController::class, 'show']);
+                Route::patch('{order}/product/{orderDetail}', [ProductController::class, 'update']);
+    
+                Route::get('{order}', [OrdersController::class, 'show']);
+                Route::post('{order}/product', [ProductController::class, 'store']);
+                Route::delete('{order}/product/{orderDetail}', [ProductController::class, 'remove']);
+    
+                Route::get('{order}/history', [OrderHistoryController::class, 'show']);
+            });
         });
     });
 

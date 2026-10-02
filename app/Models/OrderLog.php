@@ -9,6 +9,7 @@ class OrderLog extends Model
     protected $fillable = [
         'table',
         'auditable_id',
+        'auditable_by',
         'action',
         'summary',
         'status',
@@ -22,5 +23,10 @@ class OrderLog extends Model
     public function order()
     {
         return $this->belongsTo(Order::class, 'id', 'auditable_id')->where('table', 'orders');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'auditable_by', 'id');
     }
 }

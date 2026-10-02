@@ -21,7 +21,8 @@ class OrderHistoryController extends BaseController
                 $log->user;
             });
 
-        $order_details_history = OrderLog::whereIn('auditable_id', $order->lineItems->pluck('id')->toArray())
+        $order_details_ids = $order->lineItems()->select('id')->get()->pluck('id')->toArray();
+        $order_details_history = OrderLog::whereIn('auditable_id', $order_details_ids)
             ->where('table', 'order_details')
             ->orderBy('id', 'DESC')
             ->get()
@@ -29,7 +30,8 @@ class OrderHistoryController extends BaseController
                 $log->user;
             });
 
-        $order_intLog_history = OrderLog::whereIn('auditable_id', $order->intellicareLog->pluck('id')->toArray())
+        $intellicareLog_ids = $order->intellicareLog()->select('id')->get()->pluck('id')->toArray();
+        $order_intLog_history = OrderLog::whereIn('auditable_id', $intellicareLog_ids)
             ->where('table', 'order_intellicare_logs')
             ->orderBy('id', 'DESC')
             ->get()

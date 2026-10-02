@@ -27,6 +27,6 @@ class OrderLog extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class, 'id', 'auditable_by');
+        return $this->belongsTo(User::class, 'auditable_by', 'id');
     }
 }

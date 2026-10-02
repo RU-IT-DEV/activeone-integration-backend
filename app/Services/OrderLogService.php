@@ -101,7 +101,7 @@ class OrderDetailService
         ]);
     }
 
-    public function update($auditable_id, $log)
+    public function update($auditable_id, $log, $additional_summary = '')
     {
         return OrderLog::create([
             'table' => 'order_details',
@@ -109,7 +109,7 @@ class OrderDetailService
             'auditable_by' => Auth::user()->id,
             'action' => 'update',
             'status' => 1,
-            'summary' => 'An order item has been updated',
+            'summary' => "An order item has been updated. {$additional_summary}",
             'value' => $log
         ]);
     }
@@ -175,14 +175,14 @@ class OrderLogService
         return $this;
     }
 
-    public function update($auditable_id, $log)
+    public function update($auditable_id, $log, $additional_summary = '')
     {
         OrderLog::create([
             'table' => 'orders',
             'auditable_id' => $auditable_id,
             'action' => 'update',
             'status' => 1,
-            'summary' => 'An order has been updated',
+            'summary' => "An order has been updated. {$additional_summary}",
             'value' => $log
         ]);
 

@@ -67,6 +67,7 @@ Route::group(['namespace' => 'Api', 'middleware' => ['cors']], function () {
                 Route::delete('{order}/product/{orderDetail}', [ProductController::class, 'remove']);
     
                 Route::get('{order}/history', [OrderHistoryController::class, 'show']);
+                Route::get('{order}/customer-history', [OrderHistoryController::class, 'customerOrderHistory']);
             });
         });
     });

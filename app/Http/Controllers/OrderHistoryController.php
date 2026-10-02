@@ -44,4 +44,14 @@ class OrderHistoryController extends BaseController
         return $this->sendResponse($all_order_history, "Success.");
 
     }
+
+    public function customerOrderHistory(Request $request, Order $order)
+    {
+        $customer_email = $order->customer_email;
+        $customer_orders = Order::where('customer_email', $customer_email)
+            ->orderBy('id', 'DESC')
+            ->get();
+
+        return $this->sendResponse($customer_orders, "Success.");
+    }
 }

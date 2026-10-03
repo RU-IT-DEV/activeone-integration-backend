@@ -388,7 +388,6 @@ class ShopifyHelper
 
             'customer' => [
                 'toAssociate' => [
-                    'email' => $order->customer_email,
                     'id' => $order->customer_id
                 ]
             ],

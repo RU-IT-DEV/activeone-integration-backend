@@ -387,7 +387,7 @@ class ShopifyHelper
             'email' => $order->customer_email,
 
             'customer' => [
-                'toUpsert' => [
+                'toAssociate' => [
                     'email' => $order->customer_email,
                     'id' => $order->customer_id
                 ]

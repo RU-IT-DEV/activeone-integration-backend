@@ -450,8 +450,6 @@ class ShopifyHelper
                 'phone',
             ]),
 
-            'email' => $order->customer_email,
-
             'customer' => [
                 'toAssociate' => [
                     'id' => $order->customer_id

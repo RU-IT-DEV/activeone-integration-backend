@@ -86,11 +86,14 @@ class ShopifyCreateOrderJob implements ShouldQueue
                     $this->orderModel->shopify_status = "ORDER_ERR";
                     $this->orderModel->save();
                     if (array_key_exists('userErrors', $orderCreate)) {
-                        $msg= $orderCreate['userErrors']['message'];
+                        $arr_msgs = array_map(function ($v) {
+                            return $v['message'];
+                        }, $orderCreate['userErrors']);
+                        $msgs = implode(", ", $arr_msgs);
                         $orderLogService->update($this->orderModel->id, [
                             'shopify_status' => "ORDER_ERR",
-                        ])->shopify->createShopifyError($this->orderModel->id, "Shopify didn't create your order. {$msg}");
-                        throw new \Exception($msg, 1);
+                        ])->shopify->createShopifyError($this->orderModel->id, "Shopify didn't create your order. {$msgs}");
+                        throw new \Exception($msgs, 1);
                     }
                     throw new \Exception($resp_data, 1);
                 } else {

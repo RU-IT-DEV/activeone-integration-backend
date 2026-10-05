@@ -253,7 +253,19 @@ class OrdersController extends BaseController
         $this->validate($request, [
             'id' => 'required|string',
             'totalAmount' => 'required|numeric',
-            'prccode' => 'required|string|alpha_num|between:4,7',
+            'prctype' => 'required|in:1,2,3,4,5',
+            'prccode' => [
+                'requiredIf:prctype,1',
+                'alpha_num',
+                'string',
+                'between:4,7'
+            ],
+            'prcfirstname' => [
+                'requiredIf:prctype,1',
+            ],
+            'prclastname' => [
+                'requiredIf:prctype,1',
+            ],
             'diagnosis' => 'required|string',
             'customer' => 'required|array',
             'customer.id' => 'required|string',

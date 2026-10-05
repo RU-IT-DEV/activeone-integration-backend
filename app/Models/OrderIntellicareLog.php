@@ -16,7 +16,10 @@ class OrderIntellicareLog extends Model
         'contract',
         'branch',
         'receipt_number',
+        'prctype',
         'prccode',
+        'prcfirstname',
+        'prclastname',
         'diagnosis',
         'prescription_location'
     ];

@@ -253,7 +253,19 @@ class OrdersController extends BaseController
         $this->validate($request, [
             'id' => 'required|string',
             'totalAmount' => 'required|numeric',
-            'prccode' => 'required|string|alpha_num|between:4,7',
+            'prctype' => 'required|in:1,2,3,4,5',
+            'prccode' => [
+                'requiredIf:prctype,1',
+                'alpha_num',
+                'string',
+                'between:4,7'
+            ],
+            'prcfirstname' => [
+                'requiredIf:prctype,1',
+            ],
+            'prclastname' => [
+                'requiredIf:prctype,1',
+            ],
             'diagnosis' => 'required|string',
             'customer' => 'required|array',
             'customer.id' => 'required|string',
@@ -274,7 +286,7 @@ class OrdersController extends BaseController
         ]);
 
         try {
-            $order = DB::transaction(function () use ($reqData) {
+            $order = DB::transaction(function () use ($reqData, $orderLogService) {
                 $customer = (object) $reqData['customer'];
     
                 $order = Order::create([
@@ -300,6 +312,9 @@ class OrdersController extends BaseController
                         $obj_item->merchandise['taxable'],
                         FILTER_VALIDATE_BOOLEAN
                     );
+                    $icd = $obj_item->merchandise['product']['code'] ?? "Not Available";
+                    $diagnosisArrKey = array_search($icd, $orderLogService->diagnosis);
+                    $icd_code = $orderLogService->diagnosis_codes[$diagnosisArrKey];
     
                     if (isset($obj_item->merchandise['image'])) {
                         if (!is_null($obj_item->merchandise['image'])) {
@@ -320,6 +335,7 @@ class OrdersController extends BaseController
                             'quantity' => $obj_item->quantity, 
                             'sku' => $obj_item->merchandise['sku'],
                             'code' => $obj_item->merchandise['sku'], 
+                            'icdcode' => $icd_code === FALSE ? $icd:$icd_code,
                             'title' => $obj_item->merchandise['product']['title'], 
                             'type' => $category, 
                             'variantTitle' => $obj_item->merchandise['title'],
@@ -358,7 +374,10 @@ class OrdersController extends BaseController
                     'birth_date' => $customer->birth_date,
                     'contract' => $customer->contract,
                     'branch' => 'NCR-PS',
+                    'prctype' => $reqData['prctype'],
                     'prccode' => $reqData['prccode'],
+                    'prcfirstname' => $reqData['prcfirstname'],
+                    'prclastname' => $reqData['prclastname'],
                     'diagnosis' => explode(",", $reqData['diagnosis']),
                     'prescription_location' => ''
                 ]);

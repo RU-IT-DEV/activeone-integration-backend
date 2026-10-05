@@ -92,7 +92,9 @@ class ShopifyCreateOrderJob implements ShouldQueue
                         $msgs = implode(", ", $arr_msgs);
                         $orderLogService->update($this->orderModel->id, [
                             'shopify_status' => "ORDER_ERR",
-                        ])->shopify->createShopifyError($this->orderModel->id, "Shopify didn't create your order. {$msgs}");
+                        ], "Shopify create order failed.")
+                          ->shopify
+                          ->createShopifyError($this->orderModel->id, "Shopify didn't create your order. {$msgs}");
                         throw new \Exception($msgs, 1);
                     }
                     throw new \Exception($resp_data, 1);
@@ -107,7 +109,7 @@ class ShopifyCreateOrderJob implements ShouldQueue
                     $orderLogService->update($this->orderModel->id, [
                         'shopify_order_name' => $order['name'],
                         'shopify_status' => "SUCCESS",
-                    ]);
+                    ], "Shopify order created successfully. Order name: " . $order['name']);
 
                     JobDispatcher::dispatch(
                         new IntellicareCreateTransactionJob($this->orderModel->id)

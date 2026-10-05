@@ -46,4 +46,11 @@ class Order extends Model
             ->where('action', 'reject')
             ->orderBy('id', 'DESC');
     }
+
+    public function statusUpdatedBy()
+    {
+        return $this->hasOne(OrderLog::class, 'auditable_id')
+            ->where('table', 'orders')
+            ->whereIn('action', ['approve','reject']);
+    }
 }

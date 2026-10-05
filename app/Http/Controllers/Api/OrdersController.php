@@ -13,6 +13,7 @@ use App\Services\OrderLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Order;
+use Carbon\Carbon;
 
 class OrdersController extends BaseController
 {
@@ -55,7 +56,180 @@ class OrdersController extends BaseController
         return $this->sendResponse($orders, "Orders retrieved successfully.");
     }
 
-    public function export(Request $request)\n    {\n        $filename = 'activeone-orders-' . now()->format('Ymd-His') . '.csv';\n\n        return response()->streamDownload(function () {\n            $handle = fopen('php://output', 'w');\n\n            fputcsv($handle, [\n                'Order Number',\n                'Order Date Creation',\n                'Name of Customer',\n                'Status',\n                'Approved (Partial)',\n                'Changes Applied',\n                'Comments',\n                'Validation Date',\n                'Validation Time',\n                'Total Amount',\n                'List of Medicine Ordered',\n                'SKU Code',\n                'QTY',\n                'Email',\n                'Contact Number (Phone Number)',\n                'Attached Prescription'\n            ]);\n\n            $orders = DB::table('orders as o')\n                ->leftJoin('order_details as od', 'od.order_id', '=', 'o.id')\n                ->leftJoin('order_shippings as os', 'os.order_id', '=', 'o.id')\n                ->where('o.shopify_status', '!=', 'TRXN_ERROR')\n                ->select([\n                    'o.shopify_order_name',\n                    'o.created_at',\n                    'o.customer_name',\n                    'o.activeone_status',\n                    'o.totalAmount',\n                    'o.customer_email',\n                    'os.phone',\n                    'od.id as order_detail_id',\n                    'od.title',\n                    'od.sku',\n                    'od.quantity',\n                    'od.reason as item_reason',\n                    DB::raw("(SELECT MAX(ol.created_at) FROM order_logs ol WHERE ol.table = 'orders' AND ol.auditable_id = o.id AND ol.action IN ('approve', 'reject')) as validation_at"),\n                    DB::raw("(SELECT JSON_UNQUOTE(JSON_EXTRACT(ol.value, '$.order_reason')) FROM order_logs ol WHERE ol.table = 'orders' AND ol.auditable_id = o.id AND ol.action = 'reject' ORDER BY ol.id DESC LIMIT 1) as rejection_reason"),\n                    DB::raw("(SELECT GROUP_CONCAT(ol.summary ORDER BY ol.id ASC SEPARATOR ' | ') FROM order_logs ol WHERE ol.table = 'order_details' AND ol.auditable_id = od.id AND ol.action IN ('create', 'update', 'delete')) as item_changes"),\n                    DB::raw("(SELECT GROUP_CONCAT(DISTINCT op.file_path ORDER BY op.id ASC SEPARATOR '|') FROM order_prescriptions op WHERE op.order_id = o.id) as prescription_paths"),\n                    DB::raw("EXISTS(SELECT 1 FROM order_logs ol WHERE ol.table = 'order_details' AND ol.auditable_id IN (SELECT od2.id FROM order_details od2 WHERE od2.order_id = o.id) AND ol.action IN ('update', 'delete')) as has_item_changes")\n                ])\n                ->orderBy('o.created_at')\n                ->orderBy('o.id')\n                ->orderBy('od.id')\n                ->cursor();\n\n            foreach ($orders as $row) {\n                $validationAt = $row->validation_at ? Carbon::parse($row->validation_at) : null;\n                $status = strtoupper((string) $row->activeone_status);\n                $changesApplied = $row->item_changes ?: '';\n                $comments = $row->item_reason ?: ($row->rejection_reason ?: '');\n\n                // Partial approval means the order was approved after at least one\n                // existing medicine was changed or removed during pharmacy validation.\n                $approvedPartial = $status === 'APPROVED' && (bool) $row->has_item_changes\n                    ? 'Yes'\n                    : 'No';\n\n                $prescriptionLinks = [];\n                foreach (array_filter(explode('|', (string) $row->prescription_paths)) as $path) {\n                    $prescriptionLinks[] = url('/api/a1-shopify-integration/object?fileName=' . urlencode($path));\n                }\n\n                fputcsv($handle, [\n                    $row->shopify_order_name,\n                    $row->created_at ? Carbon::parse($row->created_at)->format('m/d/Y h:i:s A') : '',\n                    $row->customer_name,\n                    $status,\n                    $approvedPartial,\n                    $changesApplied,\n                    $comments,\n                    $validationAt ? $validationAt->format('m/d/Y') : '',\n                    $validationAt ? $validationAt->format('h:i:s A') : '',\n                    $row->totalAmount,\n                    $row->title,\n                    $row->sku,\n                    $row->quantity,\n                    $row->customer_email,\n                    $row->phone,\n                    implode(' | ', $prescriptionLinks)\n                ]);\n            }\n\n            fclose($handle);\n        }, $filename, [\n            'Content-Type' => 'text/csv; charset=UTF-8',\n            'Content-Disposition' => 'attachment; filename="' . $filename . '"',\n        ]);\n    }\n\n    public function show(Request $request, Order $order) 
+    public function export(Request $request)
+    {
+        $filename = 'activeone-orders-' . now()->format('Ymd-His') . '.csv';
+
+        return response()->streamDownload(function () {
+
+            $handle = fopen('php://output', 'w');
+
+            fputcsv($handle, [
+                'Order Number',
+                'Order Date Creation',
+                'Name of Customer',
+                'Status',
+                'Approved (Partial)',
+                'Changes Applied',
+                'Comments',
+                'Validation Date',
+                'Validation Time',
+                'Total Amount',
+                'List of Medicine Ordered',
+                'SKU Code',
+                'QTY',
+                'Email',
+                'Contact Number (Phone Number)',
+                'Attached Prescription'
+            ]);
+
+            $orders = DB::table('orders as o')
+                ->leftJoin('order_details as od', 'od.order_id', '=', 'o.id')
+                ->leftJoin('order_shippings as os', 'os.order_id', '=', 'o.id')
+                ->where('o.shopify_status', '!=', 'TRXN_ERROR')
+                ->select([
+                    'o.shopify_order_name',
+                    'o.created_at',
+                    'o.customer_name',
+                    'o.activeone_status',
+                    'o.totalAmount',
+                    'o.customer_email',
+                    'os.phone',
+                    'od.id as order_detail_id',
+                    'od.title',
+                    'od.sku',
+                    'od.quantity',
+                    'od.reason as item_reason',
+
+                    DB::raw("
+                    (
+                    SELECT MAX(ol.created_at)
+                    FROM order_logs ol
+                    WHERE ol.table = 'orders'
+                    AND ol.auditable_id = o.id
+                    AND ol.action IN ('approve', 'reject')
+                    ) as validation_at
+                    "),
+
+                    DB::raw("
+                    (
+                    SELECT JSON_UNQUOTE(JSON_EXTRACT(ol.value, '$.order_reason'))
+                    FROM order_logs ol
+                    WHERE ol.table = 'orders'
+                    AND ol.auditable_id = o.id
+                    AND ol.action = 'reject'
+                    ORDER BY ol.id DESC
+                    LIMIT 1
+                    ) as rejection_reason
+                    "),
+
+                    DB::raw("
+                    (
+                    SELECT GROUP_CONCAT(
+                    ol.summary
+                    ORDER BY ol.id ASC
+                    SEPARATOR ' | '
+                    )
+                    FROM order_logs ol
+                    WHERE ol.table = 'order_details'
+                    AND ol.auditable_id = od.id
+                    AND ol.action IN ('create', 'update', 'delete')
+                    ) as item_changes
+                    "),
+
+                    DB::raw("
+                    (
+                    SELECT GROUP_CONCAT(
+                    DISTINCT op.file_path
+                    ORDER BY op.id ASC
+                    SEPARATOR '|'
+                    )
+                    FROM order_prescriptions op
+                    WHERE op.order_id = o.id
+                    ) as prescription_paths
+                    "),
+
+                    DB::raw("
+                    EXISTS (
+                    SELECT 1
+                    FROM order_logs ol
+                    WHERE ol.table = 'order_details'
+                    AND ol.auditable_id IN (
+                    SELECT od2.id
+                    FROM order_details od2
+                    WHERE od2.order_id = o.id
+                    )
+                    AND ol.action IN ('update', 'delete')
+                    ) as has_item_changes
+                    ")
+                ])
+                ->orderBy('o.created_at')
+                ->orderBy('o.id')
+                ->orderBy('od.id')
+                ->cursor();
+
+            foreach ($orders as $row) {
+
+                $validationAt = $row->validation_at
+                    ? Carbon::parse($row->validation_at)
+                    : null;
+
+                $status = strtoupper((string) $row->activeone_status);
+
+                $changesApplied = $row->item_changes ?: '';
+
+                $comments = $row->item_reason
+                    ?: ($row->rejection_reason ?: '');
+
+                $approvedPartial =
+                    $status === 'APPROVED' && (bool) $row->has_item_changes
+                    ? 'Yes'
+                    : 'No';
+
+                $prescriptionLinks = [];
+
+                foreach (
+                    array_filter(
+                        explode('|', (string) $row->prescription_paths)
+                    ) as $path
+                ) {
+                    $prescriptionLinks[] = url(
+                        '/api/a1-shopify-integration/object?fileName=' .
+                        urlencode($path)
+                    );
+                }
+
+                fputcsv($handle, [
+                    $row->shopify_order_name,
+                    $row->created_at
+                    ? Carbon::parse($row->created_at)->format('m/d/Y h:i:s A')
+                    : '',
+                    $row->customer_name,
+                    $status,
+                    $approvedPartial,
+                    $changesApplied,
+                    $comments,
+                    $validationAt ? $validationAt->format('m/d/Y') : '',
+                    $validationAt ? $validationAt->format('h:i:s A') : '',
+                    $row->totalAmount,
+                    $row->title,
+                    $row->sku,
+                    $row->quantity,
+                    $row->customer_email,
+                    $row->phone,
+                    implode(' | ', $prescriptionLinks),
+                ]);
+            }
+
+            fclose($handle);
+
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ]);
+    }
+
+    public function show(Request $request, Order $order) 
     {
         $order->load([
             'lineItems', 'shippingAddress', 'billingAddress', 'intellicareLog', 'prescriptions', 
@@ -71,6 +245,7 @@ class OrdersController extends BaseController
         
         return $this->sendResponse($order, "Order {$order->id} is retrieved");
     }
+
     public function store(Request $request, OrderLogService $orderLogService)
     {
         $reqData = $request->all();

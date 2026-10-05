@@ -59,6 +59,8 @@ Route::group(['namespace' => 'Api', 'middleware' => ['cors']], function () {
             Route::get('refresh-token', [AuthController::class, 'refreshToken']);
 
             Route::prefix('orders')->group(function () {
+                Route::get('export', [OrdersController::class, 'export']);
+                
                 Route::get('{order}/product', [ProductController::class, 'show']);
                 Route::patch('{order}/product/{orderDetail}', [ProductController::class, 'update']);
     

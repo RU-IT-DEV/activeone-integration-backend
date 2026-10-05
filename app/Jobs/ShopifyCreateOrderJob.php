@@ -55,6 +55,7 @@ class ShopifyCreateOrderJob implements ShouldQueue
             ]
         ]);
 
+        logger()->info("ShopifyCreateOrderJob: Sending request to Shopify API...", $this->order);
         $client = Http::withHeaders([
             'X-Shopify-Access-Token' => $this->shopifyHelper->x_access_token
         ])->post("$apiUrl/admin/api/2026-07/graphql.json", [
@@ -84,11 +85,19 @@ class ShopifyCreateOrderJob implements ShouldQueue
                 if (count($orderCreate['userErrors']) > 0) {
                     $this->orderModel->shopify_status = "ORDER_ERR";
                     $this->orderModel->save();
-                    $orderLogService->update($this->orderModel->id, [
-                        'shopify_status' => "ORDER_ERR",
-                    ], "Shopify create order failed.")
-                    ->shopify->createShopifyError($this->orderModel->id, "Shopify didn't create your order.");
-                    throw new \Exception($resp_data['userErrors'], 1);
+                    if (array_key_exists('userErrors', $orderCreate)) {
+                        $arr_msgs = array_map(function ($v) {
+                            return $v['message'];
+                        }, $orderCreate['userErrors']);
+                        $msgs = implode(", ", $arr_msgs);
+                        $orderLogService->update($this->orderModel->id, [
+                            'shopify_status' => "ORDER_ERR",
+                        ], "Shopify create order failed.")
+                          ->shopify
+                          ->createShopifyError($this->orderModel->id, "Shopify didn't create your order. {$msgs}");
+                        throw new \Exception($msgs, 1);
+                    }
+                    throw new \Exception($resp_data, 1);
                 } else {
                     $order = $resp_data['orderCreate']['order'];
                     $this->orderModel->shopify_status = "SUCCESS";

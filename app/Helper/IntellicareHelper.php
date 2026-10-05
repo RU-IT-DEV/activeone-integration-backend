@@ -201,7 +201,10 @@ class IntellicareHelper
             'branch' => $intellicareLog->branch,
             'birth_date' => $intellicareLog->birth_date,
             'receipt_number' => $intellicareLog->receipt_number,
+            'prctype' => $intellicareLog->prctype,
             'prccode' => $intellicareLog->prccode,
+            'prcfirstname' => $intellicareLog->prcfirstname,
+            'prclastname' => $intellicareLog->prclastname,
             'diagnosis' => $this->diagnosis($intellicareLog->diagnosis),
             'medicines' => $intellicareLog->medicines->map(function ($item) {
                 $qty = $item->quantity;
@@ -214,7 +217,8 @@ class IntellicareHelper
                         'gross_wo_vat' => 0.8,
                         'vat_amount' => 0.2,
                         'type' => $item->type,
-                        'with_prescription' => (bool) $item->is_prescribed  
+                        'icdcode' => $item->icdcode,
+                        'with_prescription' => (bool) $item->is_prescribed,  
                     ];
                 }
                 return false;

@@ -17,6 +17,10 @@ class CartController extends BaseController
         try {
             $session = ShopifyCheckoutSession::where('token', $request->cartToken)->first();
 
+            if (!$session) {
+                throw new \Exception("Invalid access.", 500);
+            }
+
             $cart = $shopifyHelper->getCart($session->cart_token);
 
             $lineItems = data_get($cart, 'data.cart.lines.edges', []);
@@ -89,7 +93,7 @@ class CartController extends BaseController
             if ($e->getCode() === 422) {
                 return $this->sendError("Something went wrong. {$e->getMessage()}", [], 422);
             } else {
-                return $this->sendError("Something went wrong. {$e->getMessage()}", []);
+                return $this->sendError("Something went wrong. {$e->getMessage()}", [], $e->getCode());
             }
         }
     }

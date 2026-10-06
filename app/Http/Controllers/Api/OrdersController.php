@@ -70,7 +70,7 @@ class OrdersController extends BaseController
         return $this->sendResponse($orders, "Orders retrieved successfully.");
     }
 
-    public function export(Request $request)
+    public function export(Request $request, OrderSearchService $orderSearch)
     {
         $filename = 'activeone-orders-' . now()->format('Ymd-His') . '.csv';
 
@@ -97,7 +97,15 @@ class OrdersController extends BaseController
                 'Attached Prescription'
             ]);
 
+            $filteredOrders = Order::query()
+                ->select('orders.id')
+                ->where('orders.shopify_status', '!=', 'TRXN_ERROR');
+
+            $orderSearch->apply($filteredOrders, $request);
+
             $orders = DB::table('orders as o')
+                ->whereIn('o.id', $filteredOrders)
+
                 ->leftJoin('order_details as od', 'od.order_id', '=', 'o.id')
                 ->leftJoin('order_shippings as os', 'os.order_id', '=', 'o.id')
                 ->where('o.shopify_status', '!=', 'TRXN_ERROR')

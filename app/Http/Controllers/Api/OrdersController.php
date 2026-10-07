@@ -361,6 +361,7 @@ class OrdersController extends BaseController
                             'quantity' => $obj_item->quantity, 
                             'sku' => $obj_item->merchandise['sku'],
                             'code' => $obj_item->merchandise['sku'], 
+                            'icd' => $icd,
                             'icdcode' => $icd_code === FALSE ? $icd:$icd_code,
                             'title' => $obj_item->merchandise['product']['title'], 
                             'type' => $category, 

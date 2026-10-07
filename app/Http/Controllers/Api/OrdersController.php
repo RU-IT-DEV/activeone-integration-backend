@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Dispatchers\JobDispatcher;
+use App\Helper\ShopifyHelper;
 use App\Http\Controllers\Api\BaseController;
 use App\Jobs\IntellicareCreateTransactionJob;
 use App\Jobs\ShopifyCreateOrderJob;
@@ -14,7 +15,8 @@ use App\Services\OrderSearchService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
-use App\Models\Order;\nuse App\Models\OrderDetails;
+use App\Models\Order;
+use App\Models\OrderDetails;
 use Carbon\Carbon;
 
 class OrdersController extends BaseController
@@ -75,7 +77,7 @@ class OrdersController extends BaseController
     {
         $filename = 'activeone-orders-' . now()->format('Ymd-His') . '.csv';
 
-        return response()->streamDownload(function () {
+        return response()->streamDownload(function () use ($request, $orderSearch) {
 
             $handle = fopen('php://output', 'w');
 
@@ -521,7 +523,7 @@ class OrdersController extends BaseController
     public function updateOrderIcDs(
         Request $request,
         OrderLogService $orderLogService,
-        \App\Helper\ShopifyHelper $shopifyHelper
+        ShopifyHelper $shopifyHelper
     )
     {
         $updated = 0;
@@ -586,13 +588,14 @@ class OrdersController extends BaseController
                             continue;
                         }
 
-                        $diagnosisIndex = array_search(
-                            $medicineCode,
-                            $orderLogService->diagnosis_codes,
-                            true
-                        );
+                        $diagnosisIndex = FALSE;
+                        foreach ($orderLogService->diagnosis as $key => $icd) {
+                            if (strtoupper($icd) === $medicineCode) {
+                                $diagnosisIndex = $key;
+                            }
+                        }
 
-                        if ($diagnosisIndex === false || !isset($orderLogService->diagnosis[$diagnosisIndex])) {
+                        if ($diagnosisIndex === false || !isset($orderLogService->diagnosis_codes[$diagnosisIndex])) {
                             $skipped++;
                             $errors[] = [
                                 'order_detail_id' => $orderDetail->id,
@@ -608,7 +611,9 @@ class OrdersController extends BaseController
                             'icdcode' => $orderLogService->diagnosis_codes[$diagnosisIndex],
                         ]);
 
-                        $orderLogService->orderDetails->update(
+                        $orderDetail->refresh();
+
+                        $orderLogService->orderDetails->systemUpdate(
                             $orderDetail->id,
                             $orderDetail,
                             "ICD updated from Shopify medicine code {$medicineCode}."

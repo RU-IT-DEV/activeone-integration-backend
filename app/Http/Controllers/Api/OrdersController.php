@@ -12,6 +12,7 @@ use App\Services\CustomCrypt;
 use App\Services\OrderLogService;
 use App\Services\OrderSearchService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use App\Models\Order;
 use Carbon\Carbon;
@@ -278,15 +279,18 @@ class OrdersController extends BaseController
             'prctype' => 'required|in:1,2,3,4,5',
             'prccode' => [
                 'requiredIf:prctype,1',
+                'nullable',
                 'alpha_num',
                 'string',
                 'between:4,7'
             ],
             'prcfirstname' => [
-                'requiredIf:prctype,1',
+                Rule::requiredIf(fn () => in_array(request('prctype'), ['2', '3', '4', '5'])),
+                'string'
             ],
             'prclastname' => [
-                'requiredIf:prctype,1',
+                Rule::requiredIf(fn () => in_array(request('prctype'), ['2', '3', '4', '5'])),
+                'string'
             ],
             'diagnosis' => 'required|string',
             'customer' => 'required|array',

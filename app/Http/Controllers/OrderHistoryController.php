@@ -21,7 +21,7 @@ class OrderHistoryController extends BaseController
                 $log->user;
             });
 
-        $order_details_ids = $order->lineItems()->select('id')->get()->pluck('id')->toArray();
+        $order_details_ids = $order->lineItems()->withTrashed()->select('id')->get()->pluck('id')->toArray();
         $order_details_history = OrderLog::whereIn('auditable_id', $order_details_ids)
             ->where('table', 'order_details')
             ->orderBy('id', 'DESC')

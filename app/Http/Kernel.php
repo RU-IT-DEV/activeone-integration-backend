@@ -65,6 +65,7 @@ class Kernel extends HttpKernel
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'cors' => \App\Http\Middleware\Cors::class, 
-        'purge.auth' => \App\Http\Middleware\PurgeRequestAuth::class
+        'purge.auth' => \App\Http\Middleware\PurgeRequestAuth::class,
+        'order.icd.api.key' => \App\Http\Middleware\VerifyOrderIcdApiKey::class
     ];
 }

@@ -41,6 +41,9 @@ return [
         'tenant_id' => env('AZURE_TENANT_ID'),
         'secret_value' => env('AZURE_SECRET_VALUE'),
     ],
+    'order_icd_update' => [
+        'api_key' => env('ORDER_ICD_UPDATE_API_KEY'),
+    ],
     'shopify' => [
         'store_name' => env('SHOPIFY_STORE_NAME'),
         'client_id' => env('SHOPIFY_APP_ID'),

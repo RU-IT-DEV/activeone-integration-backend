@@ -39,6 +39,10 @@ class ProductController extends BaseController
                 return $field['type'] == "metaobject_reference" || $field['key'] == "medicine_type";
             }));
 
+            $product_code = array_values(array_filter($product['metafields'], function ($field) {
+                return $field['key'] == "medicine_code";
+            }));
+
             if (count($product_type) > 0) {
                 $str_typeValue = strtolower($product_type[0]['value']);
                 if (str_contains($str_typeValue, 'otc')) {
@@ -46,6 +50,11 @@ class ProductController extends BaseController
                 } else {
                     $product['category']['name'] = empty($str_typeValue) ? 'OTC':strtoupper($str_typeValue);
                 }
+            }
+
+            if (count($product_code) > 0) {
+                $str_codeValue = $product_code[0]['value'];
+                $product['icd'] = $str_codeValue;
             }
 
             $variants = data_get($product, 'variants.nodes', []);
@@ -129,6 +138,8 @@ class ProductController extends BaseController
                 'quantity' => $obj_item['quantity'], 
                 'sku' => $obj_item['sku'],
                 'code' => $obj_item['sku'], 
+                'icd' => $obj_item['icd'],
+                'icdcode' => $obj_item['icdcode'],
                 'title' => $obj_item['title'], 
                 'type' => $category, 
                 'variantTitle' => $obj_item['selectedOptions'][0]['value'],
@@ -192,6 +203,9 @@ class ProductController extends BaseController
         OrderDetails $orderDetail, 
         OrderLogService $orderLogService
     ) {
+        $reason = $request->reason;
+        $orderDetail->reason = $reason;
+        $orderDetail->save();
         $orderLogService->orderDetails->delete($orderDetail->id, $orderDetail);
         $orderDetail->delete();
         return $this->sendResponse([], "Item removed");

@@ -184,7 +184,8 @@ class OrderLogService
         'UTI / Kidney Stones',
         'Vertigo / Dizziness',
         'Viral Infection / Cold Sores',
-        'Vitamins / Supplements'
+        'Vitamins / Supplements',
+        'Prostate / Urinary Difficulty'
     ];
 
     public $diagnosis_codes = [
@@ -195,7 +196,7 @@ class OrderLogService
         'I49', 'F41', 'J02', 'M62', 'R11',
         'R50', 'A07', 'G20', 'O60', 'K30',
         'K27', 'E03', 'A15', 'N39', 'H81',
-        'B00', 'Z29'
+        'B00', 'Z29', 'N40'
     ];
 
     public function __construct()

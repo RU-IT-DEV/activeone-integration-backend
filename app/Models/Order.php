@@ -19,6 +19,11 @@ class Order extends Model
         return $this->hasMany(OrderDetails::class, 'order_id');
     }
 
+    public function lineItemsTrashed()
+    {
+        return $this->hasMany(OrderDetails::class, 'order_id')->onlyTrashed();
+    }
+
     public function shippingAddress()
     {
         return $this->hasOne(OrderShipping::class, 'order_id');

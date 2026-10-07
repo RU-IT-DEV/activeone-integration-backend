@@ -573,6 +573,11 @@ class OrdersController extends BaseController
                             continue;
                         }
 
+                        $find_productPrice = collect(data_get($product, 'variants.nodes', []))
+                            ->first()['price'];
+
+                        $productPrice = floatval($find_productPrice);
+
                         $medicineCode = collect(data_get($product, 'metafields.nodes', []))
                             ->firstWhere('key', 'medicine_code')['value'] ?? null;
 
@@ -609,6 +614,9 @@ class OrdersController extends BaseController
                         $orderDetail->update([
                             'icd' => $orderLogService->diagnosis[$diagnosisIndex],
                             'icdcode' => $orderLogService->diagnosis_codes[$diagnosisIndex],
+                            'amount' => $productPrice,
+                            'vat_amount' => $productPrice * 0.2,
+                            'no_vat_amount' => $productPrice - ($productPrice * 0.2)
                         ]);
 
                         $orderDetail->refresh();

@@ -10,6 +10,7 @@ use App\Mail\PharmaRejectionMail;
 use Illuminate\Support\Facades\Mail;
 use App\Services\CustomCrypt;
 use App\Services\OrderLogService;
+use App\Services\OrderSearchService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
@@ -18,46 +19,59 @@ use Carbon\Carbon;
 
 class OrdersController extends BaseController
 {
-    public function index(Request $request)
+    public function index(Request $request, OrderSearchService $orderSearch)
     {
-        $perPage = $request->input('itemsPerPage', 10);
-        $search = $request->input('search', null);
+        $perPage = max(1, min((int) $request->input('itemsPerPage', 10), 100));
         $sortBy = $request->input('sortBy', []);
+
         $orders = Order::with([
-            'lineItems', 'shippingAddress', 'billingAddress', 'intellicareLog', 'prescriptions',
+            'lineItems',
+            'shippingAddress',
+            'billingAddress',
+            'intellicareLog',
+            'prescriptions',
             'statusUpdatedBy' => function ($query) {
                 return $query->select(
-                    'auditable_id', 
+                    'auditable_id',
                     'auditable_by',
                     'created_at',
                     DB::raw("JSON_EXTRACT(value, '$.order_reason') as reason")
                 );
-            }, 'statusUpdatedBy.user'
-        ])->where('shopify_status', '!=', 'TRXN_ERROR');
+            },
+            'statusUpdatedBy.user'
+        ])->where('orders.shopify_status', '!=', 'TRXN_ERROR');
 
-        if ($search) {
-            $orders->where(function ($query) use ($search) {
-                $query->where('shopify_order_name', 'like', "%{$search}%")
-                    ->orWhere('customer_email', 'like', "%{$search}%")
-                    ->orWhere('customer_name', 'like', "%{$search}%")
-                    ->orWhere('totalAmount', 'like', "%{$search}%")
-                    ->orWhere('intellicare_status', 'like', "%{$search}%")
-                    ->orWhere('activeone_status', 'like', "%{$search}%");
-            });
-        }
+        $orderSearch->apply($orders, $request);
 
-        if ($sortBy) {
-            foreach ($sortBy as $value) {
-                $orders = $orders->orderBy($value['key'], $value['order']);
+        // Whitelist sortable fields so client-provided column names cannot cause SQL errors.
+        $sortable = [
+            'id' => 'orders.id',
+            'customer_name' => 'orders.customer_name',
+            'customer_email' => 'orders.customer_email',
+            'shopify_order_name' => 'orders.shopify_order_name',
+            'activeone_status' => 'orders.activeone_status',
+            'intellicare_status' => 'orders.intellicare_status',
+            'created_at' => 'orders.created_at',
+            'totalAmount' => 'orders.totalAmount',
+        ];
+
+        if (is_array($sortBy)) {
+            foreach ($sortBy as $sort) {
+                $key = $sort['key'] ?? null;
+                $direction = strtolower($sort['order'] ?? 'asc');
+
+                if (isset($sortable[$key]) && in_array($direction, ['asc', 'desc'], true)) {
+                    $orders->orderBy($sortable[$key], $direction);
+                }
             }
         }
 
-        $orders = $orders->paginate($perPage);
+        $orders = $orders->paginate($perPage)->withQueryString();
 
         return $this->sendResponse($orders, "Orders retrieved successfully.");
     }
 
-    public function export(Request $request)
+    public function export(Request $request, OrderSearchService $orderSearch)
     {
         $filename = 'activeone-orders-' . now()->format('Ymd-His') . '.csv';
 
@@ -84,7 +98,15 @@ class OrdersController extends BaseController
                 'Attached Prescription'
             ]);
 
+            $filteredOrders = Order::query()
+                ->select('orders.id')
+                ->where('orders.shopify_status', '!=', 'TRXN_ERROR');
+
+            $orderSearch->apply($filteredOrders, $request);
+
             $orders = DB::table('orders as o')
+                ->whereIn('o.id', $filteredOrders)
+
                 ->leftJoin('order_details as od', 'od.order_id', '=', 'o.id')
                 ->leftJoin('order_shippings as os', 'os.order_id', '=', 'o.id')
                 ->where('o.shopify_status', '!=', 'TRXN_ERROR')

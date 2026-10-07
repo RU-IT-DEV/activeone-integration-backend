@@ -42,6 +42,10 @@ Route::group(['namespace' => 'Api', 'middleware' => ['cors']], function () {
     Route::post('order', [OrdersController::class, 'store']);
     Route::post('order/{order}/prescriptions', [OrderPrescriptionController::class, 'store']);
 
+    Route::middleware('order.icd.api.key')->group(function () {
+        Route::post('admin/orders/update-icds', [OrdersController::class, 'updateOrderIcDs']);
+    });
+
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('orders', [OrdersController::class, 'index']);
         Route::patch('orders/{order}', [OrdersController::class, 'update']);

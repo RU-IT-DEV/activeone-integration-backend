@@ -60,6 +60,7 @@ Route::group(['namespace' => 'Api', 'middleware' => ['cors']], function () {
 
             Route::prefix('orders')->group(function () {
                 Route::get('export', [OrdersController::class, 'export']);
+                Route::post('update-icds', [OrdersController::class, 'updateOrderIcDs']);
                 
                 Route::get('{order}/product', [ProductController::class, 'show']);
                 Route::patch('{order}/product/{orderDetail}', [ProductController::class, 'update']);

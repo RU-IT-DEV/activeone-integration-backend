@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Dispatchers\JobDispatcher;
+use App\Helper\ShopifyHelper;
 use App\Http\Controllers\Api\BaseController;
 use App\Jobs\IntellicareCreateTransactionJob;
 use App\Jobs\ShopifyCreateOrderJob;
@@ -13,6 +14,7 @@ use App\Services\OrderLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Order;
+use App\Models\OrderDetails;
 
 class OrdersController extends BaseController
 {
@@ -286,6 +288,138 @@ class OrdersController extends BaseController
         }
 
         return $this->sendResponse($metaobject, "Product metaobject retrieved successfully.");
+    }
+    
+    public function updateOrderIcDs(
+        Request $request,
+        OrderLogService $orderLogService,
+        ShopifyHelper $shopifyHelper
+    )
+    {
+        $updated = 0;
+        $skipped = 0;
+        $errors = [];
+        $productCache = [];
+
+        OrderDetails::query()
+            ->whereNull('icd')
+            ->whereNull('icdcode')
+            ->orderBy('id')
+            ->chunkById(100, function ($orderDetails) use (
+                &$updated,
+                &$skipped,
+                &$errors,
+                &$productCache,
+                $shopifyHelper,
+                $orderLogService
+            ) {
+                foreach ($orderDetails as $orderDetail) {
+                    $sku = trim((string) $orderDetail->sku);
+
+                    if ($sku === '') {
+                        $skipped++;
+                        $errors[] = [
+                            'order_detail_id' => $orderDetail->id,
+                            'sku' => null,
+                            'reason' => 'SKU is empty.',
+                        ];
+                        continue;
+                    }
+
+                    try {
+                        if (!array_key_exists($sku, $productCache)) {
+                            $productCache[$sku] = $shopifyHelper->getProductBySku($sku);
+                        }
+
+                        $product = $productCache[$sku];
+
+                        if (!$product) {
+                            $skipped++;
+                            $errors[] = [
+                                'order_detail_id' => $orderDetail->id,
+                                'sku' => $sku,
+                                'reason' => 'Shopify product not found.',
+                            ];
+                            continue;
+                        }
+
+                        $find_productPrice = collect(data_get($product, 'variants.nodes', []))
+                            ->first()['price'];
+
+                        $productPrice = floatval($find_productPrice);
+
+                        $medicineCode = collect(data_get($product, 'metafields.nodes', []))
+                            ->firstWhere('key', 'medicine_code')['value'] ?? null;
+
+                        $medicineCode = strtoupper(trim((string) $medicineCode));
+
+                        if ($medicineCode === '') {
+                            $skipped++;
+                            $errors[] = [
+                                'order_detail_id' => $orderDetail->id,
+                                'sku' => $sku,
+                                'reason' => 'Shopify product has no medicine_code.',
+                            ];
+                            continue;
+                        }
+
+                        $diagnosisIndex = FALSE;
+                        foreach ($orderLogService->diagnosis as $key => $icd) {
+                            if (strtoupper($icd) === $medicineCode) {
+                                $diagnosisIndex = $key;
+                            }
+                        }
+
+                        if ($diagnosisIndex === false || !isset($orderLogService->diagnosis_codes[$diagnosisIndex])) {
+                            $skipped++;
+                            $errors[] = [
+                                'order_detail_id' => $orderDetail->id,
+                                'sku' => $sku,
+                                'medicine_code' => $medicineCode,
+                                'reason' => 'Medicine code is not in the ICD diagnosis list.',
+                            ];
+                            continue;
+                        }
+
+                        $orderDetail->update([
+                            'icd' => $orderLogService->diagnosis[$diagnosisIndex],
+                            'icdcode' => $orderLogService->diagnosis_codes[$diagnosisIndex],
+                            'amount' => $productPrice,
+                            'vat_amount' => $productPrice * 0.2,
+                            'no_vat_amount' => $productPrice - ($productPrice * 0.2)
+                        ]);
+
+                        $orderDetail->refresh();
+
+                        $orderLogService->orderDetails->systemUpdate(
+                            $orderDetail->id,
+                            $orderDetail,
+                            "ICD updated from Shopify medicine code {$medicineCode}."
+                        );
+
+                        $updated++;
+                    } catch (\Throwable $e) {
+                        $skipped++;
+                        $errors[] = [
+                            'order_detail_id' => $orderDetail->id,
+                            'sku' => $sku,
+                            'reason' => $e->getMessage(),
+                        ];
+
+                        logger()->error('Failed to update order detail ICD.', [
+                            'order_detail_id' => $orderDetail->id,
+                            'sku' => $sku,
+                            'exception' => $e,
+                        ]);
+                    }
+                }
+            });
+
+        return $this->sendResponse([
+            'updated' => $updated,
+            'skipped' => $skipped,
+            'errors' => $errors,
+        ], 'Order detail ICD update completed.');
     }
 
     public function createIntellicareTransaction(Request $request, Order $order)

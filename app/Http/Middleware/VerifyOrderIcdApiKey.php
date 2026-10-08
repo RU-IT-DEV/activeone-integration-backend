@@ -8,6 +8,11 @@ use Symfony\Component\HttpFoundation\Response;
 
 class VerifyOrderIcdApiKey
 {
+    /**
+     * Handle an incoming request.
+     *
+     * @param  Closure(Request): (Response)  $next
+     */
     public function handle(Request $request, Closure $next): Response
     {
         $providedKey = $request->header('X-API-KEY');

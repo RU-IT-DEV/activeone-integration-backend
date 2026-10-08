@@ -152,6 +152,12 @@ class OrdersController extends BaseController
     
                 }
                 $order->lineItems()->createMany($orderDetails);
+
+
+                $phone = $address->phone;
+                if (preg_match('/^09\d{9}$/', $phone)) {
+                    $phone = '+63' . substr($phone, 1);
+                }
     
                 $addressData = [
                     'address1' => $address->address,
@@ -162,7 +168,7 @@ class OrdersController extends BaseController
                     'zip' => $address->postalCode,
                     'firstName' => $customer->firstName,
                     'lastName' => $customer->lastName,
-                    'phone' => $address->phone ?? null,
+                    'phone' => $phone ?? null,
                 ];
     
                 $order->shippingAddress()->create($addressData);

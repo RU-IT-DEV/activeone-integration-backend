@@ -184,7 +184,7 @@ class OrderLogService
         'Nausea / Vomiting',
         'Pain / Fever',
         'Parasites / Amoeba',
-        'Parkinson"s Disease',
+        "Parkinson’s Disease",
         'Preterm Labor / Pregnancy',
         'Stomach Pain / Bloating',
         'Stomach Ulcer',

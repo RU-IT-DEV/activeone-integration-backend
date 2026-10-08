@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class OrderDetails extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'order_id', 'shopify_productId', 'shopify_product_price', 
         'image_url', 'quantity', 'sku', 'icd', 'icdcode',

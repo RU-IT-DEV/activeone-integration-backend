@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\OrderLog;
+use Illuminate\Support\Facades\Auth;
 
 class IntellicareLogService
 {
@@ -92,6 +93,7 @@ class OrderDetailService
         return OrderLog::create([
             'table' => 'order_details',
             'auditable_id' => $auditable_id,
+            'auditable_by' => Auth::user()->id,
             'action' => 'create',
             'status' => 1,
             'summary' => 'An item has been added to an order',
@@ -99,14 +101,28 @@ class OrderDetailService
         ]);
     }
 
-    public function update($auditable_id, $log)
+    public function update($auditable_id, $log, $additional_summary = '')
     {
         return OrderLog::create([
             'table' => 'order_details',
             'auditable_id' => $auditable_id,
+            'auditable_by' => Auth::user()->id,
             'action' => 'update',
             'status' => 1,
-            'summary' => 'An order item has been updated',
+            'summary' => "An order item has been updated. {$additional_summary}",
+            'value' => $log
+        ]);
+    }
+
+    public function systemUpdate($auditable_id, $log, $additional_summary = '')
+    {
+        return OrderLog::create([
+            'table' => 'order_details',
+            'auditable_id' => $auditable_id,
+            'auditable_by' => 0,
+            'action' => 'update',
+            'status' => 1,
+            'summary' => "An order item has been updated. {$additional_summary}",
             'value' => $log
         ]);
     }
@@ -129,6 +145,7 @@ class OrderDetailService
         return OrderLog::create([
             'table' => 'order_details',
             'auditable_id' => $auditable_id,
+            'auditable_by' => Auth::user()->id,
             'action' => 'delete',
             'status' => 1,
             'summary' => 'An order item has been deleted',
@@ -236,14 +253,14 @@ class OrderLogService
         return $this;
     }
 
-    public function update($auditable_id, $log)
+    public function update($auditable_id, $log, $additional_summary = '')
     {
         OrderLog::create([
             'table' => 'orders',
             'auditable_id' => $auditable_id,
             'action' => 'update',
             'status' => 1,
-            'summary' => 'An order has been updated',
+            'summary' => "An order has been updated. {$additional_summary}",
             'value' => $log
         ]);
 
@@ -254,6 +271,7 @@ class OrderLogService
         OrderLog::create([
             'table' => 'orders',
             'auditable_id' => $auditable_id,
+            'auditable_by' => Auth::user()->id,
             'action' => 'approve',
             'status' => 1,
             'summary' => 'Order status has been updated to APPROVED.',
@@ -268,6 +286,7 @@ class OrderLogService
         OrderLog::create([
             'table' => 'orders',
             'auditable_id' => $auditable_id,
+            'auditable_by' => Auth::user()->id,
             'action' => 'reject',
             'status' => 1,
             'summary' => 'Order status has been updated to REJECTED.',

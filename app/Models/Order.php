@@ -19,6 +19,11 @@ class Order extends Model
         return $this->hasMany(OrderDetails::class, 'order_id');
     }
 
+    public function lineItemsTrashed()
+    {
+        return $this->hasMany(OrderDetails::class, 'order_id')->onlyTrashed();
+    }
+
     public function shippingAddress()
     {
         return $this->hasOne(OrderShipping::class, 'order_id');
@@ -45,5 +50,12 @@ class Order extends Model
             ->where('table', 'orders')
             ->where('action', 'reject')
             ->orderBy('id', 'DESC');
+    }
+
+    public function statusUpdatedBy()
+    {
+        return $this->hasOne(OrderLog::class, 'auditable_id')
+            ->where('table', 'orders')
+            ->whereIn('action', ['approve','reject']);
     }
 }

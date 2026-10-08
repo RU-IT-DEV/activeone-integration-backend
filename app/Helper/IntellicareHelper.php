@@ -47,8 +47,12 @@ class IntellicareHelper
                 $response = $client->json();
     
                 $resp_status = $this->custom_crypt->decrypt($response['status']);
-                logger()->info($response, $resp_status);
-                throw new \Exception($resp_status['message']);
+                logger()->info($response, [$resp_status]);
+                if (isset($resp_status['message'])) {
+                    throw new \Exception($resp_status['message']);
+                } else if (isset($resp_status['Message'])) {
+                    throw new \Exception($resp_status['Message']);
+                }
             } else {
                 $response = $this->clientResponse($client->json());
         
@@ -197,7 +201,10 @@ class IntellicareHelper
             'branch' => $intellicareLog->branch,
             'birth_date' => $intellicareLog->birth_date,
             'receipt_number' => $intellicareLog->receipt_number,
+            'prctype' => $intellicareLog->prctype,
             'prccode' => $intellicareLog->prccode,
+            'prcfirstname' => $intellicareLog->prcfirstname,
+            'prclastname' => $intellicareLog->prclastname,
             'diagnosis' => $this->diagnosis($intellicareLog->diagnosis),
             'medicines' => $intellicareLog->medicines->map(function ($item) {
                 $qty = $item->quantity;
@@ -206,11 +213,12 @@ class IntellicareHelper
                         'code' => $item->code,
                         'quantity' => $item->quantity,
                         'unit' => $item->unit,
-                        'gross' => 1,
-                        'gross_wo_vat' => 0.8,
-                        'vat_amount' => 0.2,
+                        'gross' => $item->amount,
+                        'gross_wo_vat' => $item->vat_amount,
+                        'vat_amount' => $item->no_vat_amount,
                         'type' => $item->type,
-                        'with_prescription' => (bool) $item->is_prescribed  
+                        'icdcode' => $item->icdcode,
+                        'with_prescription' => (bool) $item->is_prescribed,  
                     ];
                 }
                 return false;

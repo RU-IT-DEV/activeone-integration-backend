@@ -11,41 +11,247 @@ use App\Mail\PharmaRejectionMail;
 use Illuminate\Support\Facades\Mail;
 use App\Services\CustomCrypt;
 use App\Services\OrderLogService;
+use App\Services\OrderSearchService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use App\Models\Order;
 use App\Models\OrderDetails;
+use Carbon\Carbon;
 
 class OrdersController extends BaseController
 {
-    public function index(Request $request)
+    public function index(Request $request, OrderSearchService $orderSearch)
     {
-        $perPage = $request->input('itemsPerPage', 10);
-        $search = $request->input('search', null);
+        $perPage = max(1, min((int) $request->input('itemsPerPage', 10), 100));
         $sortBy = $request->input('sortBy', []);
-        $orders = Order::with(['lineItems', 'shippingAddress', 'billingAddress', 'intellicareLog', 'prescriptions'])
-            ->where('shopify_status', '!=', 'TRXN_ERROR');
 
-        if ($search) {
-            $orders->where(function ($query) use ($search) {
-                $query->where('shopify_order_name', 'like', "%{$search}%")
-                    ->orWhere('customer_email', 'like', "%{$search}%")
-                    ->orWhere('customer_name', 'like', "%{$search}%")
-                    ->orWhere('totalAmount', 'like', "%{$search}%")
-                    ->orWhere('intellicare_status', 'like', "%{$search}%")
-                    ->orWhere('activeone_status', 'like', "%{$search}%");
-            });
-        }
+        $orders = Order::with([
+            'lineItems',
+            'shippingAddress',
+            'billingAddress',
+            'intellicareLog',
+            'prescriptions',
+            'statusUpdatedBy' => function ($query) {
+                return $query->select(
+                    'auditable_id',
+                    'auditable_by',
+                    'created_at',
+                    DB::raw("JSON_EXTRACT(value, '$.order_reason') as reason")
+                );
+            },
+            'statusUpdatedBy.user'
+        ])->where('orders.shopify_status', '!=', 'TRXN_ERROR');
 
-        if ($sortBy) {
-            foreach ($sortBy as $value) {
-                $orders = $orders->orderBy($value['key'], $value['order']);
+        $orderSearch->apply($orders, $request);
+
+        // Whitelist sortable fields so client-provided column names cannot cause SQL errors.
+        $sortable = [
+            'id' => 'orders.id',
+            'customer_name' => 'orders.customer_name',
+            'customer_email' => 'orders.customer_email',
+            'shopify_order_name' => 'orders.shopify_order_name',
+            'activeone_status' => 'orders.activeone_status',
+            'intellicare_status' => 'orders.intellicare_status',
+            'created_at' => 'orders.created_at',
+            'totalAmount' => 'orders.totalAmount',
+        ];
+
+        if (is_array($sortBy)) {
+            foreach ($sortBy as $sort) {
+                $key = $sort['key'] ?? null;
+                $direction = strtolower($sort['order'] ?? 'asc');
+
+                if (isset($sortable[$key]) && in_array($direction, ['asc', 'desc'], true)) {
+                    $orders->orderBy($sortable[$key], $direction);
+                }
             }
         }
 
-        $orders = $orders->paginate($perPage);
+        $orders = $orders->paginate($perPage)->withQueryString();
 
         return $this->sendResponse($orders, "Orders retrieved successfully.");
+    }
+
+    public function export(Request $request, OrderSearchService $orderSearch)
+    {
+        $filename = 'activeone-orders-' . now()->format('Ymd-His') . '.csv';
+
+        return response()->streamDownload(function () use ($request, $orderSearch) {
+
+            $handle = fopen('php://output', 'w');
+
+            fputcsv($handle, [
+                'Order Number',
+                'Order Date Creation',
+                'Name of Customer',
+                'Status',
+                'Approved (Partial)',
+                'Changes Applied',
+                'Comments',
+                'Validation Date',
+                'Validation Time',
+                'Total Amount',
+                'List of Medicine Ordered',
+                'SKU Code',
+                'QTY',
+                'Email',
+                'Contact Number (Phone Number)',
+                'Attached Prescription'
+            ]);
+
+            $filteredOrders = Order::query()
+                ->select('orders.id')
+                ->where('orders.shopify_status', '!=', 'TRXN_ERROR');
+
+            $orderSearch->apply($filteredOrders, $request);
+
+            $orders = DB::table('orders as o')
+                ->whereIn('o.id', $filteredOrders)
+
+                ->leftJoin('order_details as od', 'od.order_id', '=', 'o.id')
+                ->leftJoin('order_shippings as os', 'os.order_id', '=', 'o.id')
+                ->where('o.shopify_status', '!=', 'TRXN_ERROR')
+                ->select([
+                    'o.shopify_order_name',
+                    'o.created_at',
+                    'o.customer_name',
+                    'o.activeone_status',
+                    'o.totalAmount',
+                    'o.customer_email',
+                    'os.phone',
+                    'od.id as order_detail_id',
+                    'od.title',
+                    'od.sku',
+                    'od.quantity',
+                    'od.reason as item_reason',
+
+                    DB::raw("
+                    (
+                    SELECT MAX(ol.created_at)
+                    FROM order_logs ol
+                    WHERE ol.table = 'orders'
+                    AND ol.auditable_id = o.id
+                    AND ol.action IN ('approve', 'reject')
+                    ) as validation_at
+                    "),
+
+                    DB::raw("
+                    (
+                    SELECT JSON_UNQUOTE(JSON_EXTRACT(ol.value, '$.order_reason'))
+                    FROM order_logs ol
+                    WHERE ol.table = 'orders'
+                    AND ol.auditable_id = o.id
+                    AND ol.action = 'reject'
+                    ORDER BY ol.id DESC
+                    LIMIT 1
+                    ) as rejection_reason
+                    "),
+
+                    DB::raw("
+                    (
+                    SELECT GROUP_CONCAT(
+                    ol.summary
+                    ORDER BY ol.id ASC
+                    SEPARATOR ' | '
+                    )
+                    FROM order_logs ol
+                    WHERE ol.table = 'order_details'
+                    AND ol.auditable_id = od.id
+                    AND ol.action IN ('create', 'update', 'delete')
+                    ) as item_changes
+                    "),
+
+                    DB::raw("
+                    (
+                    SELECT GROUP_CONCAT(
+                    DISTINCT op.file_path
+                    ORDER BY op.id ASC
+                    SEPARATOR '|'
+                    )
+                    FROM order_prescriptions op
+                    WHERE op.order_id = o.id
+                    ) as prescription_paths
+                    "),
+
+                    DB::raw("
+                    EXISTS (
+                    SELECT 1
+                    FROM order_logs ol
+                    WHERE ol.table = 'order_details'
+                    AND ol.auditable_id IN (
+                    SELECT od2.id
+                    FROM order_details od2
+                    WHERE od2.order_id = o.id
+                    )
+                    AND ol.action IN ('update', 'delete')
+                    ) as has_item_changes
+                    ")
+                ])
+                ->orderBy('o.created_at')
+                ->orderBy('o.id')
+                ->orderBy('od.id')
+                ->cursor();
+
+            foreach ($orders as $row) {
+
+                $validationAt = $row->validation_at
+                    ? Carbon::parse($row->validation_at)
+                    : null;
+
+                $status = strtoupper((string) $row->activeone_status);
+
+                $changesApplied = $row->item_changes ?: '';
+
+                $comments = $row->item_reason
+                    ?: ($row->rejection_reason ?: '');
+
+                $approvedPartial =
+                    $status === 'APPROVED' && (bool) $row->has_item_changes
+                    ? 'Yes'
+                    : 'No';
+
+                $prescriptionLinks = [];
+
+                foreach (
+                    array_filter(
+                        explode('|', (string) $row->prescription_paths)
+                    ) as $path
+                ) {
+                    $prescriptionLinks[] = url(
+                        '/api/a1-shopify-integration/object?fileName=' .
+                        urlencode($path)
+                    );
+                }
+
+                fputcsv($handle, [
+                    $row->shopify_order_name,
+                    $row->created_at
+                    ? Carbon::parse($row->created_at)->format('m/d/Y h:i:s A')
+                    : '',
+                    $row->customer_name,
+                    $status,
+                    $approvedPartial,
+                    $changesApplied,
+                    $comments,
+                    $validationAt ? $validationAt->format('m/d/Y') : '',
+                    $validationAt ? $validationAt->format('h:i:s A') : '',
+                    $row->totalAmount,
+                    $row->title,
+                    $row->sku,
+                    $row->quantity,
+                    $row->customer_email,
+                    $row->phone,
+                    implode(' | ', $prescriptionLinks),
+                ]);
+            }
+
+            fclose($handle);
+
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ]);
     }
 
     public function show(Request $request, Order $order) 
@@ -64,6 +270,7 @@ class OrdersController extends BaseController
         
         return $this->sendResponse($order, "Order {$order->id} is retrieved");
     }
+
     public function store(Request $request, OrderLogService $orderLogService)
     {
         $reqData = $request->all();
@@ -71,7 +278,22 @@ class OrdersController extends BaseController
         $this->validate($request, [
             'id' => 'required|string',
             'totalAmount' => 'required|numeric',
-            'prccode' => 'required|string|alpha_num|between:4,7',
+            'prctype' => 'required|in:1,2,3,4,5',
+            'prccode' => [
+                'requiredIf:prctype,1',
+                'nullable',
+                'alpha_num',
+                'string',
+                'between:4,7'
+            ],
+            'prcfirstname' => [
+                Rule::requiredIf(fn () => in_array(request('prctype'), ['2', '3', '4', '5'])),
+                'string'
+            ],
+            'prclastname' => [
+                Rule::requiredIf(fn () => in_array(request('prctype'), ['2', '3', '4', '5'])),
+                'string'
+            ],
             'diagnosis' => 'required|string',
             'customer' => 'required|array',
             'customer.id' => 'required|string',
@@ -92,7 +314,7 @@ class OrdersController extends BaseController
         ]);
 
         try {
-            $order = DB::transaction(function () use ($reqData) {
+            $order = DB::transaction(function () use ($reqData, $orderLogService) {
                 $customer = (object) $reqData['customer'];
     
                 $order = Order::create([
@@ -118,6 +340,9 @@ class OrdersController extends BaseController
                         $obj_item->merchandise['taxable'],
                         FILTER_VALIDATE_BOOLEAN
                     );
+                    $icd = $obj_item->merchandise['product']['code'] ?? "Not Available";
+                    $diagnosisArrKey = array_search($icd, $orderLogService->diagnosis);
+                    $icd_code = $orderLogService->diagnosis_codes[$diagnosisArrKey];
     
                     if (isset($obj_item->merchandise['image'])) {
                         if (!is_null($obj_item->merchandise['image'])) {
@@ -138,6 +363,8 @@ class OrdersController extends BaseController
                             'quantity' => $obj_item->quantity, 
                             'sku' => $obj_item->merchandise['sku'],
                             'code' => $obj_item->merchandise['sku'], 
+                            'icd' => $icd,
+                            'icdcode' => $icd_code === FALSE ? $icd:$icd_code,
                             'title' => $obj_item->merchandise['product']['title'], 
                             'type' => $category, 
                             'variantTitle' => $obj_item->merchandise['title'],
@@ -182,7 +409,10 @@ class OrdersController extends BaseController
                     'birth_date' => $customer->birth_date,
                     'contract' => $customer->contract,
                     'branch' => 'NCR-PS',
+                    'prctype' => $reqData['prctype'],
                     'prccode' => $reqData['prccode'],
+                    'prcfirstname' => $reqData['prcfirstname'],
+                    'prclastname' => $reqData['prclastname'],
                     'diagnosis' => explode(",", $reqData['diagnosis']),
                     'prescription_location' => ''
                 ]);
@@ -427,6 +657,138 @@ class OrdersController extends BaseController
                 ]);
             }
         }
+
+        return $this->sendResponse([
+            'updated' => $updated,
+            'skipped' => $skipped,
+            'errors' => $errors,
+        ], 'Order detail ICD update completed.');
+    }
+
+    public function updateOrderIcDs(
+        Request $request,
+        OrderLogService $orderLogService,
+        ShopifyHelper $shopifyHelper
+    )
+    {
+        $updated = 0;
+        $skipped = 0;
+        $errors = [];
+        $productCache = [];
+
+        OrderDetails::query()
+            ->whereNull('icd')
+            ->whereNull('icdcode')
+            ->orderBy('id')
+            ->chunkById(100, function ($orderDetails) use (
+                &$updated,
+                &$skipped,
+                &$errors,
+                &$productCache,
+                $shopifyHelper,
+                $orderLogService
+            ) {
+                foreach ($orderDetails as $orderDetail) {
+                    $sku = trim((string) $orderDetail->sku);
+
+                    if ($sku === '') {
+                        $skipped++;
+                        $errors[] = [
+                            'order_detail_id' => $orderDetail->id,
+                            'sku' => null,
+                            'reason' => 'SKU is empty.',
+                        ];
+                        continue;
+                    }
+
+                    try {
+                        if (!array_key_exists($sku, $productCache)) {
+                            $productCache[$sku] = $shopifyHelper->getProductBySku($sku);
+                        }
+
+                        $product = $productCache[$sku];
+
+                        if (!$product) {
+                            $skipped++;
+                            $errors[] = [
+                                'order_detail_id' => $orderDetail->id,
+                                'sku' => $sku,
+                                'reason' => 'Shopify product not found.',
+                            ];
+                            continue;
+                        }
+
+                        $find_productPrice = collect(data_get($product, 'variants.nodes', []))
+                            ->first()['price'];
+
+                        $productPrice = floatval($find_productPrice);
+
+                        $medicineCode = collect(data_get($product, 'metafields.nodes', []))
+                            ->firstWhere('key', 'medicine_code')['value'] ?? null;
+
+                        $medicineCode = strtoupper(trim((string) $medicineCode));
+
+                        if ($medicineCode === '') {
+                            $skipped++;
+                            $errors[] = [
+                                'order_detail_id' => $orderDetail->id,
+                                'sku' => $sku,
+                                'reason' => 'Shopify product has no medicine_code.',
+                            ];
+                            continue;
+                        }
+
+                        $diagnosisIndex = FALSE;
+                        foreach ($orderLogService->diagnosis as $key => $icd) {
+                            if (strtoupper($icd) === $medicineCode) {
+                                $diagnosisIndex = $key;
+                            }
+                        }
+
+                        if ($diagnosisIndex === false || !isset($orderLogService->diagnosis_codes[$diagnosisIndex])) {
+                            $skipped++;
+                            $errors[] = [
+                                'order_detail_id' => $orderDetail->id,
+                                'sku' => $sku,
+                                'medicine_code' => $medicineCode,
+                                'reason' => 'Medicine code is not in the ICD diagnosis list.',
+                            ];
+                            continue;
+                        }
+
+                        $orderDetail->update([
+                            'icd' => $orderLogService->diagnosis[$diagnosisIndex],
+                            'icdcode' => $orderLogService->diagnosis_codes[$diagnosisIndex],
+                            'amount' => $productPrice,
+                            'vat_amount' => $productPrice * 0.2,
+                            'no_vat_amount' => $productPrice - ($productPrice * 0.2)
+                        ]);
+
+                        $orderDetail->refresh();
+
+                        $orderLogService->orderDetails->systemUpdate(
+                            $orderDetail->id,
+                            $orderDetail,
+                            "ICD updated from Shopify medicine code {$medicineCode}."
+                        );
+
+                        $updated++;
+                    } catch (\Throwable $e) {
+                        $skipped++;
+                        $errors[] = [
+                            'order_detail_id' => $orderDetail->id,
+                            'sku' => $sku,
+                            'reason' => $e->getMessage(),
+                        ];
+
+                        logger()->error('Failed to update order detail ICD.', [
+                            'order_detail_id' => $orderDetail->id,
+                            'sku' => $sku,
+                            'exception' => $e,
+                        ]);
+                    }
+                }
+            });
 
         return $this->sendResponse([
             'updated' => $updated,

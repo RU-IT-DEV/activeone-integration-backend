@@ -127,6 +127,19 @@ class OrderDetailService
         ]);
     }
 
+    public function systemUpdate($auditable_id, $log, $additional_summary = '')
+    {
+        return OrderLog::create([
+            'table' => 'order_details',
+            'auditable_id' => $auditable_id,
+            'auditable_by' => 0,
+            'action' => 'update',
+            'status' => 1,
+            'summary' => "An order item has been updated. {$additional_summary}",
+            'value' => $log
+        ]);
+    }
+
     public function delete($auditable_id, $log)
     {
         return OrderLog::create([
@@ -188,7 +201,7 @@ class OrderLogService
         'Nausea / Vomiting',
         'Pain / Fever',
         'Parasites / Amoeba',
-        'Parkinson"s Disease',
+        "Parkinson’s Disease",
         'Preterm Labor / Pregnancy',
         'Stomach Pain / Bloating',
         'Stomach Ulcer',

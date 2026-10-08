@@ -111,6 +111,19 @@ class OrderDetailService
         ]);
     }
 
+    public function systemUpdate($auditable_id, $log, $additional_summary = '')
+    {
+        return OrderLog::create([
+            'table' => 'order_details',
+            'auditable_id' => $auditable_id,
+            'auditable_by' => 0,
+            'action' => 'update',
+            'status' => 1,
+            'summary' => "An order item has been updated. {$additional_summary}",
+            'value' => $log
+        ]);
+    }
+
     public function delete($auditable_id, $log)
     {
         return OrderLog::create([
@@ -141,6 +154,58 @@ class OrderLogService
         'RX > 30 DAYS DATE' => "This order exceeds the 30 day validity of prescription. Please secure a new prescription from your doctor.",
         'RX UTILIZED' => "This order was cancelled since prescription has been used to buy from us and full qty dispensed",
         'RX EXPIRED > 1 YEAR DATE' => "We cannot proceed with the order because prescription exceeds 1 year validity. Please secure a new prescription from your doctor.",
+    ];
+
+    public $diagnosis = [
+        'Acidity / Heartburn',
+        'Allergy / Hives / Rashes',
+        'Anemia / Iron Deficiency',
+        'Asthma / Difficulty of Breathing',
+        'Bacterial Infection',
+        'Bleeding',
+        'Constipation',
+        'Cough and Colds',
+        'Diabetes / High Blood Sugar',
+        'Diarrhea',
+        'Epilepsy / Seizures',
+        'Fungal Infection',
+        'Gallstones',
+        'Gout / High Uric Acid',
+        'Heart Disease / Chest Pain',
+        'Hemorrhoids / Piles',
+        'High Blood Pressure',
+        'High Cholesterol',
+        'High Triglycerides',
+        'Inflammatory Condition',
+        'Irregular Heartbeat',
+        'Mental Health / Anxiety / Mood',
+        'Mouth or Throat Soreness',
+        'Muscle Spasm',
+        'Nausea / Vomiting',
+        'Pain / Fever',
+        'Parasites / Amoeba',
+        'Parkinson"s Disease',
+        'Preterm Labor / Pregnancy',
+        'Stomach Pain / Bloating',
+        'Stomach Ulcer',
+        'Thyroid Problems',
+        'Tuberculosis',
+        'UTI / Kidney Stones',
+        'Vertigo / Dizziness',
+        'Viral Infection / Cold Sores',
+        'Vitamins / Supplements',
+        'Prostate / Urinary Difficulty'
+    ];
+
+    public $diagnosis_codes = [
+        'K21', 'J30', 'D50', 'J45', 'A49',
+        'R58', 'K59', 'J06', 'E11', 'A09',
+        'G40', 'B35', 'K80', 'M10', 'I25',
+        'K64', 'I10', 'E78', 'E78', 'M79',
+        'I49', 'F41', 'J02', 'M62', 'R11',
+        'R50', 'A07', 'G20', 'O60', 'K30',
+        'K27', 'E03', 'A15', 'N39', 'H81',
+        'B00', 'Z29', 'N40'
     ];
 
     public function __construct()

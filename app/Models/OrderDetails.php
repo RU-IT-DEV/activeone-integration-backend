@@ -8,7 +8,7 @@ class OrderDetails extends Model
 {
     protected $fillable = [
         'order_id', 'shopify_productId', 'shopify_product_price', 
-        'image_url', 'quantity', 'sku',
+        'image_url', 'quantity', 'sku', 'icd', 'icdcode',
         'code', 'title', 'type', 'variantTitle', 'unit',
         'amount', 'vat_amount', 'no_vat_amount', 'taxable',
         'is_prescribed', 'reason'

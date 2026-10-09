@@ -251,6 +251,8 @@ class OrdersController extends BaseController
         }, $filename, [
             'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+            'Access-Control-Expose-Headers' => 'Content-Disposition',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate',
         ]);
     }
 

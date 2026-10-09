@@ -107,7 +107,7 @@ class OrdersController extends BaseController
             $orderSearch->apply($filteredOrders, $request);
 
             $orders = DB::table('orders as o')
-                ->whereIn('o.id', $filteredOrders)
+                ->whereIn('o.id', $filteredOrders->toBase())
 
                 ->leftJoin('order_details as od', 'od.order_id', '=', 'o.id')
                 ->leftJoin('order_shippings as os', 'os.order_id', '=', 'o.id')

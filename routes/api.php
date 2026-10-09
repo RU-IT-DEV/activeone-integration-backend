@@ -35,7 +35,8 @@ Route::group(['namespace' => 'Api', 'middleware' => ['cors']], function () {
     });
     Route::post('register', [AuthController::class, 'register']);
 
-    Route::get('customer-default-address', [CustomerController::class, 'show']);
+    Route::get('customer', [CustomerController::class, 'show']);
+    Route::get('customer-default-address', [CustomerController::class, 'showAddress']);
     Route::get('cart', [CartController::class, 'show']);
     Route::get('doctors', [DoctorsController::class, 'index']);
     

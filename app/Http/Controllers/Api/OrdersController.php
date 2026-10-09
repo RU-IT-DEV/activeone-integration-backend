@@ -75,7 +75,7 @@ class OrdersController extends BaseController
 
     public function export(Request $request, OrderSearchService $orderSearch)
     {
-        $filename = 'activeone-orders-' . now()->format('Ymd-His') . '.csv';
+        $filename = 'a1rxorder_' . now()->format('mdYHis') . '.csv';
 
         return response()->streamDownload(function () use ($request, $orderSearch) {
 

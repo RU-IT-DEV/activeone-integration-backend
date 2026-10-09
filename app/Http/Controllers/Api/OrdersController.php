@@ -107,7 +107,7 @@ class OrdersController extends BaseController
             $orderSearch->apply($filteredOrders, $request);
 
             $orders = DB::table('orders as o')
-                ->whereIn('o.id', $filteredOrders)
+                ->whereIn('o.id', $filteredOrders->toBase())
 
                 ->leftJoin('order_details as od', 'od.order_id', '=', 'o.id')
                 ->leftJoin('order_shippings as os', 'os.order_id', '=', 'o.id')
@@ -251,6 +251,8 @@ class OrdersController extends BaseController
         }, $filename, [
             'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+            'Access-Control-Expose-Headers' => 'Content-Disposition',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate',
         ]);
     }
 

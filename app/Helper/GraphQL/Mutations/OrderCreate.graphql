@@ -41,9 +41,6 @@ mutation OrderCreate($order: OrderCreateOrderInput!) {
           }
         }
       }
-
-      id
-      statusPageUrl(audience: MERCHANTVIEW)
     }
 
     userErrors {

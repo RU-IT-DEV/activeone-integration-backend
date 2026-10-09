@@ -13,7 +13,24 @@ class CustomerController extends BaseController
     public function show(Request $request, ShopifyHelper $shopifyHelper)
     {
         $customer_id = $request->input('customerId');
-        logger()->info($customer_id);
+        $customer_resp = $shopifyHelper->getCustomerDetails($customer_id);
+
+        $collect = collect(data_get($customer_resp, "metafields.nodes", []));
+        $response = [
+            'id' => $customer_resp['id'],
+            'firstName' => $customer_resp['firstName'],
+            'lastName' => $customer_resp['lastName'],
+            'email' => $customer_resp['email'],
+            'alternateEmail' => $collect->where('key', 'personal_email_address')->first()['value'] ?? '--',
+        ];
+
+        return $this->sendResponse($response, "Success.");
+    }
+
+    public function showAddress(Request $request, ShopifyHelper $shopifyHelper)
+    {
+        $customer_id = $request->input('customerId');
+        
         return $this->sendResponse($shopifyHelper->getCustomer($customer_id), "Success.");
     }
 

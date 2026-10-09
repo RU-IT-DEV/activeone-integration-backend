@@ -103,6 +103,7 @@ class ShopifyCreateOrderJob implements ShouldQueue
                     throw new \Exception($resp_data, 1);
                 } else {
                     $order = $resp_data['orderCreate']['order'];
+                    $this->orderModel->order_url = $order['id'];
                     $this->orderModel->shopify_status = "SUCCESS";
                     $this->orderModel->shopify_order_name = $order['name'];
                     $this->orderModel->save();

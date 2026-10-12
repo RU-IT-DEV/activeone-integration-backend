@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\OrderLog;
+use App\Models\OrderRejectionLog;
 use Illuminate\Support\Facades\Auth;
 
 class IntellicareLogService
@@ -270,7 +271,7 @@ class OrderLogService
 
     public function reject($auditable_id, $log)
     {
-        OrderLog::create([
+        $orderLog = OrderLog::create([
             'table' => 'orders',
             'auditable_id' => $auditable_id,
             'auditable_by' => Auth::user()->id,
@@ -278,6 +279,12 @@ class OrderLogService
             'status' => 1,
             'summary' => 'Order status has been updated to REJECTED.',
             'value' => $log
+        ]);
+
+        OrderRejectionLog::create([
+            'order_log_id' => $orderLog->id,
+            'reason' => $orderLog->order_reason,
+            'order_reject_comment' => $orderLog->order_reject_comment
         ]);
 
         return $this;

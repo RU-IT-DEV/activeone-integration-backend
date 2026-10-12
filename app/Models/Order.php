@@ -52,6 +52,11 @@ class Order extends Model
             ->orderBy('id', 'DESC');
     }
 
+    public function rejectLog()
+    {
+        return $this->hasOne(OrderRejectionLog::class);
+    }
+
     public function statusUpdatedBy()
     {
         return $this->hasOne(OrderLog::class, 'auditable_id')

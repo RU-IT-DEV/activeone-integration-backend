@@ -23,7 +23,8 @@ class PharmaRejectionMail extends Mailable
      */
     public function __construct(
         public Order $order,
-        public $rejection_reason_message
+        public $rejection_reason_message,
+        public $rejection_comment_message
     ) {
         $this->order_datetime = $this->order->created_at->format('F d, Y h:i A');
     }

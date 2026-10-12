@@ -458,7 +458,8 @@ class OrdersController extends BaseController
 
     public function update(Request $request, Order $order, OrderLogService $orderLogService) {
         $this->validate($request, [
-            'activeone_status' => 'required|in:APPROVED,REJECTED'
+            'activeone_status' => 'required|in:APPROVED,REJECTED',
+            'comment' => 'required'
         ], [
             'activeone_status.required' => "ActiveOne status is required.",
             'activeone_status.in' => "ActiveOne status must be Approved or Rejected.",
@@ -488,15 +489,17 @@ class OrdersController extends BaseController
                 $orderLogService->approve($order->id, $order);
             } else if ($request->input('activeone_status') == 'REJECTED') {
                 $order->order_reason = $request->input('reason');
+                $order->order_reject_comment = $request->input('comment');
                 $orderLogService->reject($order->id, $order);
                 
                 $mail_msg = $order->order_reason;
+                $mail_comment = $order->order_reject_comment;
 
                 if (isset($orderLogService->arr_reject_reason_email_msg[$order->order_reason])) {
                     $mail_msg = $orderLogService->arr_reject_reason_email_msg[$order->order_reason];
                 }
                 Mail::to($order->customer_email)
-                    ->send(new PharmaRejectionMail($order, $mail_msg));
+                    ->send(new PharmaRejectionMail($order, $mail_msg, $mail_comment));
             }
 
             DB::commit();

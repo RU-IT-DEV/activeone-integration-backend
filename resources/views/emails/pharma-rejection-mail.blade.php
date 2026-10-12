@@ -18,6 +18,9 @@ We're sorry, but we were unable to process your ActiveOne pharmacy order.
 
 {{ $rejection_reason_message }}
 
+## Details
+{{ $rejection_comment_message }}
+
 Please review the information and prescription associated with your order. If applicable, you may place a new order with the necessary corrections or an updated prescription.
 
 If you need assistance, please contact the ActiveOne RX team.

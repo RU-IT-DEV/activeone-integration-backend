@@ -402,6 +402,16 @@ class OrdersController extends BaseController
     
                 $order->shippingAddress()->create($addressData);
                 $order->billingAddress()->create($addressData);
+
+                $prcfirstname = null;
+                $prclastname = null;
+                if (isset($reqData['prcfirstname'])) {
+                    $prcfirstname = $reqData['prcfirstname'];
+                }
+
+                if (isset($reqData['prclastname'])) {
+                    $prclastname = $reqData['prclastname'];
+                }
     
                 $order->intellicareLog()->create([
                     'order_id' => $order->id,
@@ -413,8 +423,8 @@ class OrdersController extends BaseController
                     'branch' => 'NCR-PS',
                     'prctype' => $reqData['prctype'],
                     'prccode' => $reqData['prccode'],
-                    'prcfirstname' => $reqData['prcfirstname'],
-                    'prclastname' => $reqData['prclastname'],
+                    'prcfirstname' => $prcfirstname,
+                    'prclastname' => $prclastname,
                     'diagnosis' => explode(",", $reqData['diagnosis']),
                     'prescription_location' => ''
                 ]);

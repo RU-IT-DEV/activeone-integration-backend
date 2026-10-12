@@ -282,9 +282,10 @@ class OrderLogService
         ]);
 
         OrderRejectionLog::create([
+            'order_id' => $log->id,
             'order_log_id' => $orderLog->id,
-            'reason' => $orderLog->order_reason,
-            'order_reject_comment' => $orderLog->order_reject_comment
+            'reason' => $log->order_reason,
+            'comment' => $log->order_reject_comment
         ]);
 
         return $this;

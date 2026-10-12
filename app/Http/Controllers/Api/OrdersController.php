@@ -493,12 +493,13 @@ class OrdersController extends BaseController
                 $orderLogService->reject($order->id, $order);
                 
                 $mail_msg = $order->order_reason;
+                $mail_comment = $order->order_reject_comment;
 
                 if (isset($orderLogService->arr_reject_reason_email_msg[$order->order_reason])) {
                     $mail_msg = $orderLogService->arr_reject_reason_email_msg[$order->order_reason];
                 }
                 Mail::to($order->customer_email)
-                    ->send(new PharmaRejectionMail($order, $mail_msg));
+                    ->send(new PharmaRejectionMail($order, $mail_msg, $mail_comment));
             }
 
             DB::commit();

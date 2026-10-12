@@ -8,7 +8,7 @@ class OrderRejectionLog extends Model
 {
 
     protected $fillable = [
-        'order_log_id', 'reason', 'comment'
+        'order_id', 'order_log_id', 'reason', 'comment'
     ];
     
     public function order()

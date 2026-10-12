@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('order_rejection_log', function (Blueprint $table) {
+        Schema::create('order_rejection_logs', function (Blueprint $table) {
             $table->id();
             $table->integer('order_id');
             $table->integer('order_log_id');
@@ -26,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('order_rejection_log');
+        Schema::dropIfExists('order_rejection_logs');
     }
 };

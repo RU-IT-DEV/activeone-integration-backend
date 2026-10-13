@@ -10,6 +10,7 @@ class Product extends Model
         'sku',
         'netsuite_item_id',
         'name',
+        'icd', 'icdcode',
         'description',
         'amount',
         'vat_percentage',

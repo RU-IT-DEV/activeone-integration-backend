@@ -15,6 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('sku');
             $table->string('name');
+            $table->string('icd')->nullable();
+            $table->string('icdcode')->nullable();
             $table->string('netsuite_item_id')->nullable();
             $table->string('currency')->default('PHP');
             $table->float('amount');

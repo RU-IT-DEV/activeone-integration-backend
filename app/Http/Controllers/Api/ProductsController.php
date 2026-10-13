@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Helper\ShopifyHelper;
 use App\Models\Product;
+use App\Services\OrderLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -62,6 +64,8 @@ class ProductsController extends BaseController
     public function store(Request $request)
     {
         $data = $this->validatedProduct($request);
+        $data = $this->addIcd($data['sku'], $data);
+
         $product = DB::transaction(function () use ($data) {
             return Product::create($this->toDatabaseAttributes($data));
         });
@@ -77,6 +81,7 @@ class ProductsController extends BaseController
     public function update(Request $request, Product $product)
     {
         $data = $this->validatedProduct($request, $product);
+        $data = $this->addIcd($data['sku'], $data);
         DB::transaction(function () use ($product, $data) {
             $product->update($this->toDatabaseAttributes($data));
         });
@@ -90,6 +95,54 @@ class ProductsController extends BaseController
         $product->delete();
 
         return $this->sendResponse(['id' => $product->id], 'Product deleted successfully.');
+    }
+
+    private function addIcd($sku, $data)
+    {
+        $shopifyHelper = new ShopifyHelper;
+        $orderLogService = new OrderLogService;
+        $shopify_product = $shopifyHelper->getProductBySku($sku);
+
+        if ($shopify_product) {
+            $nodes = data_get($shopify_product, 'metafields.nodes', []);
+            $nodes = array_map(function($node) use ($shopifyHelper) {
+                if ($node['type'] == "metaobject_reference") {
+                    $referenceValue = $shopifyHelper->getMetaobject($node['value']);
+                    $str_typeValue = $referenceValue['displayName'];
+                    $node['valueId'] = $node['value'];
+                    $node['value'] = strtoupper($str_typeValue) ?? '';
+                }
+    
+                return $node;
+            }, $nodes);
+
+            $shopify_product['metafields'] = $nodes;
+            $product_type = array_values(array_filter($shopify_product['metafields'], function ($field) {
+                return $field['type'] == "metaobject_reference" || $field['key'] == "medicine_type";
+            }));
+
+            $product_code = array_values(array_filter($shopify_product['metafields'], function ($field) {
+                return $field['key'] == "medicine_code";
+            }));
+
+            if (count($product_type) > 0) {
+                $str_typeValue = strtolower($product_type[0]['value']);
+                if (str_contains($str_typeValue, 'otc')) {
+                    $data['product_type'] = "OTC";
+                } else {
+                    $data['product_type'] = empty($str_typeValue) ? 'OTC':strtoupper($str_typeValue);
+                }
+            }
+
+            if (count($product_code) > 0) {
+                $str_codeValue = $product_code[0]['value'];
+                $data['icd'] = $str_codeValue;
+                $diagnosisArrKey = array_search($str_codeValue, $orderLogService->diagnosis);
+                $data['icdcode'] = $orderLogService->diagnosis_codes[$diagnosisArrKey];
+            }
+        }
+
+        return $data;
     }
 
     private function validatedProduct(Request $request, ?Product $product = null): array
@@ -122,6 +175,8 @@ class ProductsController extends BaseController
             'sku' => $data['sku'],
             'netsuite_item_id' => $data['netsuite_item_id'] ?? null,
             'name' => $data['name'],
+            'icd' => $data['icd'] ?? null,
+            'icdcode' => $data['icdcode'] ?? null,
             'description' => $data['description'] ?? null,
             'amount' => $unitPrice,
             'vat_percentage' => $vatPercentage,

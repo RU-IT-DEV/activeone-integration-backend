@@ -15,14 +15,14 @@ return new class extends Migration
             $table->id();
             $table->string('sku');
             $table->string('name');
-            $table->string('netsuite_item_id');
-            $table->string('currency');
+            $table->string('netsuite_item_id')->nullable();
+            $table->string('currency')->default('PHP');
             $table->float('amount');
             $table->decimal('vat_percentage', 7, 4)->default(12);
             $table->float('no_vat_amount');
             $table->boolean('vatable');
-            $table->text('description');
-            $table->boolean('status');
+            $table->text('description')->nullable();
+            $table->boolean('status')->default(1);
             $table->timestamps();
         });
     }

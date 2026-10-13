@@ -126,9 +126,9 @@ class ProductsController extends BaseController
             'amount' => $unitPrice,
             'vat_percentage' => $vatPercentage,
             'no_vat_amount' => $noVatAmount,
-            'vatable' => $vatable,
+            'vatable' => in_array($vatable, ["true", "1"]),
             'currency' => $data['currency'],
-            'status' => $data['is_active'] ? 'active' : 'inactive',
+            'status' => in_array($data['is_active'], ["true","1"]),
         ];
     }
 

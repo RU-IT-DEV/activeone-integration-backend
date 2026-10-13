@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('netsuite_item_id');
             $table->string('currency');
             $table->float('amount');
+            $table->decimal('vat_percentage', 7, 4)->default(12);
             $table->float('no_vat_amount');
             $table->boolean('vatable');
             $table->text('description');

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Helper\IntellicareHelper;
 use App\Helper\ShopifyHelper;
 use App\Http\Controllers\Api\BaseController;
+use App\Models\Product;
 use App\Models\ShopifyCheckoutSession;
 use Illuminate\Http\Request;
 
@@ -60,8 +61,44 @@ class CartController extends BaseController
                         }
                     }
                     $product['metafields'] = $productMetafields;
-                    $item['node']['merchandise']['product'] = $product;
+                    $mitem['product'] = $product;
                 }
+
+                $itemNodeCost = $item['node']['cost'];
+                $product_Rprice = Product::where('sku', $mitem['sku'])->first();
+
+                if ($product_Rprice) {
+                    $amountToUse = $product_Rprice->amount;
+                    if (!$product_Rprice->vatable) {
+                        $amountToUse = $product_Rprice->no_vat_amount;
+                    }
+                    $item_tax_amount = $product_Rprice->amount - $product_Rprice->no_vat_amount;
+                    $mitem['taxable'] = $product_Rprice->vatable === true;
+                    $mitem['price']['amount'] = $product_Rprice->amount;
+                    $mitem['price']['vatable'] = $product_Rprice->vatable;
+                    $mitem['price']['tax_amount'] = number_format($item_tax_amount, 2, ".", "");
+                    $mitem['price']['no_vat_amount'] = $product_Rprice->no_vat_amount;
+                    
+                    $totalPrice = $amountToUse * $item['node']['quantity'];
+                    $noVat_totalPrice = $product_Rprice->no_vat_amount * $item['node']['quantity'];
+                    $itemNodeCost['totalAmount']['amount'] = number_format($totalPrice, 2, ".", "");
+                    $total_tax_amount = $totalPrice - $noVat_totalPrice;
+
+                    $itemNodeCost = [
+                        ...$itemNodeCost,
+                        'taxableAmount' => number_format($total_tax_amount, 2, ".", ""),
+                        'tax' => [
+                            'amount' => number_format($total_tax_amount, 2, ".", ""),
+                            'currencyCode' => $product_Rprice->currency
+                        ],
+                        'deductableToEmployee' => [
+                            'amount' => number_format($noVat_totalPrice, 2, ".", "")
+                        ]
+                    ];
+                }
+                
+                $item['node']['cost'] = $itemNodeCost;
+                $item['node']['merchandise'] = $mitem;
 
                 return $item;
             }, $lineItems);

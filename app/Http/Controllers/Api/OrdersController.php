@@ -469,7 +469,7 @@ class OrdersController extends BaseController
     public function update(Request $request, Order $order, OrderLogService $orderLogService) {
         $this->validate($request, [
             'activeone_status' => 'required|in:APPROVED,REJECTED',
-            'comment' => 'required'
+            'comment' => 'requiredIf:activeone_status,REJECTED'
         ], [
             'activeone_status.required' => "ActiveOne status is required.",
             'activeone_status.in' => "ActiveOne status must be Approved or Rejected.",

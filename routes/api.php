@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\FileSystemController;
 use App\Http\Controllers\Api\OrderPrescriptionController;
 use App\Http\Controllers\Api\OrdersController;
 use App\Http\Controllers\Api\ProcessJobsController;
+use App\Http\Controllers\Api\ProductsController;
 use App\Http\Controllers\Api\Shopify\CustomerController;
 use App\Http\Controllers\Api\Shopify\ProductController;
 use App\Http\Controllers\Api\UsersController;
@@ -86,5 +87,11 @@ Route::group(['namespace' => 'Api', 'middleware' => ['cors']], function () {
         \Cache::flush();
         return response()->json(['message' => 'Cache cleared successfully']);
     })->middleware('purge.auth');
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::prefix('admin')->group(function () {
+        Route::resource('products', ProductsController::class);
+    });
 });
 

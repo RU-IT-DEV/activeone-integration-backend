@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\DoctorsController;
 use App\Http\Controllers\Api\FileSystemController;
 use App\Http\Controllers\Api\OrderPrescriptionController;
 use App\Http\Controllers\Api\OrdersController;
+use App\Http\Controllers\Api\PowerAutomate\IncomingEmailController;
 use App\Http\Controllers\Api\ProcessJobsController;
 use App\Http\Controllers\Api\ProductsController;
 use App\Http\Controllers\Api\Shopify\CustomerController;
@@ -95,3 +96,4 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 });
 
+Route::post('incoming-otps', [IncomingEmailController::class, 'store']);

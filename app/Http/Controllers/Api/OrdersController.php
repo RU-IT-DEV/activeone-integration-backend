@@ -322,6 +322,7 @@ class OrdersController extends BaseController
                 $order = Order::create([
                     'customer_id' => $customer->id,
                     'customer_email' => $customer->email,
+                    'customer_email_2' => $customer->personal_email ?? null,
                     'customer_name' => "{$customer->firstName} {$customer->lastName}",
                     'shopify_cart_id' => $reqData['id'],
                     'financialStatus' => 'PENDING', 
@@ -508,8 +509,14 @@ class OrdersController extends BaseController
                 if (isset($orderLogService->arr_reject_reason_email_msg[$order->order_reason])) {
                     $mail_msg = $orderLogService->arr_reject_reason_email_msg[$order->order_reason];
                 }
-                Mail::to($order->customer_email)
-                    ->send(new PharmaRejectionMail($order, $mail_msg, $mail_comment));
+                
+                $mail = Mail::to($order->customer_email);
+
+                if (!empty($order->customer_email_2)) {
+                    $mail->cc($order->customer_email_2);
+                }
+
+                $mail->send(new PharmaRejectionMail($order, $mail_msg, $mail_comment));
             }
 
             DB::commit();

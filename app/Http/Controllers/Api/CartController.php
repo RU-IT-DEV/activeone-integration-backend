@@ -108,11 +108,12 @@ class CartController extends BaseController
             $cart['data']['cart']['lines']['edges'] = $lineItems;
             $cart['data']['arr_med_diagnosis'] = $diagnosis;
 
-            if (is_null($cart['data']['cart']['buyerIdentity']['customer'])) {
+            if (empty($cart['data']['cart']['buyerIdentity']['customer'])) {
                 $customer = $shopifyHelper->getCustomerDetails($session->shopify_customer_id);
                 $cart['data']['cart']['buyerIdentity']['email'] = $customer['email'];
                 $cart['data']['cart']['buyerIdentity']['phone'] = $customer['phone'];
-                $cart['data']['cart']['buyerIdentity']['customer'] = [
+
+                $customer = [
                     'id' => $customer['id'],
                     'firstName' => $customer['firstName'],
                     'lastName' => $customer['lastName'],
@@ -120,6 +121,20 @@ class CartController extends BaseController
                     'phone' => $customer['phone'],
                     'metafields' => $customer['metafields']['nodes']
                 ];
+
+                $arr_personal_email = array_find($customer['metafields']['nodes'], function ($value) {
+                    if ($value['key'] == "personal_email_address") {
+                        return $value;
+                    } else {
+                        return false;
+                    }
+                });
+
+                if (!empty($arr_personal_email)) {
+                    $customer['personal_email'] = $arr_personal_email['value'];
+                }
+
+                $cart['data']['cart']['buyerIdentity']['customer'] = $customer;
             }
             
             $response = [

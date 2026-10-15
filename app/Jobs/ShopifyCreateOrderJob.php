@@ -116,8 +116,13 @@ class ShopifyCreateOrderJob implements ShouldQueue
                     ], "Shopify order created successfully. Order name: " . $order['name']);
 
                     if ($this->orderModel->lineItemsTrashed->isNotEmpty()) {
-                        Mail::to($this->orderModel->customer_email)
-                            ->send(new PartialApproveMail($this->orderModel));
+                        $mail = Mail::to($this->orderModel->customer_email);
+
+                        if (!empty($this->orderModel->customer_email_2)) {
+                            $mail->cc($this->orderModel->customer_email_2);
+                        }
+                        
+                        $mail->send(new PartialApproveMail($this->orderModel));
                     }
 
                     JobDispatcher::dispatch(

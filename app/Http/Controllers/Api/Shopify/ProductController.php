@@ -167,7 +167,7 @@ class ProductController extends BaseController
                     'variantTitle' => $obj_item['selectedOptions'][0]['value'],
                     'unit' => $obj_item['selectedOptions'][0]['name'],
                     'amount' => $obj_item['amount'], 
-                    'vat_amount' => $obj_item['price']['vat_amount'], 
+                    'vat_amount' => $obj_item['price']['tax_amount'], 
                     'no_vat_amount' => $obj_item['price']['no_vat_amount'], 
                     'taxable' => $taxable,
                     'is_prescribed' => true,

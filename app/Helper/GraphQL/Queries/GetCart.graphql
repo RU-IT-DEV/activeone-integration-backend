@@ -18,6 +18,7 @@ query GetCart($cartId: ID!) {
         # Fetches customer-specific metafield parameters
         # Replace namespace and key with your exact setup values
         metafields(identifiers: [
+          { namespace: "custom", key: "personal_email_address" },
           { namespace: "custom", key: "account_number" },
           { namespace: "custom", key: "coverage_end" },
           { namespace: "custom", key: "contract" },

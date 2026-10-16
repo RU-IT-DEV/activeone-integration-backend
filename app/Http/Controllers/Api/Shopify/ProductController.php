@@ -138,13 +138,22 @@ class ProductController extends BaseController
 
             $logType = "ADD"; $order_item = [];
             $response_msg = "Successfuly added an item";
-            $order_totalAmount = $obj_item['amount'] * $obj_item['quantity'];
+            $order_totalAmount = $order->lineItemsTotal->sum(function ($item) {
+                return $item['amount'] * $item['quantity'];
+            });
 
             $order->totalAmount += $order_totalAmount;
             $order->save();
 
             $isProduct_orderExist = $order->lineItems()->where('shopify_productId', $obj_item['id'])->first();
             if ($isProduct_orderExist) {
+                // set original quantity for updating purposes
+                if (empty($isProduct_orderExist->og_quantity)) {
+                    $isProduct_orderExist->og_quantity = $isProduct_orderExist->quantity;
+                }
+
+                // If product has already been shifted
+                $isProduct_orderExist->shifted = $isProduct_orderExist->og_quantity > $obj_item['quantity'];
                 $isProduct_orderExist->increment('quantity', $obj_item['quantity']);
                 $isProduct_orderExist->save();
 
@@ -213,14 +222,22 @@ class ProductController extends BaseController
 
         try {
             $data = $request->all();
-            $orderDetail->update([
+            $update_values = [
                 'quantity' => $data['quantity'],
                 'reason' => $data['reason']
-            ]);
+            ];
+            if (empty($orderDetail->og_quantity)) {
+                $orderDetail->og_quantity = $orderDetail->quantity;
+            }
+            $update_values['shifted'] = $orderDetail->og_quantity > $data['quantity'];
 
-            $order_totalAmount = $orderDetail->amount * $data['quantity'];
+            $orderDetail->update($update_values);
 
-            $order->totalAmount += $order_totalAmount;
+            $order_totalAmount = $order->lineItemsTotal->sum(function ($item) {
+                return $item['amount'] * $item['quantity'];
+            });
+
+            $order->totalAmount = $order_totalAmount;
             $order->save();
 
             $additional_summary = "Quantity updated to {$data['quantity']}, Reason updated to {$data['reason']}";

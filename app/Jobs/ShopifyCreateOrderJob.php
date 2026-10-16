@@ -115,7 +115,8 @@ class ShopifyCreateOrderJob implements ShouldQueue
                         'shopify_status' => "SUCCESS",
                     ], "Shopify order created successfully. Order name: " . $order['name']);
 
-                    if ($this->orderModel->lineItemsTrashed->isNotEmpty()) {
+                    if ($this->orderModel->lineItemsTrashed->isNotEmpty()
+                        || $this->orderModel->lineItemsDecreased->isNotEmpty()) {
                         $mail = Mail::to($this->orderModel->customer_email);
 
                         if (!empty($this->orderModel->customer_email_2)) {

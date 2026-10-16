@@ -24,6 +24,16 @@ class Order extends Model
         return $this->hasMany(OrderDetails::class, 'order_id')->onlyTrashed();
     }
 
+    public function lineItemsDecreased()
+    {
+        return $this->hasMany(OrderDetails::class, 'order_id')->where('shifted', '<', 0);
+    }
+
+    public function lineItemsTotal()
+    {
+        return $this->lineItems()->select('id', 'order_id', 'amount');
+    }
+
     public function shippingAddress()
     {
         return $this->hasOne(OrderShipping::class, 'order_id');

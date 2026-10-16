@@ -138,7 +138,9 @@ class ProductController extends BaseController
 
             $logType = "ADD"; $order_item = [];
             $response_msg = "Successfuly added an item";
-            $order_totalAmount = $order->lineItemsTotal->sum('amount');
+            $order_totalAmount = $order->lineItemsTotal->sum(function ($item) {
+                return $item['amount'] * $item['quantity'];
+            });
 
             $order->totalAmount += $order_totalAmount;
             $order->save();
@@ -146,7 +148,7 @@ class ProductController extends BaseController
             $isProduct_orderExist = $order->lineItems()->where('shopify_productId', $obj_item['id'])->first();
             if ($isProduct_orderExist) {
                 // set original quantity for updating purposes
-                if (!empty($isProduct_orderExist->og_quantity)) {
+                if (empty($isProduct_orderExist->og_quantity)) {
                     $isProduct_orderExist->og_quantity = $isProduct_orderExist->quantity;
                 }
 
@@ -224,16 +226,16 @@ class ProductController extends BaseController
                 'quantity' => $data['quantity'],
                 'reason' => $data['reason']
             ];
-            if (!empty($orderDetail->og_quantity)) {
+            if (empty($orderDetail->og_quantity)) {
                 $orderDetail->og_quantity = $orderDetail->quantity;
             }
-            if (!$orderDetail->shifted) {
-                $update_values['shifted'] = $orderDetail->og_quantity > $data['quantity'];
-            }
+            $update_values['shifted'] = $orderDetail->og_quantity > $data['quantity'];
 
             $orderDetail->update($update_values);
 
-            $order_totalAmount = $order->lineItemsTotal->sum('amount');
+            $order_totalAmount = $order->lineItemsTotal->sum(function ($item) {
+                return $item['amount'] * $item['quantity'];
+            });
 
             $order->totalAmount = $order_totalAmount;
             $order->save();

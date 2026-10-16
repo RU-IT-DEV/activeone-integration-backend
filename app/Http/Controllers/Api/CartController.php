@@ -108,6 +108,7 @@ class CartController extends BaseController
             $cart['data']['cart']['lines']['edges'] = $lineItems;
             $cart['data']['arr_med_diagnosis'] = $diagnosis;
 
+            $customer = $cart['data']['cart']['buyerIdentity']['customer'];
             if (empty($cart['data']['cart']['buyerIdentity']['customer'])) {
                 $customer = $shopifyHelper->getCustomerDetails($session->shopify_customer_id);
                 $cart['data']['cart']['buyerIdentity']['email'] = $customer['email'];
@@ -122,26 +123,29 @@ class CartController extends BaseController
                     'metafields' => $customer['metafields']['nodes']
                 ];
 
-                $arr_personal_email = array_find($customer['metafields']['nodes'], function ($value) {
-                    if ($value['key'] == "personal_email_address") {
-                        return $value;
-                    } else {
-                        return false;
-                    }
-                });
-
-                if (!empty($arr_personal_email)) {
-                    $customer['personal_email'] = $arr_personal_email['value'];
-                }
-
                 $cart['data']['cart']['buyerIdentity']['customer'] = $customer;
             }
+
+            $arr_personal_email = array_find($customer['metafields'], function ($value) {
+                if ($value['key'] == "personal_email_address") {
+                    return $value;
+                } else {
+                    return false;
+                }
+            });
+
+            if (!empty($arr_personal_email)) {
+                $customer['personal_email'] = $arr_personal_email['value'];
+            }
+            
+            $cart['data']['cart']['buyerIdentity']['customer'] = $customer;
             
             $response = [
                 ...$cart['data']
             ];
             return $this->sendResponse($response, "Success");
         } catch (\Exception $e) {
+            logger()->error("Error code: " . $e->getCode());
             if ($e->getCode() === 422) {
                 return $this->sendError("Something went wrong. {$e->getMessage()}", [], 422);
             } else {

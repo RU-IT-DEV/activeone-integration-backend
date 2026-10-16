@@ -26,12 +26,12 @@ class Order extends Model
 
     public function lineItemsDecreased()
     {
-        return $this->hasMany(OrderDetails::class, 'order_id')->where('shifted', '<', 0);
+        return $this->hasMany(OrderDetails::class, 'order_id')->where('shifted', 1);
     }
 
     public function lineItemsTotal()
     {
-        return $this->lineItems()->select('id', 'order_id', 'amount');
+        return $this->lineItems()->select('id', 'order_id', 'amount', 'quantity');
     }
 
     public function shippingAddress()

@@ -24,6 +24,7 @@ class PartialApproveMail extends Mailable
         public Order $order
     ) {
         logger()->info($order->lineItemsTrashed);
+        logger()->info($order->lineItemsDecreased);
         $this->order_datetime = $this->order->created_at->format('F d, Y h:i A');
     }
 

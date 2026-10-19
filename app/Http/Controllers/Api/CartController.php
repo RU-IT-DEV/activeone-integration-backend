@@ -11,10 +11,8 @@ use Illuminate\Http\Request;
 
 class CartController extends BaseController
 {
-    public function show(Request $request, ShopifyHelper $shopifyHelper, IntellicareHelper $intellicareHelper)
+    public function show(Request $request, ShopifyHelper $shopifyHelper)
     {
-        $data = $request->all();
-
         try {
             $session = ShopifyCheckoutSession::where('token', $request->cartToken)->first();
 

@@ -47,7 +47,10 @@ class IntellicareHelper
                 $response = $client->json();
     
                 $resp_status = $this->custom_crypt->decrypt($response['status']);
-                logger()->info($response, $resp_status);
+                logger()->info('Intellicare API response', [
+                    'response' => $response,
+                    'decrypted_status' => $resp_status,
+                ]);
                 throw new \Exception($resp_status['message']);
             } else {
                 $response = $this->clientResponse($client->json());

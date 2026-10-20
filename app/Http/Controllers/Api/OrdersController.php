@@ -88,7 +88,16 @@ class OrdersController extends BaseController
             'address.country' => 'required|string',
             'address.region' => 'required|string',
             'address.postalCode' => 'required|string',
+            'address.phone' => [
+                'required',
+                'string',
+                'max:13',
+                'min:11',
+                'regex:/^(09\d{9}|\+639\d{9})$/'
+            ],
             // Add more validation rules as needed
+        ], [
+            'address.phone.regex' => "The phone number field must follow +639... input."
         ]);
 
         try {

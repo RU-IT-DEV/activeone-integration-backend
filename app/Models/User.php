@@ -27,7 +27,8 @@ class User extends Authenticatable
         'status',
         'email_verified_at',
         'role',
-        'position'
+        'position',
+        'admin_role_id'
     ];
 
     /**
@@ -58,6 +59,8 @@ class User extends Authenticatable
             }
         });
     }
+
+    public function adminRole() { return $this->belongsTo(AdminRole::class, 'admin_role_id'); }
 
     public function role() {
         return $this->hasOne(Roles::class, 'id', 'role_id');

@@ -10,7 +10,7 @@ class AdminUserController extends Controller {
  private function admin(Request $request):void {abort_unless($request->user()?->role === 'admin',403,'Administrator access required.');}
  private function serialize(User $user):array {
   return ['id'=>$user->id,'name'=>$user->name,'email'=>$user->email,'position'=>$user->position,
-   'role'=>$user->role,'admin_role_id'=>$user->admin_role_id,'admin_role'=>$user->adminRole,
+   'role'=>$user->role,'admin_role_id'=>$user->role,'admin_role'=>$user->adminRole,
    'status'=>$user->status,'created_at'=>$user->created_at];
  }
  public function index(Request $request) {
@@ -25,7 +25,7 @@ class AdminUserController extends Controller {
  public function store(Request $request) {
   $this->admin($request);
   $data=$this->validated($request);
-  $user=User::create(array_merge($data,['password'=>Str::random(64),'role'=>'pharmacist']));
+  $user=User::create(array_merge($data,['password'=>Str::random(64)]));
   return response()->json(['data'=>$this->serialize($user->load('adminRole'))],201);
  }
  public function update(Request $request,User $user) {
@@ -46,7 +46,7 @@ class AdminUserController extends Controller {
    'name'=>['required','string','max:255'],
    'email'=>['required','email','max:255',Rule::unique('users','email')->ignore($user?->id)],
    'position'=>['nullable','string','max:255'],
-   'admin_role_id'=>['nullable','integer','exists:admin_roles,id'],
+   'role'=>['required','integer','exists:admin_roles,id'],
   ]);
  }
 }

@@ -36,7 +36,7 @@ return new class extends Migration {
         // Use a temporary numeric column: avoids unsafe VARCHAR -> BIGINT casts
         // on PostgreSQL and preserves assignments during the conversion.
         Schema::table('users', function (Blueprint $table) {
-            $table->unsignedBigInteger('role_migration_id')->nullable();
+            $table->unsignedBigInteger('role_migration_id')->nullable()->after('remember_token');
         });
 
         foreach ($roleIds as $name => $id) {

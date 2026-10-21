@@ -195,7 +195,10 @@ class AuthController extends BaseController
                     // $member->update();
                     // $token = $member->createToken('appToken')->accessToken;
 
-                    $user = User::where('email', $decodedArray['preferred_username'])->first();
+                    $user = User::withTrashed()->where('email', $decodedArray['preferred_username'])->first();
+                    if ($user?->trashed()) {
+                        return $this->sendError('Your account has been deactivated.', [], 403);
+                    }
                     if (!$user) {
                         $arr_email = explode("@", $decodedArray['preferred_username']);
                         $name = str_replace(".", " ", $arr_email[0]);

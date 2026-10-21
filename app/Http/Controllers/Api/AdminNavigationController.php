@@ -20,7 +20,8 @@ class AdminNavigationController extends Controller {
     }
     public function update(Request $request, AdminNavigation $navigation) {
         $this->authorizeAdmin($request);
-        $navigation->update($this->validateNavigation($request, $navigation));
+        $data = $this->validateNavigation($request, $navigation);
+        $navigation->update($data);
         return response()->json(['data' => $navigation->refresh()]);
     }
     public function destroy(Request $request, AdminNavigation $navigation) {

@@ -2,6 +2,7 @@
 
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\AdminNavigationController;
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\CartItemController;
 use App\Http\Controllers\Api\DoctorsController;
@@ -92,6 +93,7 @@ Route::group(['namespace' => 'Api', 'middleware' => ['cors']], function () {
 Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('admin')->group(function () {
         Route::resource('products', ProductsController::class);
+        Route::apiResource('navigations', AdminNavigationController::class)->parameters(['navigations' => 'navigation'])->except(['show']);
     });
 });
 

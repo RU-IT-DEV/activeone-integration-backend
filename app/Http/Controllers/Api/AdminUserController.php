@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 class AdminUserController extends Controller {
- private function admin(Request $request):void {abort_unless($request->user()?->role === 'admin',403,'Administrator access required.');}
+ private function admin(Request $request):void {abort_unless($request->user()?->adminRole?->name === 'admin',403,'Administrator access required.');}
  private function serialize(User $user):array {
   return ['id'=>$user->id,'name'=>$user->name,'email'=>$user->email,'position'=>$user->position,
    'role'=>$user->role,'admin_role_id'=>$user->role,'admin_role'=>$user->adminRole,

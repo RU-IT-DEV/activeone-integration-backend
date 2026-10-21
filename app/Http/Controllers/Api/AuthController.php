@@ -7,6 +7,7 @@ use App\Helper\IntellicareHelper;
 use App\Http\Controllers\Api\BaseController;
 use App\Models\CustomerEmailVerification;
 use App\Models\User;
+use App\Models\AdminRole;
 use Illuminate\Support\Facades\Crypt;
 use Firebase\JWT\JWT;
 use Firebase\JWT\JWK;
@@ -202,12 +203,14 @@ class AuthController extends BaseController
                     if (!$user) {
                         $arr_email = explode("@", $decodedArray['preferred_username']);
                         $name = str_replace(".", " ", $arr_email[0]);
+                        $defaultRole = AdminRole::where('name', 'pharmacist')->first();
+                        if (!$defaultRole) return $this->sendError('Default pharmacist role is not configured.', [], 403);
                         $user = User::create([
                             'name' => $name,
                             'email' => $decodedArray['preferred_username'],
                             'password' => Hash::make("@ct1ve0ne_#2026"),
                             'email_verified_at' => Carbon::now(),
-                            'role' => 'pharmacist',
+                            'role' => $defaultRole->id,
                             'position' => 'ActiveOne Pharmacist'
                         ]);
                     }

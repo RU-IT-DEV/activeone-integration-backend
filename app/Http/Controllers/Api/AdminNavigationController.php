@@ -16,11 +16,13 @@ class AdminNavigationController extends Controller {
     public function store(Request $request) {
         $this->authorizeAdmin($request);
         $data = $this->validateNavigation($request);
+        if (!in_array('can_view', $data['available_actions'], true)) abort(422, 'Every navigation must define can_view.');
         return response()->json(['data' => AdminNavigation::create($data)], 201);
     }
     public function update(Request $request, AdminNavigation $navigation) {
         $this->authorizeAdmin($request);
         $data = $this->validateNavigation($request, $navigation);
+        if (!in_array('can_view', $data['available_actions'], true)) abort(422, 'Every navigation must define can_view.');
         $navigation->update($data);
         return response()->json(['data' => $navigation->refresh()]);
     }
@@ -35,7 +37,9 @@ class AdminNavigationController extends Controller {
             'route' => ['required','string','max:255','starts_with:/activeone/','regex:/^\\/activeone\\/[a-z0-9\\/-]+$/',Rule::unique('admin_navigations','route')->ignore($navigation?->id)],
             'icon' => ['required','string','max:100','regex:/^mdi-[a-z0-9-]+$/'],
             'sort_order' => ['required','integer','min:0'],
-            'is_active' => ['required','boolean']
+            'is_active' => ['required','boolean'],
+            'available_actions' => ['required','array','min:1','max:40'],
+            'available_actions.*' => ['required','string','distinct','regex:/^can_[a-z][a-z0-9_]*$/','max:80']
         ]);
     }
 }

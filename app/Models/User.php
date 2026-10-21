@@ -27,8 +27,7 @@ class User extends Authenticatable
         'status',
         'email_verified_at',
         'role',
-        'position',
-        'admin_role_id'
+        'position'
     ];
 
     /**
@@ -49,6 +48,7 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'role' => 'integer',
     ];
 
     protected static function booted() {
@@ -60,7 +60,7 @@ class User extends Authenticatable
         });
     }
 
-    public function adminRole() { return $this->belongsTo(AdminRole::class, 'admin_role_id'); }
+    public function adminRole() { return $this->belongsTo(AdminRole::class, 'role'); }
 
     public function role() {
         return $this->hasOne(Roles::class, 'id', 'role_id');

@@ -5,6 +5,7 @@ use App\Models\AdminRole;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
 class AdminUserController extends Controller {
  private function admin(Request $request):void {abort_unless($request->user()?->role === 'admin',403,'Administrator access required.');}
  private function serialize(User $user):array {
@@ -24,7 +25,7 @@ class AdminUserController extends Controller {
  public function store(Request $request) {
   $this->admin($request);
   $data=$this->validated($request);
-  $user=User::create($data);
+  $user=User::create(array_merge($data,['password'=>Str::random(64),'role'=>'pharmacist']));
   return response()->json(['data'=>$this->serialize($user->load('adminRole'))],201);
  }
  public function update(Request $request,User $user) {

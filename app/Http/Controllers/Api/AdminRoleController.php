@@ -10,7 +10,7 @@ class AdminRoleController extends Controller {
  private function admin(Request $request):void {abort_unless($request->user()?->role==='admin',403,'Administrator access required.');}
  public function index(Request $request) {
   $this->admin($request);
-  return response()->json(['data'=>AdminRole::with('permissions')->orderBy('name')->get(),'navigations'=>AdminNavigation::orderBy('sort_order')->get()->map(function($navigation){$navigation->available_actions=config('admin_navigation_actions.'.$navigation->route, ['can_view']);return $navigation;})]);
+  return response()->json(['data'=>AdminRole::with('permissions')->orderBy('name')->get(),'navigations'=>AdminNavigation::orderBy('sort_order')->get()]);
  }
  public function store(Request $request) {
   $this->admin($request);$data=$this->validated($request);
@@ -40,7 +40,7 @@ class AdminRoleController extends Controller {
   $prepared=[];
   foreach($permissions as $p){
    $nav=$navs->get($p['admin_navigation_id']);
-   $allowed=config('admin_navigation_actions.'.$nav->route,['can_view']);
+   $allowed=($nav->available_actions ?: ['can_view']);
    $actions=array_values(array_unique($p['actions']));
    if(array_diff($actions,$allowed)) abort(422,'Unsupported navigation action.');
    if(count($actions)>0 && !in_array('can_view',$actions,true)) abort(422,'View permission is required for other actions.');

@@ -7,7 +7,7 @@ use Illuminate\Validation\Rule;
 
 class AdminNavigationController extends Controller {
     private function authorizeAdmin(Request $request): void {
-        abort_unless($request->user() && $request->user()->role === 'admin', 403, 'Administrator access required.');
+        abort_unless($request->user() && $request->user()->adminRole?->name === 'admin', 403, 'Administrator access required.');
     }
     public function index(Request $request) {
         $this->authorizeAdmin($request);

@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\AdminRole;
 use App\Models\AdminRoleNavigationPermission;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -14,25 +13,7 @@ class AdminRolesSeeder extends Seeder
      */
     public function run(): void
     {
-        AdminRole::insert([
-            [
-                'name' => 'admin'
-            ],
-            [
-                'name' => 'pharmacist'
-            ],
-            [
-                'name' => 'viewer'
-            ],
-            [
-                'name' => 'cs team'
-            ],
-            [
-                'name' => 'Admin 2'
-            ],
-        ]);
-
-        AdminRoleNavigationPermission::insert([
+        $array = [
             [
                 "admin_role_id" => 2,
                 "admin_navigation_id" => 1,
@@ -222,6 +203,10 @@ class AdminRolesSeeder extends Seeder
                 "can_delete" => 0,
                 "actions" => ["can_view"]
             ]
-        ]);
+        ];
+
+        foreach ($array as $value) {
+            AdminRoleNavigationPermission::create($value);
+        }
     }
 }

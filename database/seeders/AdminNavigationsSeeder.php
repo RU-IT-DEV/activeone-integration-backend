@@ -14,7 +14,7 @@ class AdminNavigationsSeeder extends Seeder
      */
     public function run(): void
     {
-        AdminNavigation::insert([
+        $array = [
             [
                 'title' => "Dashboard",
                 'route' => "/activeone/dashboard",
@@ -85,6 +85,10 @@ class AdminNavigationsSeeder extends Seeder
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now()
             ],
-        ]);
+        ];
+
+        foreach ($array as $value) {
+            AdminNavigation::create($value);
+        }
     }
 }

@@ -273,13 +273,33 @@ class AuthController extends BaseController
 
     public function refreshToken(Request $request)
     {
-        $user = $request->user();
+        $user = $request->user()?->load('adminRole.permissions.navigation');
         
         if (!$user) {
             $auth = $request->header('Authorization');
             $token = str_replace("Bearer ", "", $auth);
-            $user = User::where('remember_token', $token)->first();
+            $user = User::with('adminRole.permissions.navigation')->where('remember_token', $token)->first();
         }
+
+        $user_navs = data_get($user, 'adminRole.permissions');
+        $new_nav_response = []; $navTitles = [];
+        foreach ($user_navs as $key => $nav) {
+            $actions = $nav['actions'];
+            if ($nav['can_view']) array_push($actions, 'can_view');
+            if ($nav['can_create']) array_push($actions, 'can_create');
+            if ($nav['can_update']) array_push($actions, 'can_update');
+            if ($nav['can_delete']) array_push($actions, 'can_delete');
+
+            array_push($navTitles, $nav['navigation']['title']);
+            $new_nav_response[] = [
+                "navigation_name" => $nav['navigation']['title'],
+                "actions" => $actions
+            ];
+        }
+
+        $user->navigation_permissions = $new_nav_response;
+        $user->navigations = $navTitles;
+        $user->unsetRelation('adminRole');
 
         return $this->sendResponse([
             'user' => $user

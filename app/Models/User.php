@@ -60,10 +60,8 @@ class User extends Authenticatable
         });
     }
 
-    public function adminRole() { return $this->belongsTo(AdminRole::class, 'role'); }
-
-    public function role() {
-        return $this->hasOne(Roles::class, 'id', 'role_id');
+    public function adminRole() { 
+        return $this->belongsTo(AdminRole::class, 'role'); 
     }
 
     public function companyAccesses()

@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        $legacyRoles = ['admin', 'viewer', 'pharmacist'];
+        $legacyRoles = ['admin', 'viewer', 'pharmacist', 'editor'];
 
         // Ensure the three existing account types have matching role records.
         foreach ($legacyRoles as $name) {

@@ -7,6 +7,7 @@ use App\Helper\IntellicareHelper;
 use App\Http\Controllers\Api\BaseController;
 use App\Models\CustomerEmailVerification;
 use App\Models\User;
+use App\Models\AdminRole;
 use Illuminate\Support\Facades\Crypt;
 use Firebase\JWT\JWT;
 use Firebase\JWT\JWK;
@@ -195,16 +196,21 @@ class AuthController extends BaseController
                     // $member->update();
                     // $token = $member->createToken('appToken')->accessToken;
 
-                    $user = User::where('email', $decodedArray['preferred_username'])->first();
+                    $user = User::withTrashed()->where('email', $decodedArray['preferred_username'])->first();
+                    if ($user?->trashed()) {
+                        return $this->sendError('Your account has been deactivated.', [], 403);
+                    }
                     if (!$user) {
                         $arr_email = explode("@", $decodedArray['preferred_username']);
                         $name = str_replace(".", " ", $arr_email[0]);
+                        $defaultRole = AdminRole::where('name', 'pharmacist')->first();
+                        if (!$defaultRole) return $this->sendError('Default pharmacist role is not configured.', [], 403);
                         $user = User::create([
                             'name' => $name,
                             'email' => $decodedArray['preferred_username'],
                             'password' => Hash::make("@ct1ve0ne_#2026"),
                             'email_verified_at' => Carbon::now(),
-                            'role' => 'pharmacist',
+                            'role' => $defaultRole->id,
                             'position' => 'ActiveOne Pharmacist'
                         ]);
                     }
@@ -267,13 +273,33 @@ class AuthController extends BaseController
 
     public function refreshToken(Request $request)
     {
-        $user = $request->user();
+        $user = $request->user()?->load('adminRole.permissions.navigation');
         
         if (!$user) {
             $auth = $request->header('Authorization');
             $token = str_replace("Bearer ", "", $auth);
-            $user = User::where('remember_token', $token)->first();
+            $user = User::with('adminRole.permissions.navigation')->where('remember_token', $token)->first();
         }
+
+        $user_navs = data_get($user, 'adminRole.permissions');
+        $new_nav_response = []; $navTitles = [];
+        foreach ($user_navs as $key => $nav) {
+            $actions = $nav['actions'];
+            if ($nav['can_view']) array_push($actions, 'can_view');
+            if ($nav['can_create']) array_push($actions, 'can_create');
+            if ($nav['can_update']) array_push($actions, 'can_update');
+            if ($nav['can_delete']) array_push($actions, 'can_delete');
+
+            array_push($navTitles, $nav['navigation']['title']);
+            $new_nav_response[] = [
+                "navigation_name" => $nav['navigation']['title'],
+                "actions" => $actions
+            ];
+        }
+
+        $user->navigation_permissions = $new_nav_response;
+        $user->navigations = $navTitles;
+        $user->unsetRelation('adminRole');
 
         return $this->sendResponse([
             'user' => $user

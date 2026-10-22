@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 class AdminRoleController extends Controller {
- private function admin(Request $request):void {abort_unless($request->user()?->role==='admin',403,'Administrator access required.');}
+ private function admin(Request $request):void {abort_unless($request->user()?->adminRole?->name==='admin',403,'Administrator access required.');}
  public function index(Request $request) {
   $this->admin($request);
   return response()->json(['data'=>AdminRole::with('permissions')->orderBy('name')->get(),'navigations'=>AdminNavigation::orderBy('sort_order')->get()]);

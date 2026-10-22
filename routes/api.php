@@ -4,6 +4,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AdminNavigationController;
 use App\Http\Controllers\Api\AdminRoleController;
+use App\Http\Controllers\Api\AdminUserController;
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\CartItemController;
 use App\Http\Controllers\Api\DoctorsController;
@@ -96,6 +97,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::resource('products', ProductsController::class);
         Route::apiResource('navigations', AdminNavigationController::class)->parameters(['navigations' => 'navigation'])->except(['show']);
         Route::apiResource('roles', AdminRoleController::class)->except(['show']);
+        Route::apiResource('users', AdminUserController::class)->except(['show']);
     });
 });
 

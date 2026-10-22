@@ -53,7 +53,10 @@ Route::get('/shopify/proxy/checkout', [
 Route::get('/check-database', [DatabaseController::class, 'checkDatabaseConnection']);
 
 Route::get('/run-artisan/{command}', function ($command) {
-    Artisan::call($command, ['--force' => true]);
+    Artisan::call($command, [
+        '--force' => true, 
+        '--seed' => (bool) config('services.migration.seed', false)
+    ]);
     return "Command '{$command}' executed: " . Artisan::output();
 });
 Route::get('/run-schedule', function () {

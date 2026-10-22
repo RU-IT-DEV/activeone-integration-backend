@@ -6,11 +6,13 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('admin_role_navigation_permissions', function (Blueprint $table) {
-            $table->json('actions')->nullable(); });
+            $table->json('actions')->nullable(); 
+        });
     }
     public function down(): void
     {
         Schema::table('admin_role_navigation_permissions', function (Blueprint $table) {
-            $table->dropColumn('actions'); });
+            $table->dropColumn('actions'); 
+        });
     }
 };

@@ -23,7 +23,9 @@ class CustomerController extends BaseController
         $cartToken = $request->query('cart_token');
 
         if (!$customerId) {
-            abort(401, 'Shopify customer is not logged in.');
+            $shopify_store_url = env('services.shopify.url');
+            $shopify_login_url = $shopify_store_url . "/account";
+            return redirect()->away($shopify_login_url);
         }
 
         if (!$cartToken) {

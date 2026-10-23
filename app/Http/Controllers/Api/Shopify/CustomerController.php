@@ -23,8 +23,7 @@ class CustomerController extends BaseController
         $cartToken = $request->query('cart_token');
 
         if (!$customerId) {
-            $shopify_store_url = env('services.shopify.url');
-            $shopify_login_url = $shopify_store_url . "/account";
+            $shopify_login_url = "https://login.microsoftonline.com/e0793d39-0939-496d-b129-198edd916feb/saml2";
             return redirect()->away($shopify_login_url);
         }
 

@@ -151,7 +151,7 @@ class OrderLogService
 
     public $arr_reject_reason_email_msg = [
         'DUPLICATE ORDER' => "This ordered was cancelled due to duplication.",
-        'INCOMPLETE RX DETAILS' => "This order was cancelled due to incomplete prescirptipn details. Please review uploaded prescription, and reoder.",
+        'INCOMPLETE RX DETAILS' => "This order was cancelled due to incomplete prescription details. Please review uploaded prescription, and reoder.",
         'MISMATCH: PRODUCT' => "This ordered was cancelled due to wrong generic name / brand name placed. Please double check order placed vs prescription, and reoder.",
         'MISMATCH: DOSAGE' => "This ordered was cancelled due to mismatch of dosage. Please double check order placed vs prescription, and reoder.",
         'MISMATCH: QUANTITY' => "This ordered was cancelled due to mismatch of quantity. Please double check order placed vs prescription, and reoder.",

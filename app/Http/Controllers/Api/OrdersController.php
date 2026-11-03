@@ -152,7 +152,7 @@ class OrdersController extends BaseController
                             'variantTitle' => $obj_item->merchandise['title'],
                             'unit' => $obj_item->merchandise['selectedOptions'][0]['name'],
                             'amount' => $obj_item->cost['totalAmount']['amount'], 
-                            'vat_amount' => $obj_item->cost['tax']['amount'], 
+                            'vat_amount' => $taxable ? $obj_item->cost['tax']['amount']:0, 
                             'no_vat_amount' => $obj_item->cost['deductableToEmployee']['amount'], 
                             'taxable' => $taxable,
                             'is_prescribed' => true

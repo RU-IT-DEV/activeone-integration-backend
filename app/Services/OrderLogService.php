@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\OrderLog;
+use App\Models\OrderRejectionLog;
+use Illuminate\Support\Facades\Auth;
 
 class IntellicareLogService
 {
@@ -92,6 +94,7 @@ class OrderDetailService
         return OrderLog::create([
             'table' => 'order_details',
             'auditable_id' => $auditable_id,
+            'auditable_by' => Auth::user()->id,
             'action' => 'create',
             'status' => 1,
             'summary' => 'An item has been added to an order',
@@ -99,14 +102,15 @@ class OrderDetailService
         ]);
     }
 
-    public function update($auditable_id, $log)
+    public function update($auditable_id, $log, $additional_summary = '')
     {
         return OrderLog::create([
             'table' => 'order_details',
             'auditable_id' => $auditable_id,
+            'auditable_by' => Auth::user()->id,
             'action' => 'update',
             'status' => 1,
-            'summary' => 'An order item has been updated',
+            'summary' => "An order item has been updated. {$additional_summary}",
             'value' => $log
         ]);
     }
@@ -129,6 +133,7 @@ class OrderDetailService
         return OrderLog::create([
             'table' => 'order_details',
             'auditable_id' => $auditable_id,
+            'auditable_by' => Auth::user()->id,
             'action' => 'delete',
             'status' => 1,
             'summary' => 'An order item has been deleted',
@@ -146,7 +151,7 @@ class OrderLogService
 
     public $arr_reject_reason_email_msg = [
         'DUPLICATE ORDER' => "This ordered was cancelled due to duplication.",
-        'INCOMPLETE RX DETAILS' => "This order was cancelled due to incomplete prescirptipn details. Please review uploaded prescription, and reoder.",
+        'INCOMPLETE RX DETAILS' => "This order was cancelled due to incomplete prescription details. Please review uploaded prescription, and reoder.",
         'MISMATCH: PRODUCT' => "This ordered was cancelled due to wrong generic name / brand name placed. Please double check order placed vs prescription, and reoder.",
         'MISMATCH: DOSAGE' => "This ordered was cancelled due to mismatch of dosage. Please double check order placed vs prescription, and reoder.",
         'MISMATCH: QUANTITY' => "This ordered was cancelled due to mismatch of quantity. Please double check order placed vs prescription, and reoder.",
@@ -236,14 +241,14 @@ class OrderLogService
         return $this;
     }
 
-    public function update($auditable_id, $log)
+    public function update($auditable_id, $log, $additional_summary = '')
     {
         OrderLog::create([
             'table' => 'orders',
             'auditable_id' => $auditable_id,
             'action' => 'update',
             'status' => 1,
-            'summary' => 'An order has been updated',
+            'summary' => "An order has been updated. {$additional_summary}",
             'value' => $log
         ]);
 
@@ -254,6 +259,7 @@ class OrderLogService
         OrderLog::create([
             'table' => 'orders',
             'auditable_id' => $auditable_id,
+            'auditable_by' => Auth::user()->id,
             'action' => 'approve',
             'status' => 1,
             'summary' => 'Order status has been updated to APPROVED.',
@@ -265,13 +271,21 @@ class OrderLogService
 
     public function reject($auditable_id, $log)
     {
-        OrderLog::create([
+        $orderLog = OrderLog::create([
             'table' => 'orders',
             'auditable_id' => $auditable_id,
+            'auditable_by' => Auth::user()->id,
             'action' => 'reject',
             'status' => 1,
             'summary' => 'Order status has been updated to REJECTED.',
             'value' => $log
+        ]);
+
+        OrderRejectionLog::create([
+            'order_id' => $log->id,
+            'order_log_id' => $orderLog->id,
+            'reason' => $log->order_reason,
+            'comment' => $log->order_reject_comment
         ]);
 
         return $this;

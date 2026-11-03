@@ -47,7 +47,7 @@ class OrderPrescriptionController extends BaseController
             $order->load(['prescriptions' => function ($query) {
                 return $query->select(['order_id', 'file_path', 'id']);
             }]);
-            $orderLogService->update($order->id, $order);
+            $orderLogService->update($order->id, $order, "Prescriptions uploaded: " . count($prescriptions) . " file(s).");
             // Runs ONLY if the outer transaction succeeds completely
             DB::afterCommit(function () use ($order) {
                 $shopifyHelper = new ShopifyHelper();

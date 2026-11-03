@@ -2,6 +2,9 @@
 
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\AdminNavigationController;
+use App\Http\Controllers\Api\AdminRoleController;
+use App\Http\Controllers\Api\AdminUserController;
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\CartItemController;
 use App\Http\Controllers\Api\DoctorsController;
@@ -9,9 +12,11 @@ use App\Http\Controllers\Api\FileSystemController;
 use App\Http\Controllers\Api\OrderPrescriptionController;
 use App\Http\Controllers\Api\OrdersController;
 use App\Http\Controllers\Api\ProcessJobsController;
+use App\Http\Controllers\Api\ProductsController;
 use App\Http\Controllers\Api\Shopify\CustomerController;
 use App\Http\Controllers\Api\Shopify\ProductController;
 use App\Http\Controllers\Api\UsersController;
+use App\Http\Controllers\OrderHistoryController;
 use Illuminate\Support\Facades\Route;
 
  
@@ -34,7 +39,8 @@ Route::group(['namespace' => 'Api', 'middleware' => ['cors']], function () {
     });
     Route::post('register', [AuthController::class, 'register']);
 
-    Route::get('customer-default-address', [CustomerController::class, 'show']);
+    Route::get('customer', [CustomerController::class, 'show']);
+    Route::get('customer-default-address', [CustomerController::class, 'showAddress']);
     Route::get('cart', [CartController::class, 'show']);
     Route::get('doctors', [DoctorsController::class, 'index']);
     
@@ -60,12 +66,20 @@ Route::group(['namespace' => 'Api', 'middleware' => ['cors']], function () {
 
         Route::middleware('auth:sanctum')->group(function () {
             Route::get('refresh-token', [AuthController::class, 'refreshToken']);
-            Route::get('orders/{order}/product', [ProductController::class, 'show']);
-            Route::patch('orders/{order}/product/{orderDetail}', [ProductController::class, 'update']);
 
-            Route::get('orders/{order}', [OrdersController::class, 'show']);
-            Route::post('orders/{order}/product', [ProductController::class, 'store']);
-            Route::delete('orders/{order}/product/{orderDetail}', [ProductController::class, 'remove']);
+            Route::prefix('orders')->group(function () {
+                Route::get('export', [OrdersController::class, 'export']);
+                
+                Route::get('{order}/product', [ProductController::class, 'show']);
+                Route::patch('{order}/product/{orderDetail}', [ProductController::class, 'update']);
+    
+                Route::get('{order}', [OrdersController::class, 'show']);
+                Route::post('{order}/product', [ProductController::class, 'store']);
+                Route::delete('{order}/product/{orderDetail}', [ProductController::class, 'remove']);
+    
+                Route::get('{order}/history', [OrderHistoryController::class, 'show']);
+                Route::get('{order}/customer-history', [OrderHistoryController::class, 'customerOrderHistory']);
+            });
         });
     });
 
@@ -76,5 +90,14 @@ Route::group(['namespace' => 'Api', 'middleware' => ['cors']], function () {
         \Cache::flush();
         return response()->json(['message' => 'Cache cleared successfully']);
     })->middleware('purge.auth');
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::prefix('admin')->group(function () {
+        Route::resource('products', ProductsController::class);
+        Route::apiResource('navigations', AdminNavigationController::class)->parameters(['navigations' => 'navigation'])->except(['show']);
+        Route::apiResource('roles', AdminRoleController::class)->except(['show']);
+        Route::apiResource('users', AdminUserController::class)->except(['show']);
+    });
 });
 

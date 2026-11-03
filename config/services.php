@@ -67,6 +67,9 @@ return [
         'project_id' => env('GOOGLE_CLOUD_PROJECT_ID'),
         'tasks_endpoint' => env('GOOGLE_CLOUD_TASKS_ENDPOINT'),
         'cloud_tasks_sa' => env('GOOGLE_CLOUD_CT_SA')
+    ],
+    'migration' => [
+        'seed' => env('MIGRATE_SEED')
     ]
 
 ];

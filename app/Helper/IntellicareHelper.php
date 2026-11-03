@@ -51,7 +51,11 @@ class IntellicareHelper
                     'response' => $response,
                     'decrypted_status' => $resp_status,
                 ]);
-                throw new \Exception($resp_status['message']);
+                if (isset($resp_status['message'])) {
+                    throw new \Exception($resp_status['message']);
+                } else if (isset($resp_status['Message'])) {
+                    throw new \Exception($resp_status['Message']);
+                }
             } else {
                 $response = $this->clientResponse($client->json());
         
@@ -171,7 +175,7 @@ class IntellicareHelper
             }
         } catch (\Exception $e) {
             \Log::error('Intellicare search doctor PRC failed: ' . $e->getMessage());
-            throw new \Exception('Intellicare search doctor PRC failed: ' . $e->getMessage() . ": You may leave it as blank.", 400);
+            throw new \Exception('Intellicare search doctor PRC failed: ' . $e->getMessage(), 400);
         }
     }
 
@@ -192,6 +196,14 @@ class IntellicareHelper
 
     public function transformTransactionData(OrderIntellicareLog $intellicareLog): array
     {
+        $prc = [];
+        if ($intellicareLog->prctype != "1") {
+            $prc = [
+                'prcfirstname' => $intellicareLog->prcfirstname,
+                'prclastname' => $intellicareLog->prclastname,
+            ];
+        }
+        
         return [
             'account_no' => $intellicareLog->account_no,
             'contract' => (int) $intellicareLog->contract,
@@ -200,7 +212,9 @@ class IntellicareHelper
             'branch' => $intellicareLog->branch,
             'birth_date' => $intellicareLog->birth_date,
             'receipt_number' => $intellicareLog->receipt_number,
+            'prctype' => $intellicareLog->prctype,
             'prccode' => $intellicareLog->prccode,
+            ...$prc,
             'diagnosis' => $this->diagnosis($intellicareLog->diagnosis),
             'medicines' => $intellicareLog->medicines->map(function ($item) {
                 $qty = $item->quantity;
@@ -209,11 +223,12 @@ class IntellicareHelper
                         'code' => $item->code,
                         'quantity' => $item->quantity,
                         'unit' => $item->unit,
-                        'gross' => 1,
-                        'gross_wo_vat' => 0.8,
-                        'vat_amount' => 0.2,
+                        'gross' => $item->amount,
+                        'gross_wo_vat' => $item->vat_amount,
+                        'vat_amount' => $item->no_vat_amount,
                         'type' => $item->type,
-                        'with_prescription' => (bool) $item->is_prescribed  
+                        'icdcode' => $item->icdcode,
+                        'with_prescription' => (bool) $item->is_prescribed,  
                     ];
                 }
                 return false;

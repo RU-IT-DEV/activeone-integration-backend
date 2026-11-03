@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Order extends Model
 {
     protected $fillable = [
-        'customer_id', 'customer_email', 'customer_name', 
+        'customer_id', 'customer_email', 'customer_email_2', 'customer_name', 
         'shopify_cart_id', 'shopify_order_name', 'shopify_order_id',
         'order_url', 'financialStatus', 'totalAmount',
         'test', 'intellicare_status', 'shopify_status',
@@ -17,6 +17,21 @@ class Order extends Model
     public function lineItems()
     {
         return $this->hasMany(OrderDetails::class, 'order_id');
+    }
+
+    public function lineItemsTrashed()
+    {
+        return $this->hasMany(OrderDetails::class, 'order_id')->onlyTrashed();
+    }
+
+    public function lineItemsDecreased()
+    {
+        return $this->hasMany(OrderDetails::class, 'order_id')->where('shifted', 1);
+    }
+
+    public function lineItemsTotal()
+    {
+        return $this->lineItems()->select('id', 'order_id', 'amount', 'quantity');
     }
 
     public function shippingAddress()
@@ -45,5 +60,17 @@ class Order extends Model
             ->where('table', 'orders')
             ->where('action', 'reject')
             ->orderBy('id', 'DESC');
+    }
+
+    public function rejectLog()
+    {
+        return $this->hasOne(OrderRejectionLog::class);
+    }
+
+    public function statusUpdatedBy()
+    {
+        return $this->hasOne(OrderLog::class, 'auditable_id')
+            ->where('table', 'orders')
+            ->whereIn('action', ['approve','reject']);
     }
 }

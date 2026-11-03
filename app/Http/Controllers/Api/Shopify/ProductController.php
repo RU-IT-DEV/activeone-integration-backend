@@ -6,6 +6,7 @@ use App\Helper\ShopifyHelper;
 use App\Http\Controllers\Api\BaseController;
 use App\Models\Order;
 use App\Models\OrderDetails;
+use App\Models\Product;
 use App\Services\OrderLogService;
 use Exception;
 use Illuminate\Http\Request;
@@ -39,6 +40,10 @@ class ProductController extends BaseController
                 return $field['type'] == "metaobject_reference" || $field['key'] == "medicine_type";
             }));
 
+            $product_code = array_values(array_filter($product['metafields'], function ($field) {
+                return $field['key'] == "medicine_code";
+            }));
+
             if (count($product_type) > 0) {
                 $str_typeValue = strtolower($product_type[0]['value']);
                 if (str_contains($str_typeValue, 'otc')) {
@@ -46,6 +51,11 @@ class ProductController extends BaseController
                 } else {
                     $product['category']['name'] = empty($str_typeValue) ? 'OTC':strtoupper($str_typeValue);
                 }
+            }
+
+            if (count($product_code) > 0) {
+                $str_codeValue = $product_code[0]['value'];
+                $product['icd'] = $str_codeValue;
             }
 
             $variants = data_get($product, 'variants.nodes', []);
@@ -68,6 +78,22 @@ class ProductController extends BaseController
                 $product['reason'] = $dbProduct->reason;
                 $product['dbExistId'] = $dbProduct->id;
                 $product['dbExist'] = true;
+            }
+
+            $product_Rprice = Product::where('sku', $product['sku'])->first();
+
+            if ($product_Rprice) {
+                $amountToUse = $product_Rprice->amount;
+                if (!$product_Rprice->vatable) {
+                    $amountToUse = $product_Rprice->no_vat_amount;
+                }
+                $item_tax_amount = $product_Rprice->amount - $product_Rprice->no_vat_amount;
+                $product['taxable'] = $product_Rprice->vatable === true;
+                $product['amount'] = $amountToUse;
+                $product['price']['amount'] = $product_Rprice->amount;
+                $product['price']['vatable'] = $product_Rprice->vatable;
+                $product['price']['tax_amount'] = number_format($item_tax_amount, 2, ".", "");
+                $product['price']['no_vat_amount'] = $product_Rprice->no_vat_amount;
             }
     
             return $this->sendResponse($product, "Product retrieved successfully");
@@ -110,44 +136,68 @@ class ProductController extends BaseController
                 $category = $obj_item['category']['name'];
             }
 
+            $logType = "ADD"; $order_item = [];
+            $response_msg = "Successfuly added an item";
+            $order_totalAmount = $order->lineItemsTotal->sum(function ($item) {
+                return $item['amount'] * $item['quantity'];
+            });
+
+            $order->totalAmount += $order_totalAmount;
+            $order->save();
+
             $isProduct_orderExist = $order->lineItems()->where('shopify_productId', $obj_item['id'])->first();
             if ($isProduct_orderExist) {
+                // set original quantity for updating purposes
+                if (empty($isProduct_orderExist->og_quantity)) {
+                    $isProduct_orderExist->og_quantity = $isProduct_orderExist->quantity;
+                }
+
+                // If product has already been shifted
+                $isProduct_orderExist->shifted = $isProduct_orderExist->og_quantity > $obj_item['quantity'];
                 $isProduct_orderExist->increment('quantity', $obj_item['quantity']);
                 $isProduct_orderExist->save();
 
-                return $this->sendResponse([
-                    'type' => 'QTY_UPDATE',
-                    'order_item' => $isProduct_orderExist
-                ], "Successfuly updated quantity of an item");
+                $logType = "QTY_UPDATE";
+                $order_item = $isProduct_orderExist;
+                $response_msg = "Successfuly updated quantity of an item.";
+            } else {
+                $orderDetail = [
+                    'order_id' => $order->id,
+                    'shopify_productId' => $obj_item['id'], 
+                    'shopify_product_price' => $obj_item['amount'],
+                    'image_url' => $image,
+                    'quantity' => $obj_item['quantity'], 
+                    'sku' => $obj_item['sku'],
+                    'code' => $obj_item['sku'], 
+                    'icd' => $obj_item['icd'],
+                    'icdcode' => $obj_item['icdcode'],
+                    'title' => $obj_item['title'], 
+                    'type' => $category, 
+                    'variantTitle' => $obj_item['selectedOptions'][0]['value'],
+                    'unit' => $obj_item['selectedOptions'][0]['name'],
+                    'amount' => $obj_item['amount'], 
+                    'vat_amount' => $obj_item['price']['tax_amount'], 
+                    'no_vat_amount' => $obj_item['price']['no_vat_amount'], 
+                    'taxable' => $taxable,
+                    'is_prescribed' => true,
+                    'reason' => $obj_item['reason']
+                ];
+                $lineItem = $order->lineItems()->create($orderDetail);
+    
+                $orderLogService->orderDetails->store($lineItem->id, $lineItem);
+                $order_item = $lineItem;
             }
 
-            $orderDetail = [
-                'order_id' => $order->id,
-                'shopify_productId' => $obj_item['id'], 
-                'shopify_product_price' => $obj_item['amount'],
-                'image_url' => $image,
-                'quantity' => $obj_item['quantity'], 
-                'sku' => $obj_item['sku'],
-                'code' => $obj_item['sku'], 
-                'title' => $obj_item['title'], 
-                'type' => $category, 
-                'variantTitle' => $obj_item['selectedOptions'][0]['value'],
-                'unit' => $obj_item['selectedOptions'][0]['name'],
-                'amount' => $obj_item['amount'], 
-                'vat_amount' => $obj_item['amount'], 
-                'no_vat_amount' => $obj_item['amount'], 
-                'taxable' => $taxable,
-                'is_prescribed' => true,
-                'reason' => $obj_item['reason']
-            ];
-            $lineItem = $order->lineItems()->create($orderDetail);
-
-            $orderLogService->orderDetails->store($lineItem->id, $lineItem);
-
+            $orderLogService->update(
+                $order->id,
+                ["id" => $order->id, "totalAmount" => $order->totalAmount],
+                "Order Total Amount has been updated; PHP {$order->totalAmount} ."
+            );
             return $this->sendResponse([
-                'type' => 'ADD',
-                'order_item' => $lineItem
-            ], "Successfuly added an item");
+                'type' => $logType,
+                'totalAmount' => $order->totalAmount,
+                'order_item' => $order_item
+            ], $response_msg);
         } catch (Exception $e) {
             return $this->sendError($e->getMessage(), "Failed to save product.", 400);
         }
@@ -172,14 +222,37 @@ class ProductController extends BaseController
 
         try {
             $data = $request->all();
-            $orderDetail->update([
+            $update_values = [
                 'quantity' => $data['quantity'],
                 'reason' => $data['reason']
-            ]);
+            ];
+            if (empty($orderDetail->og_quantity)) {
+                $orderDetail->og_quantity = $orderDetail->quantity;
+            }
+            $update_values['shifted'] = $orderDetail->og_quantity > $data['quantity'];
 
-            $orderLogService->orderDetails->update($orderDetail->id, $orderDetail);
+            $orderDetail->update($update_values);
 
-            return $this->sendResponse($orderDetail, "Success updated the product.");
+            $order_totalAmount = $order->lineItemsTotal->sum(function ($item) {
+                return $item['amount'] * $item['quantity'];
+            });
+
+            $order->totalAmount = $order_totalAmount;
+            $order->save();
+
+            $additional_summary = "Quantity updated to {$data['quantity']}, Reason updated to {$data['reason']}";
+            $orderLogService->orderDetails->update($orderDetail->id, $orderDetail, $additional_summary);
+
+            $orderLogService->update(
+                $order->id,
+                ["id" => $order->id, "totalAmount" => $order->totalAmount],
+                "Order Total Amount has been updated; PHP {$order->totalAmount} ."
+            );
+
+            return $this->sendResponse([
+                'order_item' => $orderDetail,
+                'totalAmount' => $order->totalAmount
+            ], "Success updated the product.");
         } catch (Exception $e) {
             return $this->sendError($e->getMessage(), [], 400);
         }
@@ -191,8 +264,23 @@ class ProductController extends BaseController
         OrderDetails $orderDetail, 
         OrderLogService $orderLogService
     ) {
+        $reason = $request->reason;
+        $orderDetail->reason = $reason;
+        $orderDetail->save();
+        
+        $item_totalAmount = $orderDetail->amount * $orderDetail->quantity;
+        $order->totalAmount -= $item_totalAmount;
+        
         $orderLogService->orderDetails->delete($orderDetail->id, $orderDetail);
         $orderDetail->delete();
-        return $this->sendResponse([], "Item removed");
+        
+        $orderLogService->update(
+            $order->id,
+            ["id" => $order->id, "totalAmount" => $order->totalAmount],
+            "Order Total Amount has been updated; PHP {$order->totalAmount} ."
+        );
+        return $this->sendResponse([
+            "totalAmount" => $order->totalAmount
+        ], "Item removed");
     }
 }

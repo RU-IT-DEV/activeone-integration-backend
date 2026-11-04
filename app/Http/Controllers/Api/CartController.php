@@ -106,22 +106,27 @@ class CartController extends BaseController
             $cart['data']['cart']['lines']['edges'] = $lineItems;
             $cart['data']['arr_med_diagnosis'] = $diagnosis;
 
-            $customer = $cart['data']['cart']['buyerIdentity']['customer'];
-            if (empty($cart['data']['cart']['buyerIdentity']['customer'])) {
+            $customer = [];
+            if (empty($cart['data']['cart']['buyerIdentity'])) {
                 $customer = $shopifyHelper->getCustomerDetails($session->shopify_customer_id);
-                $cart['data']['cart']['buyerIdentity']['email'] = $customer['email'];
-                $cart['data']['cart']['buyerIdentity']['phone'] = $customer['phone'];
+            } else {
+                $customer = $cart['data']['cart']['buyerIdentity']['customer'];
+                if (empty($cart['data']['cart']['buyerIdentity']['customer'])) {
+                    $customer = $shopifyHelper->getCustomerDetails($session->shopify_customer_id);
+                    $cart['data']['cart']['buyerIdentity']['email'] = $customer['email'];
+                    $cart['data']['cart']['buyerIdentity']['phone'] = $customer['phone'];
 
-                $customer = [
-                    'id' => $customer['id'],
-                    'firstName' => $customer['firstName'],
-                    'lastName' => $customer['lastName'],
-                    'email' => $customer['email'],
-                    'phone' => $customer['phone'],
-                    'metafields' => $customer['metafields']['nodes']
-                ];
+                    $customer = [
+                        'id' => $customer['id'],
+                        'firstName' => $customer['firstName'],
+                        'lastName' => $customer['lastName'],
+                        'email' => $customer['email'],
+                        'phone' => $customer['phone'],
+                        'metafields' => $customer['metafields']['nodes']
+                    ];
 
-                $cart['data']['cart']['buyerIdentity']['customer'] = $customer;
+                    $cart['data']['cart']['buyerIdentity']['customer'] = $customer;
+                }
             }
 
             $arr_personal_email = array_find($customer['metafields'], function ($value) {
@@ -143,6 +148,7 @@ class CartController extends BaseController
             ];
             return $this->sendResponse($response, "Success");
         } catch (\Exception $e) {
+            logger()->error("Error message: " . $e->getMessage());
             logger()->error("Error code: " . $e->getCode());
             if ($e->getCode() === 422) {
                 return $this->sendError("Something went wrong. {$e->getMessage()}", [], 422);

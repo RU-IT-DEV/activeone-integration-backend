@@ -20,7 +20,7 @@ class CartController extends BaseController
                 throw new \Exception("Invalid access.", 500);
             }
 
-            $cart = $shopifyHelper->getCart($session->cart_token);
+            $cart = $shopifyHelper->getCart($session->token);
 
             $lineItems = data_get($cart, 'data.cart.lines.edges', []);
 

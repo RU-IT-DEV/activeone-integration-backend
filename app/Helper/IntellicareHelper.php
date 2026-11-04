@@ -196,14 +196,6 @@ class IntellicareHelper
 
     public function transformTransactionData(OrderIntellicareLog $intellicareLog): array
     {
-        $prc = [];
-        if ($intellicareLog->prctype != "1") {
-            $prc = [
-                'prcfirstname' => $intellicareLog->prcfirstname,
-                'prclastname' => $intellicareLog->prclastname,
-            ];
-        }
-        
         return [
             'account_no' => $intellicareLog->account_no,
             'contract' => (int) $intellicareLog->contract,
@@ -212,9 +204,7 @@ class IntellicareHelper
             'branch' => $intellicareLog->branch,
             'birth_date' => $intellicareLog->birth_date,
             'receipt_number' => $intellicareLog->receipt_number,
-            'prctype' => $intellicareLog->prctype,
             'prccode' => $intellicareLog->prccode,
-            ...$prc,
             'diagnosis' => $this->diagnosis($intellicareLog->diagnosis),
             'medicines' => $intellicareLog->medicines->map(function ($item) {
                 $qty = $item->quantity;

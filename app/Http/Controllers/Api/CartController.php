@@ -72,6 +72,15 @@ class CartController extends BaseController
             $customer = [];
             if (empty($cart['data']['cart']['buyerIdentity'])) {
                 $customer = $shopifyHelper->getCustomerDetails($session->shopify_customer_id);
+
+                $customer = [
+                    'id' => $customer['id'],
+                    'firstName' => $customer['firstName'],
+                    'lastName' => $customer['lastName'],
+                    'email' => $customer['email'],
+                    'phone' => $customer['phone'],
+                    'metafields' => $customer['metafields']['nodes']
+                ];
             } else {
                 $customer = $cart['data']['cart']['buyerIdentity']['customer'];
                 if (empty($cart['data']['cart']['buyerIdentity']['customer'])) {
@@ -86,12 +95,11 @@ class CartController extends BaseController
                         'metafields' => $customer['metafields']['nodes']
                     ];
                 }
+                logger()->info("customer value", $customer);
             }
             
             $cart['data']['cart']['buyerIdentity']['email'] = $customer['email'];
             $cart['data']['cart']['buyerIdentity']['phone'] = $customer['phone'];
-
-
             $cart['data']['cart']['buyerIdentity']['customer'] = $customer;
 
             $arr_personal_email = array_find($customer['metafields'], function ($value) {

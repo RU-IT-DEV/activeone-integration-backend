@@ -137,7 +137,15 @@ class OrdersController extends BaseController
                     if (array_key_exists('category', $obj_item->merchandise['product'])) {
                         $category = $obj_item->merchandise['product']['category']['name'];
                     }
-    
+
+                    $no_vat_amount = $obj_item->cost['totalAmount']['amount'];
+                    if ($taxable) {
+                        $no_vat_amount -= $obj_item->cost['tax']['amount'];
+                        if (isset($obj_item->cost['deductableToEmployee'])) {
+                            $no_vat_amount = $obj_item->cost['deductableToEmployee']['amount'];
+                        }
+                    }
+
                     if ($obj_item->quantity > 0) {
                         $orderDetails[] = [
                             'order_id' => $order->id,
@@ -153,7 +161,7 @@ class OrdersController extends BaseController
                             'unit' => $obj_item->merchandise['selectedOptions'][0]['name'],
                             'amount' => $obj_item->cost['totalAmount']['amount'], 
                             'vat_amount' => $taxable ? $obj_item->cost['tax']['amount']:0, 
-                            'no_vat_amount' => $obj_item->cost['deductableToEmployee']['amount'], 
+                            'no_vat_amount' => $no_vat_amount, 
                             'taxable' => $taxable,
                             'is_prescribed' => true
                         ];

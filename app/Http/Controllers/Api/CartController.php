@@ -67,6 +67,8 @@ class CartController extends BaseController
             $cart['data']['cart']['lines']['edges'] = $lineItems;
             $cart['data']['arr_med_diagnosis'] = $diagnosis;
 
+            logger()->info("Customer Cart Details: ", $cart['data']['cart']);
+
             $customer = [];
             if (empty($cart['data']['cart']['buyerIdentity'])) {
                 $customer = $shopifyHelper->getCustomerDetails($session->shopify_customer_id);

@@ -20,6 +20,7 @@ class CartController extends BaseController
                 throw new \Exception("Invalid access.", 500);
             }
 
+            logger()->info("session: ", $session->toArray());
             $cart = $shopifyHelper->getCart($session->cart_token);
 
             $lineItems = data_get($cart, 'data.cart.lines.edges', []);
@@ -106,12 +107,20 @@ class CartController extends BaseController
             $cart['data']['cart']['lines']['edges'] = $lineItems;
             $cart['data']['arr_med_diagnosis'] = $diagnosis;
 
-            $customer = $cart['data']['cart']['buyerIdentity']['customer'];
-            if (empty($cart['data']['cart']['buyerIdentity']['customer'])) {
+            $customer = []; $no_customer_data = true;
+            if (empty($cart['data']['cart']['buyerIdentity'])) {
                 $customer = $shopifyHelper->getCustomerDetails($session->shopify_customer_id);
-                $cart['data']['cart']['buyerIdentity']['email'] = $customer['email'];
-                $cart['data']['cart']['buyerIdentity']['phone'] = $customer['phone'];
+            } else {
+                $customer = $cart['data']['cart']['buyerIdentity']['customer'];
+                $no_customer_data = false;
+                if (empty($cart['data']['cart']['buyerIdentity']['customer'])) {
+                    $no_customer_data = true;
+                }
+            }
 
+            if ($no_customer_data) {
+                $customer = $shopifyHelper->getCustomerDetails($session->shopify_customer_id);
+                    
                 $customer = [
                     'id' => $customer['id'],
                     'firstName' => $customer['firstName'],
@@ -120,9 +129,12 @@ class CartController extends BaseController
                     'phone' => $customer['phone'],
                     'metafields' => $customer['metafields']['nodes']
                 ];
-
-                $cart['data']['cart']['buyerIdentity']['customer'] = $customer;
             }
+            logger()->info("customer value", $customer);
+
+            $cart['data']['cart']['buyerIdentity']['email'] = $customer['email'];
+            $cart['data']['cart']['buyerIdentity']['phone'] = $customer['phone'];
+            $cart['data']['cart']['buyerIdentity']['customer'] = $customer;
 
             $arr_personal_email = array_find($customer['metafields'], function ($value) {
                 if ($value['key'] == "personal_email_address") {
@@ -143,6 +155,7 @@ class CartController extends BaseController
             ];
             return $this->sendResponse($response, "Success");
         } catch (\Exception $e) {
+            logger()->error("Error message: " . $e->getMessage());
             logger()->error("Error code: " . $e->getCode());
             if ($e->getCode() === 422) {
                 return $this->sendError("Something went wrong. {$e->getMessage()}", [], 422);

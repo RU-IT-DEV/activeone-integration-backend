@@ -107,27 +107,33 @@ class CartController extends BaseController
             $cart['data']['cart']['lines']['edges'] = $lineItems;
             $cart['data']['arr_med_diagnosis'] = $diagnosis;
 
-            $customer = [];
+            $customer = []; $no_customer_data = true;
             if (empty($cart['data']['cart']['buyerIdentity'])) {
                 $customer = $shopifyHelper->getCustomerDetails($session->shopify_customer_id);
             } else {
                 $customer = $cart['data']['cart']['buyerIdentity']['customer'];
+                $no_customer_data = false;
                 if (empty($cart['data']['cart']['buyerIdentity']['customer'])) {
-                    $customer = $shopifyHelper->getCustomerDetails($session->shopify_customer_id);
+                    $no_customer_data = true;
                 }
             }
+
+            if ($no_customer_data) {
+                $customer = $shopifyHelper->getCustomerDetails($session->shopify_customer_id);
+                    
+                $customer = [
+                    'id' => $customer['id'],
+                    'firstName' => $customer['firstName'],
+                    'lastName' => $customer['lastName'],
+                    'email' => $customer['email'],
+                    'phone' => $customer['phone'],
+                    'metafields' => $customer['metafields']['nodes']
+                ];
+            }
+            logger()->info("customer value", $customer);
+
             $cart['data']['cart']['buyerIdentity']['email'] = $customer['email'];
             $cart['data']['cart']['buyerIdentity']['phone'] = $customer['phone'];
-
-            $customer = [
-                'id' => $customer['id'],
-                'firstName' => $customer['firstName'],
-                'lastName' => $customer['lastName'],
-                'email' => $customer['email'],
-                'phone' => $customer['phone'],
-                'metafields' => $customer['metafields']['nodes']
-            ];
-
             $cart['data']['cart']['buyerIdentity']['customer'] = $customer;
 
             $arr_personal_email = array_find($customer['metafields'], function ($value) {

@@ -32,14 +32,6 @@ class OrdersController extends BaseController
             'billingAddress',
             'intellicareLog',
             'prescriptions',
-            'statusUpdatedBy' => function ($query) {
-                return $query->select(
-                    'auditable_id',
-                    'auditable_by',
-                    'created_at',
-                    DB::raw("JSON_EXTRACT(value, '$.order_reason') as reason")
-                );
-            },
             'statusUpdatedBy.user'
         ])->where('orders.shopify_status', '!=', 'TRXN_ERROR');
 

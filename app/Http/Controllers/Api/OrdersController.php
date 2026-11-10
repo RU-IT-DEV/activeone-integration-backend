@@ -334,7 +334,7 @@ class OrdersController extends BaseController
                     'customer_email_2' => $customer->personal_email ?? null,
                     'customer_name' => "{$customer->firstName} {$customer->lastName}",
                     'shopify_cart_id' => $reqData['id'],
-                    'financialStatus' => 'PENDING', 
+                    'financialStatus' => 'PAID', 
                     'totalAmount' => $reqData['totalAmount'],
                     'test' => config('app.env') !== 'production', 
                     'intellicare_status' => 'TRXN_CREATE', 

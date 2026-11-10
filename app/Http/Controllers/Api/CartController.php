@@ -109,7 +109,7 @@ class CartController extends BaseController
 
             $customer = []; $no_customer_data = true;
             if (empty($cart['data']['cart']['buyerIdentity'])) {
-                $customer = $shopifyHelper->getCustomerDetails($session->shopify_customer_id);
+                $no_customer_data = true;
             } else {
                 $customer = $cart['data']['cart']['buyerIdentity']['customer'];
                 $no_customer_data = false;

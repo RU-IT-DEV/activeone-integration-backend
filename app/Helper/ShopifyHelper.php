@@ -399,7 +399,7 @@ class ShopifyHelper
                     return [
                         'priceSet' => [
                             'shopMoney' => [
-                                'amount' => $item->shopify_product_price,
+                                'amount' => 0,
                                 'currencyCode' => 'PHP',
                             ],
                         ],

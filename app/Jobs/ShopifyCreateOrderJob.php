@@ -117,6 +117,9 @@ class ShopifyCreateOrderJob implements ShouldQueue
 
                     if ($this->orderModel->lineItemsTrashed->isNotEmpty()
                         || $this->orderModel->lineItemsDecreased->isNotEmpty()) {
+                        $this->orderModel->activeone_status = "PARTIALLY APPROVED";
+                        $this->orderModel->save();
+                        
                         $mail = Mail::to($this->orderModel->customer_email);
 
                         if (!empty($this->orderModel->customer_email_2)) {

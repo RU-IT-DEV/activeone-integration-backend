@@ -127,7 +127,9 @@ class CartController extends BaseController
                     'lastName' => $customer['lastName'],
                     'email' => $customer['email'],
                     'phone' => $customer['phone'],
-                    'metafields' => $customer['metafields']['nodes']
+                    'metafields' => array_filter($customer['metafields']['nodes'], function ($value) {
+                        return !is_null($value);
+                    })
                 ];
             }
             logger()->info("customer value", $customer);

@@ -109,7 +109,7 @@ class CartController extends BaseController
 
             $customer = []; $no_customer_data = true;
             if (empty($cart['data']['cart']['buyerIdentity'])) {
-                $customer = $shopifyHelper->getCustomerDetails($session->shopify_customer_id);
+                $no_customer_data = true;
             } else {
                 $customer = $cart['data']['cart']['buyerIdentity']['customer'];
                 $no_customer_data = false;
@@ -134,11 +134,14 @@ class CartController extends BaseController
 
             $cart['data']['cart']['buyerIdentity']['email'] = $customer['email'];
             $cart['data']['cart']['buyerIdentity']['phone'] = $customer['phone'];
-            $cart['data']['cart']['buyerIdentity']['customer'] = $customer;
 
             $arr_personal_email = array_find($customer['metafields'], function ($value) {
-                if ($value['key'] == "personal_email_address") {
-                    return $value;
+                if (!is_null($value)) {
+                    if ($value['key'] == "personal_email_address") {
+                        return $value;
+                    } else {
+                        return false;
+                    }
                 } else {
                     return false;
                 }

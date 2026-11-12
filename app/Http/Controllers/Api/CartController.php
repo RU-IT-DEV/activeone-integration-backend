@@ -116,9 +116,9 @@ class CartController extends BaseController
                 if (empty($cart['data']['cart']['buyerIdentity']['customer'])) {
                     $no_customer_data = true;
                 } else {
-                    $customer['metafields'] = array_filter($customer['metafields'], function ($value) {
+                    $customer['metafields'] = array_values(array_filter($customer['metafields'], function ($value) {
                         return !is_null($value);
-                    });
+                    }));
                 }
             }
 

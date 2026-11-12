@@ -132,9 +132,9 @@ class CartController extends BaseController
                     'lastName' => $customer['lastName'],
                     'email' => $customer['email'],
                     'phone' => $customer['phone'],
-                    'metafields' => array_filter($customer['metafields']['nodes'], function ($value) {
+                    'metafields' => array_values(array_filter($customer['metafields']['nodes'], function ($value) {
                         return !is_null($value);
-                    })
+                    }))
                 ];
             }
             logger()->info("customer value after no_customer_data condition: ", $customer);

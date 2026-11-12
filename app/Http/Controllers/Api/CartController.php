@@ -115,13 +115,11 @@ class CartController extends BaseController
                 $no_customer_data = false;
                 if (empty($cart['data']['cart']['buyerIdentity']['customer'])) {
                     $no_customer_data = true;
+                } else {
+                    $customer['metafields'] = array_filter($customer['metafields'], function ($value) {
+                        return !is_null($value);
+                    });
                 }
-
-                // if (!empty($customer['metafields'])) {
-                //     $customer['metafields'] = array_filter($customer['metafields'], function ($value) {
-                //         return !is_null($value);
-                //     });
-                // }
             }
 
             logger()->info("customer value before no_customer_data condition: ", $customer);

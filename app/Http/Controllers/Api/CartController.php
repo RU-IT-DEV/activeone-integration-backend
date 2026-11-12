@@ -116,8 +116,15 @@ class CartController extends BaseController
                 if (empty($cart['data']['cart']['buyerIdentity']['customer'])) {
                     $no_customer_data = true;
                 }
+
+                // if (!empty($customer['metafields'])) {
+                //     $customer['metafields'] = array_filter($customer['metafields'], function ($value) {
+                //         return !is_null($value);
+                //     });
+                // }
             }
 
+            logger()->info("customer value before no_customer_data condition: ", $customer);
             if ($no_customer_data) {
                 $customer = $shopifyHelper->getCustomerDetails($session->shopify_customer_id);
                     
@@ -132,7 +139,7 @@ class CartController extends BaseController
                     })
                 ];
             }
-            logger()->info("customer value", $customer);
+            logger()->info("customer value after no_customer_data condition: ", $customer);
 
             $cart['data']['cart']['buyerIdentity']['email'] = $customer['email'];
             $cart['data']['cart']['buyerIdentity']['phone'] = $customer['phone'];

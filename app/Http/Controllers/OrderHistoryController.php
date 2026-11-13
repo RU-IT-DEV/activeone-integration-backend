@@ -45,6 +45,16 @@ class OrderHistoryController extends BaseController
 
     }
 
+    public function destroy(Request $request, Order $order, OrderLog $log)
+    {
+        if (!$log) {
+            return $this->sendError("Log not found.", 404);
+        }
+
+        $log->delete();
+        return $this->sendResponse([], "Log deleted successfully.");
+    }
+
     public function customerOrderHistory(Request $request, Order $order)
     {
         $customer_email = $order->customer_email;

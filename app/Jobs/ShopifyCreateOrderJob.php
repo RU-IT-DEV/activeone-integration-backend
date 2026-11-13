@@ -50,34 +50,46 @@ class ShopifyCreateOrderJob implements ShouldQueue
         $query = file_get_contents(
             app_path('Helper/GraphQL/Mutations/OrderCreate.graphql')
         );
+        // shopify has returned an order name
+        $response_status = 0;
+        $response = false;
 
-        $orderLogService->shopify->createShopifyCall($this->orderModel->id, [
-            'httpRequest' => "$apiUrl/admin/api/2026-07/graphql.json",
-            'data' => [
-                'order_id' => $this->orderModel->id
-            ]
-        ]);
-
-        logger()->info("ShopifyCreateOrderJob: Sending request to Shopify API...", $this->order);
-        $client = Http::withHeaders([
-            'X-Shopify-Access-Token' => $this->shopifyHelper->x_access_token
-        ])->post("$apiUrl/admin/api/2026-07/graphql.json", [
-            'query' => $query,
-            'variables' => [
-                'options' => [
-                    "inventoryBehaviour" => "DECREMENT_OBEYING_POLICY",
-                    "sendFulfillmentReceipt" => true,
-                    "sendReceipt" => true
-                ],
-                'order' => $this->order
-            ]
-        ]);
-
-        $response = $client->json();
-
-        if ($client->failed()) {
+        if (is_null($order->shopify_order_name)) {
+            $orderLogService->shopify->createShopifyCall($this->orderModel->id, [
+                'httpRequest' => "$apiUrl/admin/api/2026-07/graphql.json",
+                'data' => [
+                    'order_id' => $this->orderModel->id
+                ]
+            ]);
+    
+            logger()->info("ShopifyCreateOrderJob: Sending request to Shopify API...", $this->order);
+            $client = Http::withHeaders([
+                'X-Shopify-Access-Token' => $this->shopifyHelper->x_access_token
+            ])->post("$apiUrl/admin/api/2026-07/graphql.json", [
+                'query' => $query,
+                'variables' => [
+                    'options' => [
+                        "inventoryBehaviour" => "DECREMENT_OBEYING_POLICY",
+                        "sendFulfillmentReceipt" => true,
+                        "sendReceipt" => true
+                    ],
+                    'order' => $this->order
+                ]
+            ]);
+            
+            
+            if ($client->failed()) {
+                $response = false;
+                $response_status = 1;
+            } else {
+                $response = $client->json();
+                $response_status = 2;
+            }
+        }
+        
+        if ($response_status === 1) {
             throw new \Exception("Error Processing Shopify Create Order", 1);
-        } else {
+        } else if ($response_status === 2) {
             logger()->info("Response: ", $response);
             
             if (array_key_exists('errors', $response)) {
@@ -114,26 +126,31 @@ class ShopifyCreateOrderJob implements ShouldQueue
                         'shopify_order_name' => $order['name'],
                         'shopify_status' => "SUCCESS",
                     ], "Shopify order created successfully. Order name: " . $order['name']);
-
-                    if ($this->orderModel->lineItemsTrashed->isNotEmpty()
-                        || $this->orderModel->lineItemsDecreased->isNotEmpty()) {
-                        $this->orderModel->activeone_status = "PARTIALLY APPROVED";
-                        $this->orderModel->save();
-                        
-                        $mail = Mail::to($this->orderModel->customer_email);
-
-                        if (!empty($this->orderModel->customer_email_2)) {
-                            $mail->cc($this->orderModel->customer_email_2);
-                        }
-                        
-                        $mail->send(new PartialApproveMail($this->orderModel));
-                    }
-
-                    JobDispatcher::dispatch(
-                        new IntellicareCreateTransactionJob($this->orderModel->id)
-                    );
                 }
-            } 
+            }
+        }
+
+        if ($this->orderModel->intellicare_status == "TRXN_CREATE") {
+            $this->orderModel->intellicare_status = "PROCESSING";
+            $this->orderModel->save();
+            
+            JobDispatcher::dispatch(
+                new IntellicareCreateTransactionJob($this->orderModel->id)
+            );
+        }
+
+        if ($this->orderModel->lineItemsTrashed->isNotEmpty()
+            || $this->orderModel->lineItemsDecreased->isNotEmpty()) {
+            $this->orderModel->activeone_status = "PARTIALLY APPROVED";
+            $this->orderModel->save();
+            
+            $mail = Mail::to($this->orderModel->customer_email);
+
+            if (!empty($this->orderModel->customer_email_2)) {
+                $mail->cc($this->orderModel->customer_email_2);
+            }
+            
+            $mail->send(new PartialApproveMail($this->orderModel));
         }
     }
 

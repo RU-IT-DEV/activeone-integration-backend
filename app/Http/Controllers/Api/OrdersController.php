@@ -327,7 +327,7 @@ class OrdersController extends BaseController
                     'customer_name' => "{$customer->firstName} {$customer->lastName}",
                     'shopify_cart_id' => $reqData['id'],
                     'financialStatus' => 'PAID', 
-                    'totalAmount' => $reqData['totalAmount'],
+                    'totalAmount' => $reqData['totalAmount'], // total amount is 0
                     'test' => config('app.env') !== 'production', 
                     'intellicare_status' => 'TRXN_CREATE', 
                     'shopify_status' => 'FOR_VERIFICATION',
@@ -335,7 +335,7 @@ class OrdersController extends BaseController
                 ]);
                 $address = (object) $reqData['address'];
                 $lineItems = $reqData['edges'];
-                $orderDetails = [];
+                $orderDetails = []; $orderTotal = 0;
                 foreach ($lineItems as $key => $item) {
                     $obj_item = (object) $item;
                     $image = null; 
@@ -379,11 +379,17 @@ class OrdersController extends BaseController
                             'taxable' => $taxable,
                             'is_prescribed' => true
                         ];
+
+                        $orderTotal += $obj_item->merchandise['price']['amount'];
                     }
     
                 }
                 $order->lineItems()->createMany($orderDetails);
 
+                if ($order->totalAmount == 0) {
+                    $order->totalAmount = $orderTotal;
+                    $order->save();
+                }
 
                 $phone = $address->phone;
                 if (preg_match('/^09\d{9}$/', $phone)) {

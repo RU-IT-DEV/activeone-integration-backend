@@ -122,6 +122,9 @@ class CartController extends BaseController
                 }
             }
 
+            if (is_null($customer)) {
+                $customer = [];
+            }
             logger()->info("customer value before no_customer_data condition: ", $customer);
             if ($no_customer_data) {
                 $customer = $shopifyHelper->getCustomerDetails($session->shopify_customer_id);

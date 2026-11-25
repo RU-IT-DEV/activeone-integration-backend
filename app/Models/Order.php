@@ -73,4 +73,9 @@ class Order extends Model
             ->where('table', 'orders')
             ->whereIn('action', ['approve','reject']);
     }
+
+    public function jsonUpdate()
+    {
+        return $this->hasOne(OrderJsonUpdate::class);
+    }
 }

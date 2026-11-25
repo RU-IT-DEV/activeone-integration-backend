@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\CartItemController;
 use App\Http\Controllers\Api\DoctorsController;
 use App\Http\Controllers\Api\FileSystemController;
 use App\Http\Controllers\Api\OrderPrescriptionController;
+use App\Http\Controllers\Api\Orders\DailyReportController;
 use App\Http\Controllers\Api\OrdersController;
 use App\Http\Controllers\Api\ProcessJobsController;
 use App\Http\Controllers\Api\ProductsController;
@@ -48,7 +49,13 @@ Route::group(['namespace' => 'Api', 'middleware' => ['cors']], function () {
     Route::post('order/{order}/prescriptions', [OrderPrescriptionController::class, 'store']);
 
     Route::middleware('order.icd.api.key')->group(function () {
-        Route::post('admin/orders/update-icds', [OrdersController::class, 'updateOrderIcDs']);
+        Route::prefix('admin/orders')->group(function () {
+            Route::post('update-icds', [OrdersController::class, 'updateOrderIcDs']);
+            Route::post('daily-report', [DailyReportController::class, 'store']);
+            Route::post('send-daily-report-8AM', [DailyReportController::class, 'eightThirtyAmReport']);
+            Route::post('send-daily-report-1PM', [DailyReportController::class, 'onePmReport']);
+            Route::post('send-daily-report-5PM', [DailyReportController::class, 'fivePmReport']);
+        });
     });
 
     Route::middleware('auth:sanctum')->group(function () {

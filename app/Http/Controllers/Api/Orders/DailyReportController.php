@@ -85,11 +85,15 @@ class DailyReportController extends BaseController
     public function createCSVReport(Request $request, FileUploadService $fileUploadService)
     {
         $today = Carbon::now()->format('Y-m-d');
-        // $today = "2026-11-27";
+        $today = "2026-11-27";
         $time = $request->input('timeslot');
         $daily_report = DailyReportEvents::where('report_name', $today)
             ->where('mailable', false)
             ->first();
+
+        if (!$daily_report) {
+            throw new \Exception("No daily report from database $today");
+        }
 
         $json_file = $fileUploadService->getGSObject($daily_report->file_path);
         $decoded = json_decode(
@@ -129,7 +133,16 @@ class DailyReportController extends BaseController
             rewind($csv);
 
             try {
-                $fileUploadService->storeCSV($csv, $objectPath);
+                if ($fileUploadService->storeCSV($csv, $objectPath)) {
+                    DailyReportEvents::create([
+                        'report_name' => $today,
+                        'file_path' => $objectPath,
+                        'generated_at' => Carbon::now('Asia/Manila'),
+                        'status' => 'success',
+                        'mailable' => true,
+                        'is_mail_sent' => false,
+                    ]);
+                }
             } catch (\Exception $exception) {
                 // The first successful upload owns this date and time slot.
                 if ((int) $exception->getCode() !== 412) {
@@ -161,7 +174,7 @@ class DailyReportController extends BaseController
 
         $reportDate = $validated['report_date'];
         $filename = 'orders-0830.csv';
-        $objectPath = "daily-orders/{$reportDate}/{$filename}";
+        $objectPath = "daily-orders/{$reportDate}/reports/{$filename}";
 
         $recipients = User::dailyReportReceivers();
 

@@ -137,6 +137,7 @@ class FileUploadService
     {
         try {
             $this->uploadStream($csv, $path, "text/csv");
+            return true;
         } catch (\Exception $e) {
             throw new \Exception($e->getMessage(), 400);
         }

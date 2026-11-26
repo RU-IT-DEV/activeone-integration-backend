@@ -57,7 +57,7 @@ class DailyReportMail extends Mailable
             Attachment::fromData(
                 fn (): string => $this->attachment, 
                 $this->filename
-            )->mime('text/csv')
+            )->withMime('text/csv')
         ];
     }
 }

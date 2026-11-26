@@ -71,7 +71,8 @@ class Order extends Model
     {
         return $this->hasOne(OrderLog::class, 'auditable_id')
             ->where('table', 'orders')
-            ->whereIn('action', ['approve','reject']);
+            ->whereIn('action', ['approve','reject'])
+            ->select('id', 'table', 'auditable_id', 'auditable_by', 'summary');
     }
 
     public function jsonUpdate()

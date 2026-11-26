@@ -133,6 +133,15 @@ class FileUploadService
         return config('filesystems.disks.gcs.bucket');
     }
 
+    public function storeCSV($csv, $path = 'bulk_uploads')
+    {
+        try {
+            $this->uploadStream($csv, $path, "text/csv");
+        } catch (\Exception $e) {
+            throw new \Exception($e->getMessage(), 400);
+        }
+    }
+
     public function storeFile($data, $prefix = 'bulk_uploads')
     {
         $bucket = $this->bucket();

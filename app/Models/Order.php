@@ -74,9 +74,4 @@ class Order extends Model
             ->whereIn('action', ['approve','reject'])
             ->select('id', 'table', 'auditable_id', 'auditable_by', 'summary');
     }
-
-    public function jsonUpdate()
-    {
-        return $this->hasOne(OrderJsonUpdate::class);
-    }
 }

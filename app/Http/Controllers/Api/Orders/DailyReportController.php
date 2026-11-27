@@ -70,14 +70,6 @@ class DailyReportController extends BaseController
 
         DailyReportEvents::create($new_daily_report);
 
-        foreach ($orders as $order) {
-            $order->jsonUpdate()->create([
-                'update_type' => 'create',
-                'started_at' => Carbon::now('Asia/Manila'),
-                'status' => 'success',
-            ]);
-        }
-
         return response()->noContent();
     }
 

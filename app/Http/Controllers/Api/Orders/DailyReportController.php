@@ -79,10 +79,10 @@ class DailyReportController extends BaseController
     public function jsonRewrite(Request $request, FileUploadService $fileUploadService) 
     {
         $validated = $request->validate([
-            'timeslot' => ['required', 'string', 'regex:/\A(?:[01][0-9]|2[0-3])[0-5][0-9]\z/'],
+            'timeslot' => ['nullable', 'string', 'regex:/\A(?:[01][0-9]|2[0-3])[0-5][0-9]\z/'],
         ]);
 
-        $time = $validated['timeslot'];
+        $time = $validated['timeslot'] ?? Carbon::now('Asia/Manila')->format('Hi');
         $day = Carbon::now('Asia/Manila')->startOfDay();
         $today = $day->toDateString();
 

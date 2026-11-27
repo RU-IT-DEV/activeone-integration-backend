@@ -54,6 +54,12 @@ class DailyReportController extends BaseController
         ])->where('created_at', '>=', "$now 17:00")
         ->get()->toArray();
 
+        if (empty($orders)) {
+            return response()->json([
+                "message" => "Empty report."
+            ], 200);
+        }
+
         $objectFileName = $fileUploadService->storeFile($orders, "daily-orders/$tomorrow");
 
         $new_daily_report = [

@@ -149,7 +149,7 @@ class DailyReportController extends BaseController
                     'order_count' => count($rows),
                 ]);
             } else {
-                return false;
+                return true;
             }
         } catch (\Exception $e) {
             $dailyReport->status = "failed @ $today $time";
@@ -186,6 +186,34 @@ class DailyReportController extends BaseController
             throw new \Exception("No daily report from database $today");
         }
 
+        $filename = "orders-$time.csv";
+        $objectPath = "daily-orders/{$today}/reports/$filename";
+
+        $csvDailyReport = DailyReportEvents::where('file_path', $objectPath)
+            ->first();
+
+        DailyReportEvents::where('report_name', $today)
+            ->where('mailable', true)
+            ->where('is_mail_sent', false)
+            ->where('id', '<', $csvDailyReport->id)
+            ->update([
+                'status' => 'overdue'
+            ]);
+        
+        if ($csvDailyReport->status == 'overdue') {
+            return response()->noContent();
+        }
+
+        if (!$csvDailyReport) {
+            $csvDailyReport = DailyReportEvents::create([
+                'report_name' => $today,
+                'file_path' => $objectPath,
+                'status' => 'processing',
+                'mailable' => true,
+                'is_mail_sent' => false,
+            ]);
+        }
+
         if (!$this->jsonRewrite($request, $fileUploadService)) {
             throw new \Exception("Json rewrite failed.", 400);
         }
@@ -212,21 +240,6 @@ class DailyReportController extends BaseController
 
         // extract json
         // Collect all fields so optional fields on later orders are included.
-        $filename = "orders-$time.csv";
-        $objectPath = "daily-orders/{$today}/reports/$filename";
-
-        $csvDailyReport = DailyReportEvents::where('file_path', $objectPath)
-            ->first();
-
-        if (!$csvDailyReport) {
-            $csvDailyReport = DailyReportEvents::create([
-                'report_name' => $today,
-                'file_path' => $objectPath,
-                'status' => 'processing',
-                'mailable' => true,
-                'is_mail_sent' => false,
-            ]);
-        }
 
         // transform to csv
         $csv = fopen('php://temp', 'w+b');

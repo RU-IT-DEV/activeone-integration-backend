@@ -148,15 +148,21 @@ class DailyReportController extends BaseController
                     'message' => 'Daily report JSON updated.',
                     'order_count' => count($rows),
                 ]);
+            } else {
+                return false;
             }
         } catch (\Exception $e) {
             $dailyReport->status = "failed @ $today $time";
             $dailyReport->save();
 
-            return response()->json([
-                'message' => $e->getMessage(),
-                'data' => $dailyReport
-            ], 400);
+            if (!in_array($time, ["0830", "1300", "1700"])) {
+                return response()->json([
+                    'message' => $e->getMessage(),
+                    'data' => $dailyReport
+                ], 400);
+            } else {
+                return false;
+            }
         }
     }
     
@@ -180,7 +186,9 @@ class DailyReportController extends BaseController
             throw new \Exception("No daily report from database $today");
         }
 
-        $this->jsonRewrite($request, $fileUploadService);
+        if (!$this->jsonRewrite($request, $fileUploadService)) {
+            throw new \Exception("Json rewrite failed.", 400);
+        }
 
         $dailyReport->status = "started compiling for csv generation";
         $dailyReport->save();
@@ -207,11 +215,28 @@ class DailyReportController extends BaseController
         $filename = "orders-$time.csv";
         $objectPath = "daily-orders/{$today}/reports/$filename";
 
+        $csvDailyReport = DailyReportEvents::where('file_path', $objectPath)
+            ->first();
+
+        if (!$csvDailyReport) {
+            $csvDailyReport = DailyReportEvents::create([
+                'report_name' => $today,
+                'file_path' => $objectPath,
+                'status' => 'processing',
+                'mailable' => true,
+                'is_mail_sent' => false,
+            ]);
+        }
+
         // transform to csv
         $csv = fopen('php://temp', 'w+b');
 
         if ($csv === false) {
             throw new \Exception('Unable to open the temporary CSV stream.');
+        }
+
+        if ($csvDailyReport->status == 'failed') {
+            $time = Carbon::now()->format('Hi');
         }
 
         try {
@@ -230,16 +255,12 @@ class DailyReportController extends BaseController
 
             try {
                 if ($fileUploadService->storeCSV($csv, $objectPath)) {
-                    DailyReportEvents::create([
-                        'report_name' => $today,
-                        'file_path' => $objectPath,
-                        'generated_at' => Carbon::now('Asia/Manila'),
-                        'status' => 'success',
-                        'mailable' => true,
-                        'is_mail_sent' => false,
-                    ]);
+                    $csvDailyReport->generated_at = Carbon::now('Asia/Manila');
+                    $csvDailyReport->status = 'success';
+                    $csvDailyReport->save();
                 }
             } catch (\Exception $exception) {
+                $csvDailyReport->status = 'failed';
                 // The first successful upload owns this date and time slot.
                 if ((int) $exception->getCode() !== 412) {
                     throw $exception;

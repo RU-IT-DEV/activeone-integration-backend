@@ -49,10 +49,7 @@ class OrderReportSendMailJob implements ShouldQueue
             $dailyReport = DailyReportEvents::where('file_path', $objectPath)->first();
 
             if ($dailyReport === null) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Report record not found.',
-                ], 404);
+                throw new \Exception("Report record not found.", 404);
             }
 
             if ($dailyReport->is_mail_sent) {

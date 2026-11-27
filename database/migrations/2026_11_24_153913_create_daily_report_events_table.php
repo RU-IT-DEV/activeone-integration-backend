@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('report_name');
             $table->text('file_path');
-            $table->datetime('generated_at');
+            $table->datetime('generated_at')->nullable();
             $table->string('status');
             $table->boolean('mailable')->default(false);
             $table->boolean('is_mail_sent')->default(false);

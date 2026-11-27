@@ -52,6 +52,7 @@ Route::group(['namespace' => 'Api', 'middleware' => ['cors']], function () {
         Route::prefix('admin/orders')->group(function () {
             Route::post('update-icds', [OrdersController::class, 'updateOrderIcDs']);
             Route::post('daily-report', [DailyReportController::class, 'store']);
+            Route::post('daily-report/json-rewrite', [DailyReportController::class, 'jsonRewrite']);
             Route::post('daily-report/generate', [DailyReportController::class, 'createCSVReport']);
             Route::post('send-daily-report-8AM', [DailyReportController::class, 'eightThirtyAmReport']);
             Route::post('send-daily-report-1PM', [DailyReportController::class, 'onePmReport']);

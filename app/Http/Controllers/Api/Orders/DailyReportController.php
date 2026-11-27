@@ -76,6 +76,77 @@ class DailyReportController extends BaseController
         return response()->noContent();
     }
 
+    public function jsonRewrite(Request $request, FileUploadService $fileUploadService) 
+    {
+        $validated = $request->validate([
+            'timeslot' => ['required', 'string', 'regex:/\A(?:[01][0-9]|2[0-3])[0-5][0-9]\z/'],
+        ]);
+
+        $time = $validated['timeslot'];
+        $day = Carbon::now('Asia/Manila')->startOfDay();
+        $today = $day->toDateString();
+
+        $dailyReport = DailyReportEvents::where('report_name', $today)
+            ->where('mailable', false)
+            ->firstOrFail();
+
+        $orders = Order::with([
+            'lineItems' => function($query) {
+                return $query->select([
+                    'order_id', 'sku', 'title', 
+                    'variantTitle', 'type', 'icd', 'icdcode',
+                    'quantity', 'amount', 'vat_amount', 
+                    'no_vat_amount', 'reason'
+                ])->whereNull('deleted_at');
+            }, 'intellicareLog' => function ($query) {
+                return $query->select([
+                    'order_id', 'reference_number', 'account_no', 'loa_date'
+                ]);
+            }, 'statusUpdatedBy.user' => function ($query) {
+                return $query->select([
+                    'id', 'email'
+                ]);
+            }
+        ])->select([
+            'id', 'customer_email', 'customer_email_2', 
+            'customer_name', 'shopify_order_name', 
+            'activeone_status', 'intellicare_status', 'created_at'
+        ]);
+        
+        $cutoff = $day->copy()->setTime(17, 0);
+
+        if ((int) $time <= 1700) {
+            $start = $day;
+            $end = $cutoff;
+        } else {
+            $start = $cutoff;
+            $end = $day->copy()->addDay();
+        }
+
+        // This assumes orders.created_at is stored and queried in UTC.
+        $rows = $orders
+            ->where('created_at', '>=', $start->copy()->utc()->toDateTimeString())
+            ->where('created_at', '<', $end->copy()->utc()->toDateTimeString())
+            ->orderBy('id')
+            ->get()
+            ->toArray();
+
+        $fileUploadService->storeCSV(
+            json_encode($rows, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
+            $dailyReport->file_path,
+            "application/json"
+        );
+
+        logger()->info("Daily report JSON updated @ $today $time.", [
+            'order_count' => count($rows),
+        ]);
+        return response()->json([
+            'message' => 'Daily report JSON updated.',
+            'order_count' => count($rows),
+        ]);
+    }
+    
+
     /**
      * Create the CSV File
      * 
@@ -84,8 +155,9 @@ class DailyReportController extends BaseController
      */
     public function createCSVReport(Request $request, FileUploadService $fileUploadService)
     {
+        $this->jsonRewrite($request, $fileUploadService);
         $today = Carbon::now()->format('Y-m-d');
-        $today = "2026-11-27";
+        // $today = "2026-11-27";
         $time = $request->input('timeslot');
         $daily_report = DailyReportEvents::where('report_name', $today)
             ->where('mailable', false)

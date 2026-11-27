@@ -5,12 +5,9 @@ namespace App\Http\Controllers\Api\Orders;
 use App\Dispatchers\JobDispatcher;
 use App\Http\Controllers\Api\BaseController;
 use App\Jobs\OrderReportSendMailJob;
-use App\Mail\DailyReportMail;
 use App\Models\DailyReportEvents;
-use App\Models\User;
 use App\Models\Order;
 use App\Services\FileUploadService;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 

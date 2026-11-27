@@ -2,6 +2,8 @@
 
 namespace App\Jobs;
 
+use Illuminate\Support\Facades\Mail;
+use App\Mail\DailyReportMail;
 use App\Models\DailyReportEvents;
 use App\Models\User;
 use App\Services\FileUploadService;
@@ -34,7 +36,7 @@ class OrderReportSendMailJob implements ShouldQueue
         if ($recipients === []) {
             logger()->warning('Daily order report has no eligible recipients', [
                 'report_date' => $reportDate,
-                'slot' => '0830',
+                'slot' => $this->timeslot,
             ]);
 
             return response()->noContent();
@@ -71,8 +73,14 @@ class OrderReportSendMailJob implements ShouldQueue
 
                 $csv = $object->downloadAsString();
 
+                $times = [
+                    '0830' => '8:30 AM',
+                    '1300' => '1:00 PM',
+                    '1700' => '5:00 PM'
+                ];
+
                 Mail::to($recipients)
-                    ->send(new DailyReportMail($reportDate, '8:30 AM', $filename, $csv));
+                    ->send(new DailyReportMail($reportDate, $times[$this->timeslot], $filename, $csv));
 
                 $dailyReport->is_mail_sent = true;
                 $dailyReport->save();

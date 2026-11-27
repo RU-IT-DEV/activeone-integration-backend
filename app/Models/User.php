@@ -69,4 +69,26 @@ class User extends Authenticatable
         return $this->hasMany(UserCompanyAccess::class);
     }
 
+    public static function dailyReportReceivers()
+    {
+        return User::query()
+            ->whereNotNull('email')
+            ->with('adminRole.permissions')
+            ->get()
+            ->filter(function (User $user): bool {
+                return $user->adminRole?->permissions->contains(
+                    fn ($permission): bool => in_array(
+                        'can_receive_daily_report',
+                        $permission->actions ?? [],
+                        true
+                    )
+                ) ?? false;
+            })
+            ->pluck('email')
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+    }
+
 }

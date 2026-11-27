@@ -46,6 +46,10 @@ class ProcessJobsController extends BaseController
                 isset($payload['orderId']) => new $jobClass(
                     $payload['orderId']
                 ),
+                isset($payload['reportDate']) => $jobClass(
+                    $payload['reportDate'],
+                    $payload['timeslot']
+                ),
                 default => new $jobClass(),
             };
 

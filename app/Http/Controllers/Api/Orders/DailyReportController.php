@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Api\Orders;
 
+use App\Dispatchers\JobDispatcher;
 use App\Http\Controllers\Api\BaseController;
+use App\Jobs\OrderReportSendMailJob;
 use App\Mail\DailyReportMail;
 use App\Models\DailyReportEvents;
 use App\Models\User;
@@ -227,124 +229,9 @@ class DailyReportController extends BaseController
             }
         }
 
-        return response()->noContent();
-    }
-    
-
-    /**
-     * Summary of eightThirtyAmReport
-     * 
-     * This method is for sending the CSV Report
-     * @param Request $request
-     * @param FileUploadService $fileUploadService
-     */
-    public function eightThirtyAmReport(Request $request, FileUploadService $fileUploadService)
-    {
-        $validated = $request->validate([
-            'report_date' => ['required', 'date_format:Y-m-d'],
-        ]);
-
-        $reportDate = $validated['report_date'];
-        $filename = 'orders-0830.csv';
-        $objectPath = "daily-orders/{$reportDate}/reports/{$filename}";
-
-        $recipients = User::dailyReportReceivers();
-
-        if ($recipients === []) {
-            logger()->warning('Daily order report has no eligible recipients', [
-                'report_date' => $reportDate,
-                'slot' => '0830',
-            ]);
-
-            return response()->noContent();
-        }
-
-        $object = $fileUploadService->getGSObject($objectPath);
-        if ($object->exists()) {
-            $csv = $object->downloadAsString();
-    
-            Mail::to($recipients)
-                ->send(new DailyReportMail($reportDate, "8:30 AM", $filename, $csv));
-    
-            return response()->noContent();
-        } else {
-            logger()->info("Object $objectPath does not exists.");
-            return response('', 400);
-        }
-    }
-
-    /**
-     * Summary of onePmReport
-     * 
-     * This method is for sending the CSV Report
-     * @param Request $request
-     * @param FileUploadService $fileUploadService
-     */
-    public function onePmReport(Request $request, FileUploadService $fileUploadService)
-    {
-        // daily-orders/YYYY-MM-DD/orders-1300.csv
-        $validated = $request->validate([
-            'report_date' => ['required', 'date_format:Y-m-d'],
-        ]);
-
-        $reportDate = $validated['report_date'];
-        $filename = 'orders-1300.csv';
-        $objectPath = "daily-orders/{$reportDate}/{$filename}";
-
-        $recipients = User::dailyReportReceivers();
-
-        if ($recipients === []) {
-            logger()->warning('Daily order report has no eligible recipients', [
-                'report_date' => $reportDate,
-                'slot' => '1300',
-            ]);
-
-            return response()->noContent();
-        }
-
-        $object = $fileUploadService->getGSObject($objectPath);
-        $csv = $object->downloadAsString();
-
-        Mail::to($recipients)
-            ->send(new DailyReportMail($reportDate, "1:00 PM", $filename, $csv));
-
-        return response()->noContent();
-    }
-
-    /**
-     * Summary of fivePmReport
-     * 
-     * This method is for sending CSV Report
-     * @param Request $request
-     * @param FileUploadService $fileUploadService
-     */
-    public function fivePmReport(Request $request, FileUploadService $fileUploadService)
-    {
-        // daily-orders/YYYY-MM-DD/orders-1700.csv
-        $validated = $request->validate([
-            'report_date' => ['required', 'date_format:Y-m-d'],
-        ]);
-
-        $reportDate = $validated['report_date'];
-        $filename = 'orders-1700.csv';
-        $objectPath = "daily-orders/{$reportDate}/{$filename}";
-
-        $recipients = User::dailyReportReceivers();
-
-        if ($recipients === []) {
-            logger()->warning('Daily order report has no eligible recipients', [
-                'report_date' => $reportDate,
-                'slot' => '1700',
-            ]);
-
-            return response()->noContent();
-        }
-
-        $object = $fileUploadService->getGSObject($objectPath);
-        $csv = $object->downloadAsString();
-
-        Mail::to($recipients)
-            ->send(new DailyReportMail($reportDate, "5:00 PM", $filename, $csv));
+        JobDispatcher::dispatch(
+            new OrderReportSendMailJob($today, $time)
+        );
 
         return response()->noContent();
     }

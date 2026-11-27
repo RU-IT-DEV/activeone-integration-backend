@@ -39,7 +39,7 @@ class OrderReportSendMailJob implements ShouldQueue
                 'slot' => $this->timeslot,
             ]);
 
-            return response()->noContent();
+            return;
         }
 
         $object = $fileUploadService->getGSObject($objectPath);
@@ -56,7 +56,7 @@ class OrderReportSendMailJob implements ShouldQueue
             }
 
             if ($dailyReport->is_mail_sent) {
-                return response()->noContent();
+                return;
             }
 
             try {
@@ -65,10 +65,10 @@ class OrderReportSendMailJob implements ShouldQueue
                         'object_path' => $objectPath,
                     ]);
 
-                    return response()->json([
+                    throw new \Exception(json_encode([
                         'success' => false,
                         'message' => 'Report CSV is not available yet.',
-                    ], 503);
+                    ]), 503);
                 }
 
                 $csv = $object->downloadAsString();
@@ -86,18 +86,12 @@ class OrderReportSendMailJob implements ShouldQueue
                 $dailyReport->is_mail_sent = true;
                 $dailyReport->save();
 
-                return response()->noContent();
+                return;
             } catch (\Exception $e) {
-                report($e);
-
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unable to send the daily report.',
-                ], 500);
+                throw new \Exception("Unable to send the daily report.", 400);
             }
         } else {
-            logger()->info("Object $objectPath does not exists.");
-            return response('', 400);
+            throw new \Exception("Object $objectPath does not exists.", 400);
         }
     }
 }

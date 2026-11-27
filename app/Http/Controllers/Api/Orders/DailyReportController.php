@@ -51,12 +51,6 @@ class DailyReportController extends BaseController
         ])->where('created_at', '>=', "$now 17:00")
         ->get()->toArray();
 
-        if (empty($orders)) {
-            return response()->json([
-                "message" => "Empty report."
-            ], 200);
-        }
-
         $objectFileName = $fileUploadService->storeFile($orders, "daily-orders/$tomorrow");
 
         $new_daily_report = [
@@ -135,24 +129,34 @@ class DailyReportController extends BaseController
             ->get()
             ->toArray();
 
-        $fileUploadService->storeCSV(
-            json_encode($rows, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
-            $dailyReport->file_path,
-            "application/json"
-        );
+        try {
+            $fileUploadService->storeCSV(
+                json_encode($rows, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
+                $dailyReport->file_path,
+                "application/json"
+            );
 
-        $dailyReport->status = "updated @ $today $time";
-        $dailyReport->save();
-
-        logger()->info("Daily report JSON updated @ $today $time.", [
-            'order_count' => count($rows),
-        ]);
-
-        if (!in_array($time, ["0830", "1300", "1700"])) {
-            return response()->json([
-                'message' => 'Daily report JSON updated.',
+            $dailyReport->status = "updated @ $today $time";
+            $dailyReport->save();
+    
+            logger()->info("Daily report JSON updated @ $today $time.", [
                 'order_count' => count($rows),
             ]);
+    
+            if (!in_array($time, ["0830", "1300", "1700"])) {
+                return response()->json([
+                    'message' => 'Daily report JSON updated.',
+                    'order_count' => count($rows),
+                ]);
+            }
+        } catch (\Exception $e) {
+            $dailyReport->status = "failed @ $today $time";
+            $dailyReport->save();
+
+            return response()->json([
+                'message' => $e->getMessage(),
+                'data' => $dailyReport
+            ], 400);
         }
     }
     
@@ -165,7 +169,6 @@ class DailyReportController extends BaseController
      */
     public function createCSVReport(Request $request, FileUploadService $fileUploadService)
     {
-        $this->jsonRewrite($request, $fileUploadService);
         $today = Carbon::now()->format('Y-m-d');
         // $today = "2026-11-27";
         $time = $request->input('timeslot');
@@ -176,6 +179,8 @@ class DailyReportController extends BaseController
         if (!$dailyReport) {
             throw new \Exception("No daily report from database $today");
         }
+
+        $this->jsonRewrite($request, $fileUploadService);
 
         $dailyReport->status = "started compiling for csv generation";
         $dailyReport->save();
@@ -189,6 +194,12 @@ class DailyReportController extends BaseController
 
         if (!is_array($orders)) {
             throw new \Exception('Expected a JSON array of orders.');
+        }
+
+        if (empty($orders)) {
+            return response()->json([
+                "message" => "Empty report."
+            ], 200);
         }
 
         // extract json

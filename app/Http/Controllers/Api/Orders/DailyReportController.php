@@ -63,7 +63,7 @@ class DailyReportController extends BaseController
             'report_name' => $tomorrow,
             'file_path' => $objectFileName,
             'generated_at' => Carbon::now('Asia/Manila'),
-            'status' => 'success',
+            'status' => 'created for the first time',
             'mailable' => false,
             'is_mail_sent' => false,
         ];
@@ -86,6 +86,13 @@ class DailyReportController extends BaseController
         $dailyReport = DailyReportEvents::where('report_name', $today)
             ->where('mailable', false)
             ->firstOrFail();
+
+        if (in_array($dailyReport->status, ['rewriting', 'sent'])) {
+            return response()->noContent();
+        } else {
+            $dailyReport->status = "rewriting";
+            $dailyReport->save();
+        }
 
         $orders = Order::with([
             'lineItems' => function($query) {
@@ -134,13 +141,19 @@ class DailyReportController extends BaseController
             "application/json"
         );
 
+        $dailyReport->status = "updated @ $today $time";
+        $dailyReport->save();
+
         logger()->info("Daily report JSON updated @ $today $time.", [
             'order_count' => count($rows),
         ]);
-        return response()->json([
-            'message' => 'Daily report JSON updated.',
-            'order_count' => count($rows),
-        ]);
+
+        if (!in_array($time, ["0830", "1300", "1700"])) {
+            return response()->json([
+                'message' => 'Daily report JSON updated.',
+                'order_count' => count($rows),
+            ]);
+        }
     }
     
 
@@ -156,15 +169,18 @@ class DailyReportController extends BaseController
         $today = Carbon::now()->format('Y-m-d');
         // $today = "2026-11-27";
         $time = $request->input('timeslot');
-        $daily_report = DailyReportEvents::where('report_name', $today)
+        $dailyReport = DailyReportEvents::where('report_name', $today)
             ->where('mailable', false)
             ->first();
 
-        if (!$daily_report) {
+        if (!$dailyReport) {
             throw new \Exception("No daily report from database $today");
         }
 
-        $json_file = $fileUploadService->getGSObject($daily_report->file_path);
+        $dailyReport->status = "started compiling for csv generation";
+        $dailyReport->save();
+
+        $json_file = $fileUploadService->getGSObject($dailyReport->file_path);
         $decoded = json_decode(
             $json_file->downloadAsString(), true, 512, JSON_THROW_ON_ERROR
         );
@@ -223,6 +239,9 @@ class DailyReportController extends BaseController
                 fclose($csv);
             }
         }
+
+        $dailyReport->status = "ready for mail sending @ $today $time";
+        $dailyReport->save();
 
         JobDispatcher::dispatch(
             new OrderReportSendMailJob($today, $time)

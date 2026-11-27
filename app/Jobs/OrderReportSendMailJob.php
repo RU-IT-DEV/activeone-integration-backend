@@ -82,6 +82,7 @@ class OrderReportSendMailJob implements ShouldQueue
                 Mail::to($recipients)
                     ->send(new DailyReportMail($reportDate, $times[$this->timeslot], $filename, $csv));
 
+                $dailyReport->status = "sent";
                 $dailyReport->is_mail_sent = true;
                 $dailyReport->save();
 
